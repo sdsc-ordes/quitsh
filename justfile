@@ -15,18 +15,6 @@ default:
 develop *args:
     just nix-develop default
 
-# Enter the Nix development shell `$1` and execute the command `${@:2}`.
-nix-develop *args:
-    #!/usr/bin/env bash
-    set -eu
-    shell="$1"; shift 1;
-    args=("$@") && [ "${#args[@]}" != 0 ] || args="$SHELL"
-    nix develop \
-        --accept-flake-config \
-        --override-input devenv-root "path:.devenv/state/pwd" \
-        "{{flake_dir}}#$shell" \
-        --command "${args[@]}"
-
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to build this component.
 build *args:
@@ -49,6 +37,11 @@ format *args:
 # Build the `cli` tool with Nix.
 package-nix:
     nix build -L "{{flake_dir}}#cli" -o "{{out_dir}}/package/cli"
+
+## CI =========================================================================
+ci *args:
+    just nix-develop "ci" "$@"
+## ============================================================================
 
 ## Build over Go ==============================================================
 ## These commands are only for trouble-shooting.
@@ -75,6 +68,19 @@ go-test-unit-tests *args:
         -covermode=count \
         -coverpkg ./... \
         "$@" ./...
+
+# Enter the Nix development shell `$1` and execute the command `${@:2}`.
+[private]
+nix-develop *args:
+    #!/usr/bin/env bash
+    set -eu
+    shell="$1"; shift 1;
+    args=("$@") && [ "${#args[@]}" != 0 ] || args="$SHELL"
+    nix develop \
+        --accept-flake-config \
+        --override-input devenv-root "path:.devenv/state/pwd" \
+        "{{flake_dir}}#$shell" \
+        --command "${args[@]}"
 
 # Build the integration test.
 [private]
