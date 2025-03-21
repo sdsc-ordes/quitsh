@@ -76,6 +76,7 @@ nix-develop *args:
     set -eu
     shell="$1"; shift 1;
     args=("$@") && [ "${#args[@]}" != 0 ] || args="$SHELL"
+    mkdir -p .devenv/state && pwd >.devenv/state/pwd
     nix develop \
         --accept-flake-config \
         --override-input devenv-root "path:.devenv/state/pwd" \
