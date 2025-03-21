@@ -9,7 +9,7 @@
 > This repository is in `beta` and not stable enough since the design space of
 > this tool is still explored.
 
-The `quitsh` framework (/kwɪʧ/) is a build-tooling CLI framework designed to
+The `quitsh` framework (`/kwɪʧ/`) is a build-tooling CLI framework designed to
 replace loosely-typed scripting languages (e.g., `bash`, `python`, and similar
 alternatives) with the statically-typed language `Go`. Its goal is to simplify
 tooling tasks while providing robust, extendable solutions for
