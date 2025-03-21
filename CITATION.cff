@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "quitsh"
+authors:
+  - family-names: Nützi
+    given-names: Gabriel
+    orcid: "https://orcid.org/0009-0008-8197-2851"
+    affiliation: "SDSC - Swiss Data Science Center"
+date-released: 2025-01-21
+version: "0.14.0"
+url: https://github.com/sdsc-ordes/quitsh
+repository-code: https://github.com/sdsc-ordes/quitsh
+keywords:
+  - build-tooling
+  - cli-framework
+  - ci
+  - go
+  - nix
+  - dependency-graph
+  - build-targets
+  - mono-repository
+  - typed-scripting
+  - devenv
+  - automation
+  - component-based-development
+license: mit

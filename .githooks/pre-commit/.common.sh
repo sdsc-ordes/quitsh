@@ -18,7 +18,7 @@ function print_info() {
     _print "" "" "$@"
 }
 
-function print_warning() {
+function print_warn() {
     _print "" "WARN: " "$@" >&2
 }
 
@@ -33,16 +33,4 @@ function print_error() {
 function die() {
     print_error "$@"
     exit 1
-}
-
-function assert_staged() {
-    # Export if run without githooks...
-    if [ -z "${STAGED_FILES:-}" ]; then
-        CHANGED_FILES=$(git diff --cached --diff-filter=ACMR --name-only)
-
-        # shellcheck disable=SC2181
-        if [ $? -eq 0 ]; then
-            STAGED_FILES="$CHANGED_FILES"
-        fi
-    fi
 }

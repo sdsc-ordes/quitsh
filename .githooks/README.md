@@ -53,7 +53,7 @@ though if you have shared hook repositories defined, those will live under the
 `~/.githooks/shared` folder. The
 [command line tool](https://github.com/gabyx/githooks/blob/main/docs/cli/git_hooks.md)
 can list out all of them for you with `git hooks list`, and you can use it to
-trust or ingoring hooks.
+trust or ignoring hooks.
 
 ## More information
 

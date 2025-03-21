@@ -8,3 +8,5 @@ overrides:
     options:
       proseWrap: always
       tabWidth: 2
+comments:
+  min-spaces-from-content: 2
