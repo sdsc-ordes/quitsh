@@ -13,20 +13,21 @@ let
   yaml = import ./yaml.nix { inherit remarshal runCommand; };
   fs = lib.fileset;
 
-  files = fs.fromSource ../../..;
-  test = fs.fromSource ../../../test;
+  rootDir = ../../../..;
+
+  files = fs.fromSource rootDir;
+  test = fs.fromSource (rootDir + "/test");
   src = fs.toSource {
-    root = ../../..;
+    root = rootDir;
     fileset = fs.difference files test;
   };
 in
 buildGo123Module rec {
   pname = name;
-  version = (yaml.read ../../../.component.yaml).version;
+  version = (yaml.read (rootDir + "/.component.yaml")).version;
   inherit src;
 
   modRoot = "./tools/cli";
-  # subPackages = [ "tools/cli/cmd/cli" ];
 
   vendorHash = "sha256-dGdC34S+IWA25cGW/CBZ8yrhMQ73OW3G3fq9fUQFYiU=";
   proxyVendor = true;

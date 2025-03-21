@@ -1,9 +1,9 @@
 package setup
 
 import (
-	nixpath "quitsh-cli/pkg/nix"
 	"os"
 	"path"
+	nixpath "quitsh-cli/pkg/nix"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"

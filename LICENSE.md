@@ -1,4 +1,3 @@
-
 # The MIT License (MIT)
 
 Copyright © 2025 - SDSC - Swiss Data Science Center

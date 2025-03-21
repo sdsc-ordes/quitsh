@@ -5,6 +5,8 @@ package main
 import (
 	"os"
 
+	cliconfig "quitsh-cli/config"
+
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
@@ -14,7 +16,6 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	gorunner "github.com/sdsc-ordes/quitsh/pkg/runner/go"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
-	cliconfig "quitsh-cli/config"
 )
 
 func main() {

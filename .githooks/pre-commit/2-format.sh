@@ -24,4 +24,4 @@ if [ "${#FILES[@]}" = "0" ]; then
 fi
 
 ci::print_info "Running 'treefmt'..."
-nix run "./tools/nix#treefmt" -- "${FILES[@]}"
+nix run --accept-flake-config "./tools/nix#treefmt" -- "${FILES[@]}"

@@ -26,6 +26,12 @@
       url = "file+file:///dev/null";
       flake = false;
     };
+
+    # Format the repo with nix-treefmt.
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -61,17 +67,21 @@
           func { inherit lib pkgs system; }
         );
 
+      defineTreefmt = pkgs: (import ./packages/treefmt) { inherit pkgs inputs; };
+
     in
     {
+      formatter = forEachSupportedSystem ({ pkgs, ... }: defineTreefmt pkgs);
+
       packages = forEachSupportedSystem (
         { pkgs, ... }:
         let
           # Define our CLI tool.
-          cli = pkgs.callPackage ./package {
-            self = cli;
-          };
+          cli = pkgs.callPackage ./packages/cli { self = cli; };
+
         in
         {
+          treefmt = defineTreefmt pkgs;
           inherit cli;
         }
       );

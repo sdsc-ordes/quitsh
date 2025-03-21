@@ -1,9 +1,9 @@
 package gorunner
 
 import (
+	"path"
 	"quitsh-cli/pkg/runner/config"
 	"quitsh-cli/pkg/setup"
-	"path"
 	"slices"
 
 	"github.com/sdsc-ordes/quitsh/pkg/common"

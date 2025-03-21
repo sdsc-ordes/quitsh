@@ -42,6 +42,10 @@ test *args:
 lint:
     just go-cli exec-target quitsh::lint "$@"
 
+# Format all files.
+format *args:
+    nix run --accept-flake-config "{{flake_dir}}#treefmt" -- "$@"
+
 # Build the `cli` tool with Nix.
 package-nix:
     nix build -L "{{flake_dir}}#cli" -o "{{out_dir}}/package/cli"
