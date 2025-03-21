@@ -41,7 +41,8 @@ let
           pkgs.golines
           pkgs.typos-lsp
 
-          # cli
+          # Our build tool (quitsh framework).
+          cli
 
           pkgs.process-compose
         ];

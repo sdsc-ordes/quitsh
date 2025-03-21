@@ -157,7 +157,8 @@ func FindByPatterns(
 	creator comp.ComponentCreator,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
 	incls, excls := splitIntoIncludeAndExcludes(patterns)
-	log.Info("Find components by patterns.", "includes", incls, "excludes", excls)
+	log.Info("Find components by patterns.",
+		"includes", incls, "excludes", excls, "root", rootDir)
 
 	filter := func(name string, _ string) (matches bool, err error) {
 		include := false

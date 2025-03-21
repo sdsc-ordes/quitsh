@@ -23,10 +23,13 @@ type Args struct {
 	ConfigUser string `yaml:"-"`
 
 	// Working directory to switch to at startup.
+	// This will be used to search for components.
+	// This will be used to define the `RootDir` directory.
 	Cwd string `yaml:"cwd"`
 
-	// The root directory considered for searching for components
-	// and defining other things.
+	// The root directory of quitsh.
+	// By default its the Git root directory resolved starting from
+	// `Cwd`.
 	RootDir string `yaml:"rootDir"`
 
 	// The log level `debug,info,warning,error`.
@@ -123,10 +126,10 @@ func New(
 		StringVar(&rootArgs.ConfigUser, "config-user", "", "The global user configuration file (overlay), can not exist.")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.Cwd,
-			"cwd", "C", "", "Set the current working directory.")
+			"cwd", "C", "", "Set the current working directory (note: '--root-dir' = Git root dir evaluated from `--cwd`).")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.RootDir,
-			"root-dir", "R", "", "Set the root directory. This is used to search for components and Nix flake paths.")
+			"root-dir", "R", "", "Set the root directory. This is used to define configured relative paths, e.g. flake path etc.")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.LogLevel,
 			"log-level", "v", "info", "The log level. [debug|info|warn|error]")

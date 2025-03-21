@@ -42,7 +42,6 @@ test *args:
 lint:
     just go-cli exec-target quitsh::lint "$@"
 
-
 # Build the `cli` tool with Nix.
 package-nix:
     nix build -L "{{flake_dir}}#cli" -o "{{out_dir}}/package/cli"
@@ -52,7 +51,8 @@ package-nix:
 
 # Run the CLI tool (`quitsh`).
 go-cli *args:
-    go run tools/cli/cmd/cli/main.go --root-dir . "$@"
+    cd tools/cli && \
+    go run ./cmd/cli/main.go -C ../.. "$@"
 
 # Build `quitsh`.
 go-build:
