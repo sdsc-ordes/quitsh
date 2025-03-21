@@ -1,0 +1,16 @@
+name: component-a
+version: 1.0.0
+language: go
+
+targets:
+  banana:
+    stage: build
+    steps:
+      - runnerID: integration-test::build-go
+  build:
+    depends: ["self::banana"]
+    steps:
+      - runner: go-custom
+  lint:
+    steps:
+      - runner: go-custom

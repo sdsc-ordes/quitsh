@@ -1,0 +1,29 @@
+name: quitsh
+version: 0.14.0
+language: go
+
+inputs:
+  srcs:
+    patterns:
+      - "^.*$"
+
+targets:
+  test:
+    steps:
+      - runner: go
+      - runner: go-bin
+        config:
+          # Build everything instrumented.
+          # Execute the binaries via a `go test` provided in the following
+          # pkg and with tags.
+          buildPkg: test/cmd
+          testPkg: test
+          buildTags: ["integration"]
+          testTags: ["integration"]
+
+  build:
+    steps:
+      - runner: go
+  lint:
+    steps:
+      - runner: go
