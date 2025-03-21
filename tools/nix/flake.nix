@@ -19,7 +19,7 @@
 
     # The devenv module to create good development shells.
     devenv = {
-      url = "github:cachix/devenv";
+      url = "github:cachix/devenv?ref=v1.4.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     devenv-root = {
@@ -32,66 +32,33 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Snowfall provides a structured way of creating a flake output.
+    # Documentation: https://snowfall.org/guides/lib/quickstart/
+    snowfall-lib = {
+      url = "github:snowfallorg/lib";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     inputs:
     let
-      inherit (inputs.self) outputs;
-      inherit (inputs.nixpkgs) lib;
-
-      supportedSystems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-        "x86_64-darwin"
-        "aarch64-linux"
-      ];
-
-      # Import nixpkgs and load it into
-      # pkgs and apply overlays to it.
-      loadNixpgs =
-        system:
-        import inputs.nixpkgs {
-          inherit system;
-          overlays = [ ];
-        };
-
-      forEachSupportedSystem =
-        func:
-        lib.genAttrs supportedSystems (
-          system:
-          let
-            pkgs = loadNixpgs system;
-            lib = pkgs.lib;
-          in
-          func { inherit lib pkgs system; }
-        );
-
-      defineTreefmt = pkgs: (import ./packages/treefmt) { inherit pkgs inputs; };
-
+      root-dir = ../..;
     in
-    {
-      formatter = forEachSupportedSystem ({ pkgs, ... }: defineTreefmt pkgs);
+    inputs.snowfall-lib.mkFlake {
+      inherit inputs;
 
-      packages = forEachSupportedSystem (
-        { pkgs, ... }:
-        let
-          # Define our CLI tool.
-          cli = pkgs.callPackage ./packages/cli { self = cli; };
+      # The `src` must be the root of the flake.
+      src = "${root-dir}";
 
-        in
-        {
-          treefmt = defineTreefmt pkgs;
-          inherit cli;
-        }
-      );
-
-      devShells = forEachSupportedSystem (
-        { pkgs, system, ... }:
-        import ./shells.nix {
-          inherit lib pkgs inputs;
-          inherit (outputs.packages.${system}) cli;
-        }
-      );
+      snowfall = {
+        root = "${root-dir}" + "/tools/nix";
+        namespace = "quitsh";
+        meta = {
+          name = "quitsh";
+          title = "quitsh";
+        };
+      };
     };
 }

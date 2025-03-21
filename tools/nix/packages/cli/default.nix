@@ -6,7 +6,6 @@
   installShellFiles,
   testers,
   git,
-  self,
 }:
 let
   name = "cli";
@@ -21,57 +20,59 @@ let
     root = rootDir;
     fileset = fs.difference files test;
   };
-in
-buildGo123Module rec {
-  pname = name;
-  version = (yaml.read (rootDir + "/.component.yaml")).version;
-  inherit src;
 
-  modRoot = "./tools/cli";
+  cli = buildGo123Module rec {
+    pname = name;
+    version = (yaml.read (rootDir + "/.component.yaml")).version;
+    inherit src;
 
-  vendorHash = "sha256-dGdC34S+IWA25cGW/CBZ8yrhMQ73OW3G3fq9fUQFYiU=";
-  proxyVendor = true;
+    modRoot = "./tools/cli";
 
-  nativeBuildInputs = [ installShellFiles ];
-  nativeCheckInputs = [ git ];
+    vendorHash = "sha256-dGdC34S+IWA25cGW/CBZ8yrhMQ73OW3G3fq9fUQFYiU=";
+    proxyVendor = true;
 
-  ldflags =
-    let
-      modulePath = "custodian/tools/custodian-cli";
-    in
-    [
-      "-s"
-      "-w"
-      "-X ${modulePath}/pkg/build.buildVersion=${version}"
-    ];
+    nativeBuildInputs = [ installShellFiles ];
+    nativeCheckInputs = [ git ];
 
-  checkFlags =
-    let
-      # Disable tests requiring integration tools
-      skippedTests = [
-        "TestProcessComposeDevenv"
+    ldflags =
+      let
+        modulePath = "custodian/tools/custodian-cli";
+      in
+      [
+        "-s"
+        "-w"
+        "-X ${modulePath}/pkg/build.buildVersion=${version}"
       ];
-    in
-    [ "-skip=^${builtins.concatStringsSep "$|^" skippedTests}$" ];
 
-  postInstall = ''
-    installShellCompletion --cmd cli \
-      --bash <($out/bin/${name} completion bash) \
-      --fish <($out/bin/${name} completion fish) \
-      --zsh <($out/bin/${name} completion zsh)
-  '';
+    checkFlags =
+      let
+        # Disable tests requiring integration tools
+        skippedTests = [
+          "TestProcessComposeDevenv"
+        ];
+      in
+      [ "-skip=^${builtins.concatStringsSep "$|^" skippedTests}$" ];
 
-  passthru.tests.version = testers.testVersion {
-    package = self;
-    command = "${name} --version";
-    inherit version;
+    postInstall = ''
+      installShellCompletion --cmd cli \
+        --bash <($out/bin/${name} completion bash) \
+        --fish <($out/bin/${name} completion fish) \
+        --zsh <($out/bin/${name} completion zsh)
+    '';
+
+    passthru.tests.version = testers.testVersion {
+      package = cli;
+      command = "${name} --version";
+      inherit version;
+    };
+
+    meta = with lib; {
+      description = "The quitsh's own CLI tool to build itself.";
+      homepage = "https://data-custodian.gitlab.io/custodian";
+      license = licenses.agpl3Plus;
+      maintainers = [ "gabyx" ];
+      mainProgram = name;
+    };
   };
-
-  meta = with lib; {
-    description = "The quitsh's own CLI tool to build itself.";
-    homepage = "https://data-custodian.gitlab.io/custodian";
-    license = licenses.agpl3Plus;
-    maintainers = [ "gabyx" ];
-    mainProgram = name;
-  };
-}
+in
+cli
