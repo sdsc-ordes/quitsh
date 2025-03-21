@@ -1,3 +1,15 @@
+# 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
+#
+# Quitsh
+#
+# You are looking at quitsh's own component
+# definition which defines some targets
+# which will run steps over runners (Go code).
+# Each runner will dispatch over a Nix development shell which
+# makes the stuff very stable.
+#
+# 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
+
 name: quitsh
 version: 0.14.0
 language: go
