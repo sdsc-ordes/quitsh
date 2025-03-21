@@ -20,6 +20,7 @@
 
   programs.gofmt.enable = true;
   programs.goimports.enable = true;
+  programs.golines.enable = true;
 
   # Lua.
   programs.stylua.enable = true;

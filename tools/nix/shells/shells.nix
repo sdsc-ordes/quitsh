@@ -10,68 +10,73 @@ let
 
   toolchains = {
     go = [
-      (
-        { ... }:
-        {
-          packages = [
-            pkgs.git
-            go
-            # For tests.
-            pkgs.process-compose
-          ];
+      (args: {
+        packages = [
+          pkgs.git
+          go
+          # For tests.
+          pkgs.process-compose
+        ];
 
-          env = {
-            QUITSH_TOOLCHAINS = "go";
-          };
-        }
-      )
+        env = {
+          QUITSH_TOOLCHAINS = "go";
+        };
+      })
+    ];
+
+    go-lint = [
+      (args: {
+        env = {
+          QUITSH_TOOLCHAINS = "go-lint";
+        };
+
+        packages = [
+          pkgs.git
+          pkgs.golangci-lint
+          go
+        ];
+      })
     ];
 
     general = [
-      (
-        { ... }:
-        {
-          packages = [
-            pkgs.quitsh.bootstrap
+      (args: {
+        packages = [
+          pkgs.quitsh.bootstrap
 
-            # Main languages.
-            go
+          # Main languages.
+          go
 
-            # Linting and LSP and debuggers.
-            pkgs.delve
-            pkgs.gopls
-            pkgs.golines
-            pkgs.typos-lsp
+          # Linting and LSP and debuggers.
+          pkgs.delve
+          pkgs.gopls
+          pkgs.golines
+          pkgs.typos-lsp
 
-            # Our build tool (quitsh framework).
-            pkgs.quitsh.cli
+          # Our build tool (quitsh framework).
+          pkgs.quitsh.cli
 
-            pkgs.process-compose
-          ];
+          pkgs.process-compose
+        ];
 
-          languages.go.enableHardeningWorkaround = true;
+        languages.go.enableHardeningWorkaround = true;
 
-          env = {
-            QUITSH_TOOLCHAINS = "general";
-          };
-        }
-      )
+        env = {
+          QUITSH_TOOLCHAINS = "general";
+        };
+      })
     ];
 
     ci = [
-      (
-        { ... }:
-        {
-          packages = [
-            pkgs.quitsh.bootstrap
-            pkgs.quitsh.cli
-          ];
+      (args: {
+        packages = [
+          pkgs.quitsh.bootstrap
+          pkgs.quitsh.cli
+        ];
 
-          env = {
-            QUITSH_TOOLCHAINS = "ci";
-          };
-        }
-      )
+        env = {
+          QUITSH_TOOLCHAINS = "ci";
+        };
+      })
     ];
   };
 
@@ -89,7 +94,7 @@ let
       inherit inputs pkgs;
       modules = [
         (
-          { ... }:
+          args:
           {
             devenv.flakesIntegration = lib.hiPrio false;
           }
@@ -106,4 +111,5 @@ in
   default = makeShell pkgs toolchains.general;
   ci = makeShell pkgs toolchains.ci;
   go = makeShell pkgs toolchains.go;
+  go-lint = makeShell pkgs toolchains.go-lint;
 }

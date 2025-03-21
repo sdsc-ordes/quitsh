@@ -126,10 +126,13 @@ func New(
 		StringVar(&rootArgs.ConfigUser, "config-user", "", "The global user configuration file (overlay), can not exist.")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.Cwd,
-			"cwd", "C", "", "Set the current working directory (note: '--root-dir' = Git root dir evaluated from `--cwd`).")
+			"cwd", "C", "",
+			"Set the current working directory "+
+				"(note: '--root-dir' = Git root dir evaluated from `--cwd`).")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.RootDir,
-			"root-dir", "R", "", "Set the root directory. This is used to define configured relative paths, e.g. flake path etc.")
+			"root-dir", "R", "", "Set the root directory. "+
+				"This is used to define configured relative paths, e.g. flake path etc.")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.LogLevel,
 			"log-level", "v", "info", "The log level. [debug|info|warn|error]")

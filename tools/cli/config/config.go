@@ -6,6 +6,8 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 
 	"github.com/huandu/go-clone"
+
+	cconfig "quitsh-cli/pkg/runner/config"
 )
 
 type CommandArgs struct {
@@ -23,10 +25,14 @@ type Config struct {
 	Commands CommandArgs `yaml:"commands"`
 
 	// The build settings which get copied and injected into the runners:
-	Build BuildSettings `yaml:"build"`
+	Build cconfig.BuildSettings `yaml:"build"`
+
+	// The lint settings which get copied and injected into the runners:
+	// - `custodian::lint-go`
+	Lint cconfig.LintSettings `yaml:"lint"`
 
 	// The test settings which get copied and injected into the runners:
-	Test TestSettings `yaml:"test"`
+	Test cconfig.TestSettings `yaml:"test"`
 }
 
 // New returns custodians arguments with default values.

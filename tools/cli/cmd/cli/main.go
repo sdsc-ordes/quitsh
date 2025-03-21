@@ -6,6 +6,7 @@ import (
 	"os"
 
 	cliconfig "quitsh-cli/config"
+	cliGoRunner "quitsh-cli/pkg/runner/go"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
@@ -68,6 +69,11 @@ func registerRunners(cl cli.ICLI, args *cliconfig.Config) {
 	}
 
 	err = gorunner.RegisterTest(args.Test.WrapToITestSettings(), cl.RunnerFactory(), true)
+	if err != nil {
+		log.PanicE(err, "Could not register runner.")
+	}
+
+	err = cliGoRunner.Register(&args.Lint, cl.RunnerFactory())
 	if err != nil {
 		log.PanicE(err, "Could not register runner.")
 	}
