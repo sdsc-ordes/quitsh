@@ -36,10 +36,10 @@ constrained by specific technologies.
 
 #### Extendability
 
-- `quitsh` serves as a library to build customized CLI tools for your specific
-  tasks.
-- Users can add custom commands and specialized tooling features using libraries
-  like [`cobra`](https://github.com/spf13/cobra).
+- `quitsh` serves as a library to build **your customized** CLI tool 
+  for your specific tasks.
+- Users can add custom commands and specialized tooling features
+  using libraries like [`cobra`](https://github.com/spf13/cobra).
 
 #### Targets and Steps
 
@@ -50,7 +50,8 @@ constrained by specific technologies.
 
 #### Runner System
 
-- Steps within targets are executed by **runners**, which act as reusable
+- Steps within targets are executed by **runners**, which are written by you 
+  in Go and act as reusable
   replacements for traditional build/tooling scripts.
 - Runners can have custom YAML configuration options specified per component in
   `.component.yaml`.
