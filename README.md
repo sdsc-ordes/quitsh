@@ -4,16 +4,16 @@
 
 <p align="center">
   <a href="https://codecov.io/gh/sdsc-ordes/quitsh">
-    <img src="https://codecov.io/gh/sdsc-ordes/quitsh/graph/badge.svg?token=35RP18MHFR" alt="Coverage" />
+    <img src="https://codecov.io/gh/sdsc-ordes/quitsh/graph/badge.svg?token=35RP18MHFR"  />
   </a>
   <a href="https://github.com/sdsc-ordes/quitsh/releases/latest">
-    <img src="https://img.shields.io/github/release/sdsc-ordes/quitsh.svg?label=release" alt="Current Release" />
+    <img src="https://img.shields.io/github/release/sdsc-ordes/quitsh.svg?label=release"  />
   </a>
   <a href="https://github.com/sdsc-ordes/quitsh/actions/workflows/normal.yaml">
-    <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/quitsh/normal.yaml?label=ci" alt="Pipeline Status" />
+    <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/quitsh/normal.yaml?label=ci" />
   </a>
   <a href="https://mit-license.org/">
-    <img src="https://img.shields.io/badge/License-Apache2.0-blue.svg?" alt="License label" />
+    <img src="https://img.shields.io/badge/License-Apache2.0-blue.svg?" />
   </a>
 </p>
 
