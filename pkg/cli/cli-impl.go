@@ -50,6 +50,12 @@ func (c *cliApp) Stages() stage.Stages {
 }
 
 func (c *cliApp) Run() error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Panic("Panic occurred:", "panic", r)
+		}
+	}()
+
 	if err := c.rootCmdPreExec(); err != nil {
 		return err
 	}
