@@ -12,8 +12,8 @@
 The `quitsh` framework (`/kwɪʧ/`) is a build-tooling CLI framework designed to
 replace loosely-typed scripting languages (e.g., `bash`, `python`, and similar
 alternatives) with the statically-typed language `Go`. Its goal is to simplify
-tooling tasks while providing robust, extendable solutions for
-mono-repositories.
+tooling tasks while providing robust, extendable solutions for component
+repositories (mono-repositories).
 
 `quitsh` is an opinionated framework born out of frustration with the lack of
 simple and extendable tooling for mono-repos. It is language-agnostic and
