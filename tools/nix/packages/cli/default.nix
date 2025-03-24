@@ -2,7 +2,7 @@
   lib,
   remarshal,
   runCommand,
-  buildGo123Module,
+  buildGo124Module,
   installShellFiles,
   testers,
   git,
@@ -21,14 +21,14 @@ let
     fileset = fs.difference files test;
   };
 
-  cli = buildGo123Module rec {
+  cli = buildGo124Module rec {
     pname = name;
     version = (yaml.read (rootDir + "/.component.yaml")).version;
     inherit src;
 
     modRoot = "./tools/cli";
 
-    vendorHash = "sha256-dGdC34S+IWA25cGW/CBZ8yrhMQ73OW3G3fq9fUQFYiU=";
+    vendorHash = "sha256-HFecJKC1NkKTalMjGB9nQ38Z1h3jk/74OBaCjmGJY3k";
     proxyVendor = true;
 
     nativeBuildInputs = [ installShellFiles ];
@@ -36,7 +36,7 @@ let
 
     ldflags =
       let
-        modulePath = "custodian/tools/custodian-cli";
+        modulePath = "github.com/sdsc-ordes/quitsh";
       in
       [
         "-s"

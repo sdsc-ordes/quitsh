@@ -32,6 +32,17 @@ jobs:
       - name: build
         run: just ci just build
 
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-nix
+        with:
+          cachix_cache_name: quitsh
+          cachix_auth_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: package
+        run: just package-nix
+
   test:
     runs-on: ubuntu-latest
     steps:

@@ -5,9 +5,11 @@
     extra-trusted-substituters = [
       # Nix community's cache server
       "https://nix-community.cachix.org"
+      "https://devenv.cachix.org"
     ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
     ];
 
     allow-import-from-derivation = "true";
@@ -15,11 +17,11 @@
 
   inputs = {
     # Nixpkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # The devenv module to create good development shells.
     devenv = {
-      url = "github:cachix/devenv?ref=v1.4.1";
+      url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     devenv-root = {
