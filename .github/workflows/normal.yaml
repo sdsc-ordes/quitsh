@@ -53,3 +53,10 @@ jobs:
           cachix_auth_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: test
         run: just ci just test
+
+      - name: coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_ORG_TOKEN }}
+          verbose: true
+          files: ./.output/coverage/data/coverage.txt
