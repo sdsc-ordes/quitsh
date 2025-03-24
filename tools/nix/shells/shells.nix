@@ -74,7 +74,7 @@ let
       (args: {
         packages = [
           pkgs.quitsh.bootstrap
-          pkgs.quitsh.cli
+          # pkgs.quitsh.cli
         ];
 
         env = {
