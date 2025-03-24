@@ -55,6 +55,9 @@ type Args struct {
 	GlobalOutput bool `yaml:"globalOutput"`
 	// Use a specific output directory.
 	GlobalOutputDir string `yaml:"outputDir"`
+
+	// Enable running targets in parallel.
+	Parallel bool `yaml:"parallel"`
 }
 
 type Settings struct {
@@ -137,6 +140,10 @@ func New(
 	}
 
 	addPersistendFlags(rootCmd.PersistentFlags(), rootArgs)
+
+	rootCmd.PersistentFlags().
+		BoolVarP(&rootArgs.Parallel,
+			"parallel", "p", false, "If targets are built in parallel.")
 
 	rootCmd.Flags().
 		BoolVar(&version, "version", version, "Print the version.")
