@@ -6,7 +6,7 @@
   ...
 }:
 let
-  go = pkgs.go_1_23;
+  go = pkgs.go_1_24;
 
   toolchains = {
     go = [
@@ -57,7 +57,7 @@ let
           pkgs.typos-lsp
 
           # Our build tool (quitsh framework).
-          pkgs.quitsh.cli
+          # pkgs.quitsh.cli
 
           pkgs.process-compose
         ];
@@ -74,7 +74,7 @@ let
       (args: {
         packages = [
           pkgs.quitsh.bootstrap
-          pkgs.quitsh.cli
+          # pkgs.quitsh.cli
         ];
 
         env = {
