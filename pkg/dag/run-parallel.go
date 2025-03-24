@@ -22,13 +22,12 @@ func ExecuteDAGParallel(
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
-) error {
-	executor := taskflow.NewExecutor(uint(runtime.NumCPU()-1) * 10000) //nolint:gosec
+) (allErrors error) {
+	executor := taskflow.NewExecutor(uint(runtime.NumCPU()-1) * 10000) //nolint:gosec,mnd
 	tf := taskflow.NewTaskFlow("DAG")
 
 	var buildError error
 	var lock sync.Mutex
-	allErrors := []error{}
 
 	addRunnerTasks := func(sf *taskflow.Subflow, node *TargetNode, step *step.Config) {
 		var runners []factory.RunnerInstance
@@ -55,25 +54,32 @@ func ExecuteDAGParallel(
 
 		runnerTasks := []*taskflow.Task{}
 		for runnerIdx, r := range runners {
+			n := fmt.Sprintf("%v::step-%v::%v", node.Target.ID, step.Index, runnerIdx)
 			runnerTask := sf.NewTask(
-				fmt.Sprintf("%v::%v::%v", node.Target.ID, step.Index, runnerIdx),
+				n,
 				func() {
-					err := ExecuteRunner(
+					var err error
+					defer func() {
+						var p error
+						if r := recover(); r != nil {
+							p = errors.New("panic in runner task '%v': %v", n, r)
+						}
+
+						lock.Lock()
+						defer lock.Unlock()
+						allErrors = errors.Combine(allErrors, err, p)
+					}()
+
+					err = ExecuteRunner(
 						node.Comp,
 						node.Target.ID,
 						step.Index,
 						runnerIdx,
 						r.Runner,
-						step.Toolchain,
+						r.Toolchain,
 						toolchainDispatcher,
 						config,
 						rootDir)
-
-					lock.Lock()
-					defer lock.Unlock()
-					if err != nil {
-						allErrors = append(allErrors, err)
-					}
 				})
 
 			runnerTasks = append(runnerTasks, runnerTask)
@@ -128,5 +134,5 @@ func ExecuteDAGParallel(
 
 	executor.Run(tf).Wait()
 
-	return nil
+	return allErrors
 }
