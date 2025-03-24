@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
@@ -13,6 +14,7 @@ type RunnerStatus struct {
 	Failed   bool
 	CompName string
 	TargetID target.ID
+	StepIdx  step.Index
 	RunnerID runner.RegisterID
 }
 
@@ -37,10 +39,11 @@ func (s RunnerStatuses) Log() {
 
 		fmt.Fprintf(
 			&sb,
-			"- %v: Component '%v', target id: '%v', runner id: '%v'\n",
+			"- %v: Component '%v', target id: '%v', step idx: '%v', runner id: '%v'\n",
 			failed,
 			s.CompName,
 			s.TargetID,
+			s.StepIdx,
 			s.RunnerID,
 		)
 	}

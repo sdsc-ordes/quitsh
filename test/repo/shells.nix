@@ -7,7 +7,9 @@
   # Toolchain Shells ============================
   go = pkgs.mkShell {
     QUITSH_TOOLCHAINS = "go";
-    packages = [ pkgs.go ];
+    packages = [
+      pkgs.go
+    ];
   };
   # =============================================
 }

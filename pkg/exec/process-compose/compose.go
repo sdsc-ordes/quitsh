@@ -37,17 +37,17 @@ func Start(
 
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
-		return
+		return pc, err
 	}
 
 	err = os.MkdirAll(path.Dir(socketPath), fs.DefaultPermissionsDir)
 	if err != nil {
-		return
+		return pc, err
 	}
 
 	procfileScript, err := buildProcFileScript(devShellInstallable, rootDir)
 	if err != nil {
-		return
+		return pc, err
 	}
 
 	b := exec.NewCmdCtxBuilder().Cwd(rootDir)
@@ -58,11 +58,15 @@ func Start(
 	// Start the process compose.
 	err = b.Build().Check(procfileScript, "-D")
 	if err != nil {
-		err = errors.AddContext(err, "Could not start procfileScript '%s'.", procfileScript)
-
-		return
+		return pc, errors.AddContext(err, "Could not start procfileScript '%s'.", procfileScript)
 	}
-	log.Info("Launched process-compose for devenv shell.", "shell", devShellInstallable)
+	log.Info(
+		"Launched process-compose for devenv shell.",
+		"shell",
+		devShellInstallable,
+		"socket",
+		socketPath,
+	)
 
 	b = exec.NewCmdCtxBuilder().
 		Cwd(rootDir).

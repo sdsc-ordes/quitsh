@@ -136,6 +136,7 @@ func executeRunners(
 				failed,
 				rD.comp.Root(),
 				rD.targetID,
+				rD.step.Index,
 				rD.inst.RunnerID,
 			},
 		)
@@ -162,7 +163,7 @@ func ExecuteRunner(
 	haveToolchain := nix.HaveToolchain(toolchain)
 	noDispatch := skipDispatch || haveToolchain
 
-	log.Info("Start runner.")
+	log.Info("Start runner.", "step", stepIdx, "runner", runner.ID())
 	log.Info(
 		"Toolchain status.",
 		"Name", toolchain,

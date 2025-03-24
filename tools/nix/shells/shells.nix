@@ -51,6 +51,10 @@ let
           pkgs.gopls
           pkgs.golines
           pkgs.typos-lsp
+          pkgs.golines
+          pkgs.golangci-lint
+          pkgs.golangci-lint-langserver
+          pkgs.typos-lsp
 
           # Our build tool (quitsh framework).
           pkgs.quitsh.cli
