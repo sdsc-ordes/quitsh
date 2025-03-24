@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://codecov.io/gh/sdsc-ordes/quitsh">
-    <img src="https://codecov.io/gh/sdsc-ordes/quitsh/graph/badge.svg?token=35RP18MHFR"  />
+    <img src="https://codecov.io/gh/sdsc-ordes/quitsh/graph/badge.svg?token=35RP18MHFR" />
   </a>
   <a href="https://github.com/sdsc-ordes/quitsh/releases/latest">
     <img src="https://img.shields.io/github/release/sdsc-ordes/quitsh.svg?label=release"  />
@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/quitsh/normal.yaml?label=ci" />
   </a>
   <a href="https://mit-license.org/">
-    <img src="https://img.shields.io/badge/License-Apache2.0-blue.svg?" />
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg?" />
   </a>
 </p>
 
