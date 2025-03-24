@@ -3,12 +3,11 @@ version: 1.0.0
 language: go
 
 targets:
-  banana:
-    stage: build
+  build-banana:
     steps:
       - runnerID: integration-test::build-go
   build:
-    depends: ["self::banana"]
+    depends: ["self::build-banana"]
     steps:
       - runner: go-custom
   lint:

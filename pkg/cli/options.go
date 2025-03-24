@@ -100,7 +100,7 @@ func WithTargetToStageMapperDefault() Option {
 			debug.Assert(len(c.stages) != 0, "stages are not set")
 
 			for i := range c.stages {
-				if strings.HasSuffix(targetName, string(c.stages[i].Stage)) {
+				if strings.HasPrefix(targetName, string(c.stages[i].Stage)) {
 					return c.stages[i].Stage, nil
 				}
 			}

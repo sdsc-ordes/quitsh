@@ -106,7 +106,7 @@ func TestCLIExecTarget2(t *testing.T) {
 			"exec-target",
 			"--log-level",
 			"debug",
-			"component-a::banana",
+			"component-a::build-banana",
 		)
 	})
 
