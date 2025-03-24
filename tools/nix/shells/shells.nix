@@ -50,8 +50,8 @@ let
           pkgs.delve
           pkgs.gopls
           pkgs.golines
+          pkgs.gotools
           pkgs.typos-lsp
-          pkgs.golines
           pkgs.golangci-lint
           pkgs.golangci-lint-langserver
           pkgs.typos-lsp

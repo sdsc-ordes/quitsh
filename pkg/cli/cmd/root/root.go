@@ -46,6 +46,9 @@ type Args struct {
 	GlobalOutput bool `yaml:"globalOutput"`
 	// Use a specific output directory.
 	GlobalOutputDir string `yaml:"outputDir"`
+
+	// Enable running targets in parallel.
+	Parallel bool `yaml:"parallel"`
 }
 
 type Settings struct {
@@ -153,6 +156,10 @@ func New(
 	rootCmd.PersistentFlags().
 		StringVar(&rootArgs.GlobalOutputDir,
 			"global-output-dir", "", "Use this as global output directory (more simple: use '--global-output').")
+
+	rootCmd.PersistentFlags().
+		BoolVarP(&rootArgs.Parallel,
+			"parallel", "p", false, "If targets are built in parallel.")
 
 	rootCmd.Flags().
 		BoolVar(&version, "version", false, "Print the version.")
