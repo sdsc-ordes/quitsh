@@ -13,6 +13,17 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
+func GetGenerateFlags(
+	generateTags []string,
+) (flags []string) {
+	if len(generateTags) != 0 {
+		flags = append(flags, "--tags")
+		flags = append(flags, "--tags", strings.Join(generateTags, ","))
+	}
+
+	return
+}
+
 func GetBuildFlags(
 	compDir string,
 	buildType cm.BuildType,

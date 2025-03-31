@@ -10,8 +10,11 @@ import (
 type RunnerConfigBuild struct {
 	VersionModule string `yaml:"versionModule" default:"pkg/build"`
 
-	// Additional build tags.
+	// Additional tags to `go build`.
 	BuildTags []string `yaml:"buildTags" default:"[]"`
+
+	// Additional tags to `go generate`.
+	GenerateTags []string `yaml:"generateTags" default:"[]"`
 }
 
 func (c *RunnerConfigBuild) Validate() error {

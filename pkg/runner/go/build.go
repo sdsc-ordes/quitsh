@@ -91,7 +91,10 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	}
 
 	log.Info("Run Go generate.")
-	err = goctx.Check("generate", "./...")
+	flags := GetGenerateFlags(r.runnerConfig.GenerateTags)
+	cmd := append([]string{"generate"}, flags...)
+	cmd = append(cmd, "./...")
+	err = goctx.Check(cmd...)
 	if err != nil {
 		log.ErrorE(err, "Go generate failed.")
 
@@ -99,7 +102,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	}
 
 	// Build everything into `outputDir`.
-	flags := GetBuildFlags(
+	flags = GetBuildFlags(
 		comp.Root(),
 		r.settings.BuildType(),
 		r.settings.EnvironmentType(),
@@ -113,7 +116,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	)
 
 	log.Info("Run Go install.")
-	cmd := append([]string{"install"}, flags...)
+	cmd = append([]string{"install"}, flags...)
 	cmd = append(cmd, r.settings.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	err = goctx.Check(cmd...)
