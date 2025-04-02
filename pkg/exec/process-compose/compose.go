@@ -23,18 +23,34 @@ type ProcessComposeCtx struct {
 }
 
 // Start starts the process compose from a
-// `devShellInstallable` (e.g. `./tools/nix#custodian.shells.test-dbs`
-// which must be a `devenv` shell) in the flake located
+// `devShellAttrPath` (e.g. `custodian.shells.test-dbs`
+// which must be a `devenv` shell) in the flake `flake.nix` located
 // at `flakeDir`. The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
+// Note: You also call [StartFromInstallable] and directly pass an
+// installable, e.g. a flake output attribute path like
+// `./a/b/c#mynamespace.shells.test-dbs`.
 func Start(
 	rootDir string,
 	flakeDir string,
+	devShellAttrPath string,
+	logFile string,
+) (pc ProcessComposeCtx, err error) {
+	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
+
+	return StartFromInstallable(rootDir, devShellAttrPath, logFile)
+}
+
+// Start starts the process compose from a Nix
+// `devShellInstallable` (e.g. `./tools/nix#custodian.shells.test-dbs`
+// which must be a `devenv` shell).
+// The `rootDir` is the working directory and
+// where the `.devenv/state/pwd` file is for `nonPureEval == false`.
+func StartFromInstallable(
+	rootDir string,
 	devShellInstallable string,
 	logFile string,
 ) (pc ProcessComposeCtx, err error) {
-	devShellInstallable = nix.FlakeInstallable(flakeDir, devShellInstallable)
-
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
@@ -66,6 +82,8 @@ func Start(
 		devShellInstallable,
 		"socket",
 		socketPath,
+		"logFile",
+		logFile,
 	)
 
 	b = exec.NewCmdCtxBuilder().
@@ -94,6 +112,10 @@ func (pc *ProcessComposeCtx) Stop() error {
 func (pc *ProcessComposeCtx) WaitTillRunning(
 	ctx context.Context,
 	procs ...string) (isRunning bool, err error) {
+	if len(procs) == 0 {
+		return true, nil
+	}
+
 	err = pc.waitForSocket()
 	if err != nil {
 		return false, err
