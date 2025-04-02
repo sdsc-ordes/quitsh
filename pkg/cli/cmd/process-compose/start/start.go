@@ -54,7 +54,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 
 	startCmd.Flags().
 		StringVarP(&stArgs.flakeDir,
-			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a `flake.nix` file.")
+			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
 
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitFor,

@@ -128,7 +128,7 @@ func New(
 		StringVarP(&rootArgs.Cwd,
 			"cwd", "C", ".",
 			"Set the current working directory "+
-				"(note: '--root-dir' = Git root dir evaluated from `--cwd`).")
+				"(note: '--root-dir' = Git root dir evaluated from '--cwd').")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.RootDir,
 			"root-dir", "R", "", "Set the root directory. "+
