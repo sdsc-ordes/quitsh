@@ -108,8 +108,8 @@ func StartServices(
 		log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
 	}
 
-	log.Info("Inspect processes with 'process-compose attach -u '%s'.", pcCtx.Socket())
-	log.Info("Stop processes with 'process-compose down -u '%s'.", pcCtx.Socket())
+	log.Infof("Inspect processes with 'process-compose attach -u '%s'.", pcCtx.Socket())
+	log.Infof("Stop processes with 'process-compose down -u '%s'.", pcCtx.Socket())
 
 	return pcCtx, nil
 }
