@@ -38,6 +38,10 @@ format *args:
 package-nix:
     nix build -L "{{flake_dir}}#cli" -o "{{out_dir}}/package/cli"
 
+# Clean the output folder.
+clean:
+    rm -rf "{{out_dir}}"
+
 ## CI =========================================================================
 ci *args:
     just nix-develop "ci" "$@"

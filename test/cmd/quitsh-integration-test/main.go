@@ -9,6 +9,7 @@ import (
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
+	processcompose "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
@@ -53,6 +54,7 @@ func main() {
 
 	var args Config
 
+	flakeDir := "."
 	cli, err := cli.New(
 		&args.Commands.Root,
 		&args,
@@ -60,7 +62,7 @@ func main() {
 		cli.WithStages("lint", "build", "test", "monkey-stage", "deploy"),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithToolchainDispatcherNix(
-			".",
+			flakeDir,
 			func(c config.IConfig) *toolchain.DispatchArgs {
 				cc := common.Cast[*Config](c)
 
@@ -72,15 +74,11 @@ func main() {
 		log.PanicE(err, "Could not setup cli.")
 	}
 
-	// Only for testing we set the root directory to:
-	// Assuming we are running in `test` directory.
-	// Will be made absolute on first invocation.
-	cli.RootArgs().RootDir = "repo"
-
 	// Setup quitsh provided helper commands.
 	execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
 	exectarget.AddCmd(cli, cli.RootCmd())
 	listcmd.AddCmd(cli, cli.RootCmd())
+	processcompose.AddCmd(cli, cli.RootCmd(), flakeDir)
 
 	// Register some Go runner.
 	err = gorunner.Register(&args.Build, cli.RunnerFactory())

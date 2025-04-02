@@ -7,6 +7,10 @@ import (
 
 // FlakeInstallable returns the attribute path `<flakePath>#<attrPath>`.
 func FlakeInstallable(flakePath string, attrPath string) string {
+	if flakePath == "" {
+		flakePath = "."
+	}
+
 	return fmt.Sprintf("%s#%s", flakePath, attrPath)
 }
 

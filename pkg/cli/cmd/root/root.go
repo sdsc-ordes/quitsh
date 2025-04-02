@@ -126,7 +126,7 @@ func New(
 		StringVar(&rootArgs.ConfigUser, "config-user", "", "The global user configuration file (overlay), can not exist.")
 	rootCmd.PersistentFlags().
 		StringVarP(&rootArgs.Cwd,
-			"cwd", "C", "",
+			"cwd", "C", ".",
 			"Set the current working directory "+
 				"(note: '--root-dir' = Git root dir evaluated from `--cwd`).")
 	rootCmd.PersistentFlags().

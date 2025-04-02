@@ -92,6 +92,8 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 	// mode while still being able to run processes & services and modify
 	// (some parts) of the active shell.mkdir -p .devenv/state
 	// See: https://github.com/cachix/devenv/issues/1461
+	// NOTE: This will also work if no input matches the override which is important
+	//       for users not using this.
 	return b.
 		Cwd(rootDir).
 		BaseArgs(

@@ -107,7 +107,12 @@ func createRecord(skipFns int, level slog.Level, msg string, args ...any) slog.R
 	return r
 }
 
-// Trace will log an trace if trace is enabled.
+// Trace will log a trace info with formatting.
+func Tracef(msg string, args ...any) {
+	Trace(fmt.Sprintf(msg, args...))
+}
+
+// Trace will log a trace info.
 func Trace(msg string, args ...any) {
 	msg = fmt.Sprintf(msg, args...)
 	ctx := context.Background()
@@ -120,7 +125,12 @@ func Trace(msg string, args ...any) {
 	_ = slog.Default().Handler().Handle(ctx, r)
 }
 
-// Debug will log an info if debug is enabled.
+// Debug will log a debug info with formatting.
+func Debugf(msg string, args ...any) {
+	Debug(fmt.Sprintf(msg, args...))
+}
+
+// Debug will log a debug info.
 func Debug(msg string, args ...any) {
 	ctx := context.Background()
 	const level = slog.LevelDebug
@@ -130,6 +140,11 @@ func Debug(msg string, args ...any) {
 	}
 	r := createRecord(0, level, msg, args...)
 	_ = slog.Default().Handler().Handle(ctx, r)
+}
+
+// Info will log an info with formatting.
+func Infof(msg string, args ...any) {
+	Info(fmt.Sprintf(msg, args...))
 }
 
 // Info will log an info.
@@ -144,17 +159,32 @@ func Info(msg string, args ...any) {
 	_ = slog.Default().Handler().Handle(ctx, r)
 }
 
-// Warn will log an info.
+// Warn will log a warning info with formatting.
+func Warnf(msg string, args ...any) {
+	Warn(fmt.Sprintf(msg, args...))
+}
+
+// Warn will log an warning info.
 func Warn(msg string, args ...any) {
 	warnS(0, msg, args...)
 }
 
+// Warn will log a warning for an error `err` with formatting.
+func WarnEf(err error, msg string, args ...any) {
+	WarnE(err, fmt.Sprintf(msg, args...))
+}
+
 // Warn will log a warning for an error `err`.
 func WarnE(err error, msg string, args ...any) {
-	a := make([]interface{}, 0, 2+len(args)) //nolint: mnd
+	a := make([]any, 0, 2+len(args)) //nolint: mnd
 	a = append(a, "error", err)
 	a = append(a, args...)
 	warnS(0, msg, a...)
+}
+
+// Error will log an error with formatting.
+func Errorf(msg string, args ...any) {
+	Error(fmt.Sprintf(msg, args...))
 }
 
 // Error will log an error.
@@ -162,15 +192,30 @@ func Error(msg string, args ...any) {
 	errorS(0, msg, args...)
 }
 
+// Error will log an error for `err` with formatting.
+func ErrorEf(err error, msg string, args ...any) {
+	ErrorE(err, fmt.Sprintf(msg, args...))
+}
+
 // Error will log an error for `err`.
 func ErrorE(err error, msg string, args ...any) {
 	errorES(0, err, msg, args...)
+}
+
+// Panic will log and panic with formatting.
+func Panicf(msg string, args ...any) {
+	Panic(fmt.Sprintf(msg, args...))
 }
 
 // Panic will log and panic.
 func Panic(msg string, args ...any) {
 	errorS(0, msg, args...)
 	panic(msg)
+}
+
+// Panic will log and panic with formatting.
+func PanicEf(err error, msg string, args ...any) {
+	PanicE(err, fmt.Sprintf(msg, args...))
 }
 
 // PanicE will log and panic if `err` is not `nil`.
@@ -204,7 +249,7 @@ func errorS(skipFns int, msg string, args ...any) {
 }
 
 func errorES(skipFns int, err error, msg string, args ...any) {
-	a := make([]interface{}, 0, 2+len(args)) //nolint: mnd
+	a := make([]any, 0, 2+len(args)) //nolint: mnd
 	a = append(a, args...)
 	a = append(a, "error", err)
 	errorS(skipFns+1, msg, a...)
