@@ -2,13 +2,16 @@ package nix
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
 // FlakeInstallable returns the attribute path `<flakePath>#<attrPath>`.
 func FlakeInstallable(flakePath string, attrPath string) string {
-	if flakePath == "" {
-		flakePath = "."
+	if !path.IsAbs(flakePath) && !strings.HasPrefix(flakePath, ".") {
+		// We need always a `./...#` because `test/bla#package` does not work.
+		// NOTE: path.Join cleans the result.
+		flakePath = "./" + flakePath
 	}
 
 	return fmt.Sprintf("%s#%s", flakePath, attrPath)
