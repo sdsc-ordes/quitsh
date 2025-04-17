@@ -8,6 +8,7 @@ import (
 	comp "github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
+	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 
@@ -22,7 +23,7 @@ type queryOptions struct {
 // Find finds all components in directory `root` and loads them.
 // Some directories are by default ignored.
 //
-//nolint:gocognit
+//nolint:gocognit,funlen
 func Find(
 	rootDir string,
 	filter func(compName string, root string) (matches bool, err error),
@@ -72,8 +73,20 @@ func Find(
 
 	visitedComps := map[string]string{}
 
+	gitx := git.NewCtx(rootDir)
 	for _, componentFile := range files {
 		root := path.Dir(componentFile)
+
+		ignored, e := gitx.IsIgnored(componentFile)
+		if e != nil {
+			log.WarnE(e, "could not check if file '%s' is ignored.")
+		}
+
+		if ignored {
+			log.Warn("Component ignored by Git.", "root", root)
+
+			continue
+		}
 
 		c, e := config.LoadFromFile[comp.Config](componentFile)
 		if e != nil {
@@ -86,9 +99,9 @@ func Find(
 		log.Debug("Loaded component.", "component", c.Name, "root", root)
 
 		if p, exists := visitedComps[c.Name]; exists {
-			return nil, nil, errors.AddContext(err,
-				"component with name '%v' "+
-					"already exists at path '%v'", c.Name, p,
+			return nil, nil, errors.New(
+				"component with name '%v' at path '%v'"+
+					"already exists at path '%v'", c.Name, root, p,
 			)
 		}
 
