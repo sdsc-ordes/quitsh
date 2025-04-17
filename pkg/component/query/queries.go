@@ -99,9 +99,9 @@ func Find(
 		log.Debug("Loaded component.", "component", c.Name, "root", root)
 
 		if p, exists := visitedComps[c.Name]; exists {
-			return nil, nil, errors.AddContext(err,
-				"component with name '%v' "+
-					"already exists at path '%v'", c.Name, p,
+			return nil, nil, errors.New(
+				"component with name '%v' at path '%v'"+
+					"already exists at path '%v'", c.Name, root, p,
 			)
 		}
 
