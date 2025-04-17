@@ -23,7 +23,7 @@ type queryOptions struct {
 // Find finds all components in directory `root` and loads them.
 // Some directories are by default ignored.
 //
-//nolint:gocognit
+//nolint:gocognit,funlen
 func Find(
 	rootDir string,
 	filter func(compName string, root string) (matches bool, err error),
