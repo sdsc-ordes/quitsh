@@ -39,9 +39,7 @@ func generateCoverageReport(log log.ILog, comp *component.Component) error {
 	covFile := comp.OutCoverageDataDir("coverage.txt")
 	log.Info("Generating coverage file.", "path", "file://"+covHTML)
 
-	goctx := gox.NewCtxBuilder().
-		Cwd(comp.Root()).
-		Build()
+	goctx := gox.NewCtxBuilder().Cwd(comp.Root()).Build()
 
 	err := goctx.Chain().
 		Check("tool", "covdata", "textfmt", "-i", covDataDir, "-o", covFile).
@@ -64,7 +62,10 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	config := comp.Config()
 	log.Info("Starting Go test for component.", "component", config.Name)
 
-	goctx := gox.NewCtxBuilder().Cwd(comp.Root()).Build()
+	goctx := gox.NewCtxBuilder().Cwd(comp.Root()).
+		Env("GOWORK=off",
+			"GOTOOLCHAIN=local").
+		Build()
 
 	covDataDir := comp.OutCoverageDataDir()
 	fs.AssertDirs(comp.OutBuildBinDir(), covDataDir)
