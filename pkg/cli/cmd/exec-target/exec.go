@@ -54,7 +54,7 @@ func runExec(cli cli.ICLI, args *execTargetArgs) error {
 		selection.Insert(target.ID(args.TargetIDs[i]))
 	}
 
-	_, prios, err := dag.DefineExecutionOrder(all, &selection, nil, rootDir)
+	targets, prios, err := dag.DefineExecutionOrder(all, &selection, nil, rootDir)
 	if err != nil {
 		return err
 	}
@@ -64,11 +64,20 @@ func runExec(cli cli.ICLI, args *execTargetArgs) error {
 		dispatcher = cli.ToolchainDispatcher()
 	}
 
-	return dag.ExecuteDAG(
-		prios,
-		cli.RunnerFactory(),
-		dispatcher,
-		cli.Config(),
-		rootDir,
-	)
+	if cli.RootArgs().Parallel {
+		return dag.ExecuteDAGParallel(
+			targets,
+			cli.RunnerFactory(),
+			dispatcher,
+			cli.Config(),
+			rootDir)
+	} else {
+		return dag.ExecuteDAG(
+			prios,
+			cli.RunnerFactory(),
+			dispatcher,
+			cli.Config(),
+			rootDir,
+		)
+	}
 }
