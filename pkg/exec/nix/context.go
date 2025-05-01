@@ -97,6 +97,7 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 	return b.
 		Cwd(rootDir).
 		BaseArgs(
+			"--show-trace",
 			"--override-input",
 			"devenv-root",
 			"path:"+rootDir+"/.devenv/state/pwd",
