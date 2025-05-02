@@ -22,7 +22,7 @@ func Register(
 				return NewGoLintRunner(runnerConfig, lintSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalLintConfig,
-			DefaultToolchain:      "go-lint",
+			DefaultToolchain:      "lint-go",
 		})
 
 	err = errors.Combine(err, e)
