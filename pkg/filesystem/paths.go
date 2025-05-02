@@ -14,9 +14,10 @@ const (
 	OutputDir = ".output"
 
 	// Relative paths to `OutputDir`.
-	OutBuildDir     = "build"
-	OutBuildBinDir  = "build/bin"
-	OutBuildDocsDir = "build/docs"
+	OutBuildDir      = "build"
+	OutBuildBinDir   = "build/bin"
+	OutBuildShareDir = "build/share"
+	OutBuildDocsDir  = "build/docs"
 
 	OutPackageDir = "package"
 

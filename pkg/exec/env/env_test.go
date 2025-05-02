@@ -81,3 +81,10 @@ func TestEnvMapDefined(t *testing.T) {
 	assert.Error(t, res.AssertDefined())
 	assert.Error(t, res.AssertNotEmpty())
 }
+
+func TestEnvListFilter(t *testing.T) {
+	env := EnvList{"a=", "b=ggg", "c==ttt  "}
+	res := env.Remove("a", "c")
+	assert.Len(t, res, 1)
+	assert.Equal(t, "b=ggg", res[0])
+}

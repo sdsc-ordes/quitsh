@@ -2,8 +2,10 @@ package env
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
+	"deedles.dev/xiter"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
@@ -133,4 +135,17 @@ func (l EnvList) Find(key string) string {
 	val := l.FindIdx(key)
 
 	return val.Value
+}
+
+// Filter filters the env. list by the env variables with key `key`.
+func (l EnvList) Remove(key ...string) EnvList {
+	return slices.Collect(xiter.Filter(slices.Values(l), func(e string) bool {
+		for i := range key {
+			if strings.HasPrefix(e, key[i]+"=") {
+				return false
+			}
+		}
+
+		return true
+	}))
 }

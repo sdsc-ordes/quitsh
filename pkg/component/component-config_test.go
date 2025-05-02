@@ -21,16 +21,16 @@ language: go
 targets:
   build:
     steps:
-      - runner: go
+      - runner: build-go
   lint:
     steps:
-      - runner: go-lint
+      - runner: lint-go
   deploy:
     steps:
       - runnerID: asdf
   test:
     steps:
-      - runner: go
+      - runner: build-go
 `
 	d := t.TempDir()
 	rfile := path.Join(d, "test.yaml")
@@ -45,10 +45,10 @@ targets:
 
 	require.NoError(t, e)
 	assert.Equal(t, "comp1", c.Name)
-	assert.Equal(t, "go", c.Targets["build"].Steps[0].Runner)
-	assert.Equal(t, "go-lint", c.Targets["lint"].Steps[0].Runner)
+	assert.Equal(t, "build-go", c.Targets["build"].Steps[0].Runner)
+	assert.Equal(t, "lint-go", c.Targets["lint"].Steps[0].Runner)
 	assert.Equal(t, "", c.Targets["deploy"].Steps[0].Runner)
-	assert.Equal(t, "go", c.Targets["test"].Steps[0].Runner)
+	assert.Equal(t, "build-go", c.Targets["test"].Steps[0].Runner)
 
 	wfile := path.Join(d, "test2.yaml")
 	require.NoError(t, e)

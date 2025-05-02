@@ -12,4 +12,4 @@
     lib
     namespace
     ;
-}).go
+}).build-go

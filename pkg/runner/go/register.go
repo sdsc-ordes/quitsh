@@ -23,7 +23,7 @@ func RegisterBuild(
 				return NewGoBuildRunner(runnerConfig, buildSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalBuildConfig,
-			DefaultToolchain:      "go",
+			DefaultToolchain:      "build-go",
 		})
 	err = errors.Combine(err, e)
 
@@ -49,7 +49,7 @@ func RegisterTest(
 				return NewGoTestRunner(runnerConfig, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalBuildConfig,
-			DefaultToolchain:      "go",
+			DefaultToolchain:      "build-go",
 		})
 	err = errors.Combine(err, e)
 
@@ -66,7 +66,7 @@ func RegisterTest(
 				return NewGoTestBinRunner(runnerConfig, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalTestBinConfig,
-			DefaultToolchain:      "go",
+			DefaultToolchain:      "build-go",
 		})
 	err = errors.Combine(err, e)
 	e = factory.RegisterToKey(runner.NewRegisterKey("test", "go-bin"), GoTestBinRunnerID)
