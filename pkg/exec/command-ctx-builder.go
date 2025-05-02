@@ -104,6 +104,23 @@ func (c CmdContextBuilder) Env(env ...string) CmdContextBuilder {
 	return c
 }
 
+func (c CmdContextBuilder) EnvRemove(key ...string) CmdContextBuilder {
+	if c.withPathSet {
+		log.Panic("you cannot set envs after 'WithPaths'")
+	}
+
+	// NOTE:
+	// If we remove here something and the default is set (.env == nil -> means use
+	// os.Environ()) -> we need to add it back!
+	if key != nil && c.cmdCtx.env == nil {
+		c.cmdCtx.env = os.Environ()
+	}
+
+	c.cmdCtx.env = c.cmdCtx.env.Remove(key...)
+
+	return c
+}
+
 // EnvEmpty uses a completely empty environment.
 func (c CmdContextBuilder) EnvEmpty() CmdContextBuilder {
 	c.cmdCtx.env = []string{}

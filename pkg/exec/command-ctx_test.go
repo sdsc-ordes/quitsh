@@ -177,11 +177,21 @@ func TestCommandCtxPipeStdErr(t *testing.T) {
 }
 
 func TestCommandCtxEnv(t *testing.T) {
-	ctx := NewCmdCtxBuilder().Env("A=banana", "B=monkey").Build()
+	ctx := NewCmdCtxBuilder().Env("A=banana", "B=monkey", "C=monkey").Build()
 	out, err := ctx.Get("env")
 	require.NoError(t, err)
 	assert.Contains(t, out, "A=banana")
 	assert.Contains(t, out, "B=monkey")
+	assert.Contains(t, out, "C=monkey")
+	// We need the default environment, it must be set.
+	assert.Contains(t, out, "PATH")
+
+	ctx = NewCmdCtxBuilder().Env("A=banana", "B=monkey", "C=monkey").EnvRemove("A", "B").Build()
+	out, err = ctx.Get("env")
+	require.NoError(t, err)
+	assert.NotContains(t, out, "A=banana")
+	assert.NotContains(t, out, "B=banana")
+	assert.Contains(t, out, "C=monkey")
 	// We need the default environment, it must be set.
 	assert.Contains(t, out, "PATH")
 }

@@ -28,6 +28,11 @@ func (c *Component) OutBuildBinDir(p ...string) string {
 	return c.RelOutPath(fs.OutBuildBinDir, p...)
 }
 
+// OutBuildShareDir returns the directory of the components build share directory.
+func (c *Component) OutBuildShareDir(p ...string) string {
+	return c.RelOutPath(fs.OutBuildShareDir, p...)
+}
+
 // OutBuildDocsDir returns the directory of the components build docs directory.
 func (c *Component) OutBuildDocsDir(p ...string) string {
 	return c.RelOutPath(fs.OutBuildDocsDir, p...)
