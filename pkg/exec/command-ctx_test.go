@@ -194,6 +194,12 @@ func TestCommandCtxEnv(t *testing.T) {
 	assert.Contains(t, out, "C=monkey")
 	// We need the default environment, it must be set.
 	assert.Contains(t, out, "PATH")
+
+	// Remove from empty env.
+	ctx = NewCmdCtxBuilder().EnvRemove("PATH").Build()
+	out, err = ctx.Get("env")
+	require.NoError(t, err)
+	assert.NotRegexp(t, "^PATH=", out)
 }
 
 func TestCommandCtxEnvPure(t *testing.T) {
