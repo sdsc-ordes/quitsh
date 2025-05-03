@@ -6,7 +6,13 @@ import (
 	"strings"
 )
 
+// The toolchain env. variable as a comma separated
+// list of toolchain names in the current shell.
 const QuitshToolchainEnvVar = "QUITSH_TOOLCHAINS"
+
+// Enable `--no-pure-eval` on Nix DevShells, to forexample pass
+// env. values which are evaluated in Nix.
+const QuitshNonPureEvalEnvVar = "QUITSH_NIX_NO_PURE_EVAL"
 
 // InBuild returns `true` if we are inside a Nix build.
 func InBuild() bool {
