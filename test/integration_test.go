@@ -118,7 +118,30 @@ func TestCLIExecTarget2(t *testing.T) {
 
 	assert.Contains(t, stderr, "Hello from integration test Go runner")
 	assert.Contains(t, stderr, "🌻")
+	assert.NotContains(t, stderr, "Nix set argument: '")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLIExecTarget2Arg(t *testing.T) {
+	cli := setup(t).Env(
+		"QUITSH_NIX_NO_PURE_EVAL=true",
+		"MYARG=banana").Build()
+
+	_, stderr, err := captureOutput(func() error {
+		return cli.Check(
+			"exec-target",
+			"--log-level",
+			"debug",
+			"component-a::build-banana",
+		)
+	})
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+	assert.Contains(t, stderr, "Nix set argument: 'banana'")
 }
 
 func TestCLIProcessCompose(t *testing.T) {
