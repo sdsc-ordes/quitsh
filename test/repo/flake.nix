@@ -33,8 +33,16 @@
       # pkgs and apply overlays to it.
       loadNixpgs =
         system:
+        let
+          # Testing setting an argument.
+          sys =
+            let
+              a = builtins.getEnv "MYARG";
+            in
+            if a != "" then builtins.warn "Nix set argument: '${a}'" system else system;
+        in
         import inputs.nixpkgs {
-          inherit system;
+          system = sys;
           overlays = [ ];
         };
 

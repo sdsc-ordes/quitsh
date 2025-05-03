@@ -94,7 +94,7 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 	// See: https://github.com/cachix/devenv/issues/1461
 	// NOTE: This will also work if no input matches the override which is important
 	//       for users not using this.
-	return b.
+	b = b.
 		Cwd(rootDir).
 		BaseArgs(
 			"--show-trace",
@@ -102,6 +102,12 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 			"devenv-root",
 			"path:"+rootDir+"/.devenv/state/pwd",
 			"--accept-flake-config")
+
+	if os.Getenv(QuitshNonPureEvalEnvVar) == "true" {
+		b.BaseArgs("--no-pure-eval")
+	}
+
+	return b
 }
 
 // NewDevShellCtxBuilderI, see `NewDevShellCtxBuilder`.
