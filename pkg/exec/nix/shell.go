@@ -8,11 +8,11 @@ import (
 
 // The toolchain env. variable as a comma separated
 // list of toolchain names in the current shell.
-const QuitshToolchainEnvVar = "QUITSH_TOOLCHAINS"
+const EnvVarQuitshToolchain = "QUITSH_TOOLCHAINS"
 
 // Enable `--no-pure-eval` on Nix DevShells, to forexample pass
 // env. values which are evaluated in Nix.
-const QuitshNonPureEvalEnvVar = "QUITSH_NIX_NO_PURE_EVAL"
+const EnvVarQuitshNixNoPureEval = "QUITSH_NIX_NO_PURE_EVAL"
 
 // InBuild returns `true` if we are inside a Nix build.
 func InBuild() bool {
@@ -47,7 +47,7 @@ func HaveToolchain(toolchain string) bool {
 	}
 
 	if InBuild() || InShell() {
-		tcs := os.Getenv(QuitshToolchainEnvVar)
+		tcs := os.Getenv(EnvVarQuitshToolchain)
 		toolchains := strings.Split(tcs, ",")
 
 		return slices.Contains(toolchains, toolchain)

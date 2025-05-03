@@ -103,7 +103,7 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 			"path:"+rootDir+"/.devenv/state/pwd",
 			"--accept-flake-config")
 
-	if os.Getenv(QuitshNonPureEvalEnvVar) == "true" {
+	if os.Getenv(EnvVarQuitshNixNoPureEval) == "true" {
 		b.BaseArgs("--no-pure-eval")
 	}
 
