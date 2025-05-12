@@ -25,7 +25,6 @@ func NewImageRef(
 	registryType registry.Type,
 	isRelease bool,
 ) (ImageRef, error) {
-
 	if registryType == registry.RegistryTempTilt {
 		ref := os.Getenv("EXPECTED_REF")
 		if ref == "" {

@@ -28,7 +28,7 @@ func TestImageRef(t *testing.T) {
 		isRel bool
 	}
 
-	os.Setenv("EXPECTED_REF", "tilt-chosen:tag")
+	t.Setenv("EXPECTED_REF", "tilt-chosen:tag")
 	defer os.Unsetenv("EXPECTED_REF")
 
 	tests := []D{
@@ -41,7 +41,7 @@ func TestImageRef(t *testing.T) {
 	}
 
 	for _, te := range tests {
-		ref, e := NewImageRef(gitx, te.b, te.p, v, te.r, te.isRel)
+		ref, e := NewImageRef(gitx, te.b, te.p, v, te.r, te.isRel) //nolint:govet //intentional
 		require.NoError(t, e)
 
 		if te.r == registry.RegistryTempTilt {
