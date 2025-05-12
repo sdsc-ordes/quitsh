@@ -104,9 +104,13 @@ let
             # pkgs.quitsh.cli
           ];
 
+          env = {
+            GOTOOLCHAIN = "local";
+          };
+
           quitsh.toolchain = [ "ci" ];
         }
-      ];
+      ] ++ build-go;
     in
     {
       inherit

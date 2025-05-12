@@ -75,7 +75,7 @@ func listComponents(cl cli.ICLI, c *listArgs) error {
 	}
 
 	if c.outputFile != "" || c.format != "" {
-		err := outputJSON(comps, c.outputFile, c.format)
+		err := outputJSON(comps, c.outputFile, c.format) //nolint:govet //intentional
 
 		if err != nil {
 			return errors.AddContext(err, "Could not marshal output to JSON.")

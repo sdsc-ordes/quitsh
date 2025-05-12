@@ -128,7 +128,7 @@ func TestCommandCtxPipeStdout(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, "", output)
+	assert.Empty(t, output)
 
 	// Test that there is output.
 	output, _, err = captureOutput(func() error {
