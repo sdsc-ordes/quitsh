@@ -28,7 +28,7 @@ func NewRegistryType(s string) (Type, error) {
 		return RegistryTempTilt, nil
 	}
 
-	return 0, fmt.Errorf("wrong build type '%s'", s)
+	return 0, fmt.Errorf("wrong registry type '%s'", s)
 }
 
 // Implement the pflags Value interface.
