@@ -63,6 +63,7 @@ func setupGitRepoWithServer(t *testing.T) (repoCtx Context, serverCtx Context) {
 }
 
 func TestGetChanges(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 	d := gitx.Cwd()
 
@@ -127,6 +128,7 @@ func TestGetChanges(t *testing.T) {
 }
 
 func TestIsIgnored(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 	d := gitx.Cwd()
 
@@ -157,6 +159,7 @@ func TestIsIgnored(t *testing.T) {
 }
 
 func TestGetTags(t *testing.T) {
+	t.Parallel()
 	repoCtx, _ := setupGitRepoWithServer(t)
 
 	e := repoCtx.Chain().
@@ -185,6 +188,7 @@ func TestGetTags(t *testing.T) {
 }
 
 func TestGetChangesRevs(t *testing.T) {
+	t.Parallel()
 	repoCtx := setupGitRepo(t)
 	d := repoCtx.Cwd()
 
@@ -204,6 +208,7 @@ func TestGetChangesRevs(t *testing.T) {
 }
 
 func TestCommitIsAMerge(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 
 	e := gitx.Chain().
@@ -229,6 +234,7 @@ func TestCommitIsAMerge(t *testing.T) {
 }
 
 func TestCommitContainsTag(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 	res, e := gitx.CommitIsAMerge("HEAD")
 	require.NoError(t, e)
@@ -253,6 +259,7 @@ func TestCommitContainsTag(t *testing.T) {
 }
 
 func TestIsRefAHeadOf(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 
 	ahead, count, err := gitx.IsRefAheadOf("HEAD~1", "HEAD")
@@ -272,6 +279,7 @@ func TestIsRefAHeadOf(t *testing.T) {
 }
 
 func TestIsRefReachable(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 
 	reachable, err := gitx.IsRefReachable("HEAD", "HEAD~1")
@@ -284,6 +292,7 @@ func TestIsRefReachable(t *testing.T) {
 }
 
 func TestFetchUntil(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 
 	lastCommit, err := gitx.CurrentRev()
@@ -321,6 +330,7 @@ func TestFetchUntil(t *testing.T) {
 }
 
 func TestLocalRefExists(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 
 	shaExpect, e := gitx.CurrentRev()
@@ -331,6 +341,7 @@ func TestLocalRefExists(t *testing.T) {
 }
 
 func TestCurrentRef(t *testing.T) {
+	t.Parallel()
 	gitx := setupGitRepo(t)
 	ref, e := gitx.CurrentRef()
 	require.NoError(t, e)

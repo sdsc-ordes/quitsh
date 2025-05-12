@@ -8,6 +8,8 @@ import (
 
 // CopySlice copies a slice.
 func TestCopySlice(t *testing.T) {
+	t.Parallel()
+
 	c := []string{"a", "b"}
 	r := CopySlice(c)
 	c[1] = "c"

@@ -9,6 +9,7 @@ import (
 )
 
 func TestBuildTypeUnmarshal(t *testing.T) {
+	t.Parallel()
 	type A struct {
 		BuildType BuildType
 	}

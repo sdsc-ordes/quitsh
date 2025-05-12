@@ -82,6 +82,7 @@ func findNames(t *testing.T, comps []*component.Component, names []string) {
 }
 
 func TestComponentFindInside(t *testing.T) {
+	t.Parallel()
 	err := log.Setup("debug")
 	require.NoError(t, err)
 	_, dirs, names := setupFiles(t)
@@ -105,6 +106,7 @@ func TestComponentFindInside(t *testing.T) {
 }
 
 func TestComponentFindByPattern(t *testing.T) {
+	t.Parallel()
 	err := log.Setup("debug")
 	require.NoError(t, err)
 	dir, _, names := setupFiles(t)

@@ -7,6 +7,7 @@ import (
 )
 
 func TestRelativeDir(t *testing.T) {
+	t.Parallel()
 	type Test struct {
 		Path     string
 		Expected string

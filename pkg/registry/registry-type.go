@@ -4,58 +4,66 @@ import (
 	"fmt"
 )
 
-type RegistryType int
+type Type int
 
 const (
 	// If you change this here -> adjust the `New*` functions.
-	RegistryTemp        RegistryType = 0
-	RegistryRelease     RegistryType = 1
-	RegistryTempName                 = "temporary"
-	RegistryReleaseName              = "release"
+	RegistryTemp     Type = 0
+	RegistryRelease  Type = 1
+	RegistryTempTilt Type = 2
+
+	RegistryTempName    = "temporary"
+	RegistryReleaseName = "release"
+
+	RegistryTiltName = "tilt"
 )
 
-func NewRegistryType(s string) (RegistryType, error) {
+func NewRegistryType(s string) (Type, error) {
 	switch s {
 	case RegistryReleaseName:
 		return RegistryRelease, nil
 	case RegistryTempName:
 		return RegistryTemp, nil
+	case RegistryTiltName:
+		return RegistryTempTilt, nil
 	}
 
-	return 0, fmt.Errorf("wrong build type '%s'", s)
+	return 0, fmt.Errorf("wrong registry type '%s'", s)
 }
 
 // Implement the pflags Value interface.
-func (v RegistryType) String() string {
+func (v Type) String() string {
 	switch v {
 	case RegistryRelease:
 		return RegistryReleaseName
 	case RegistryTemp:
 		return RegistryTempName
+	case RegistryTempTilt:
+		return RegistryTiltName
 	}
 
 	panic("Not implemented.")
 }
 
 // Implement the pflags Value interface.
-func (v *RegistryType) Set(s string) (err error) {
+func (v *Type) Set(s string) (err error) {
 	*v, err = NewRegistryType(s)
 
 	return
 }
 
 // GetAllRegistryTypes returns all registry types.
-func GetAllRegistryTypes() []RegistryType {
-	return []RegistryType{RegistryTemp, RegistryRelease}
+func GetAllRegistryTypes() []Type {
+	return []Type{RegistryTemp, RegistryRelease, RegistryTempTilt}
 }
 
 // Implement the pflags Value interface.
-func (v *RegistryType) Type() string {
+func (v *Type) Type() string {
 	return "string"
 }
 
 // UnmarshalYAML unmarshals from YAML.
-func (v *RegistryType) UnmarshalYAML(unmarshal func(any) error) (err error) {
+func (v *Type) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	var s string
 	err = unmarshal(&s)
 	if err != nil {
@@ -69,6 +77,6 @@ func (v *RegistryType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 
 // MarshalYAML marshals to YAML.
 // Note: needs to be value-receiver to be called!
-func (v RegistryType) MarshalYAML() (any, error) {
+func (v Type) MarshalYAML() (any, error) {
 	return v.String(), nil
 }

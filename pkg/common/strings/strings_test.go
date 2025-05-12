@@ -7,6 +7,7 @@ import (
 )
 
 func TestSplitLines(t *testing.T) {
+	t.Parallel()
 	s := `a
 b
 c`
@@ -19,6 +20,7 @@ c`
 }
 
 func TestIndent(t *testing.T) {
+	t.Parallel()
 	s := `a
 b
 c`
@@ -31,6 +33,7 @@ c`
 }
 
 func TestSplitAndTrim(t *testing.T) {
+	t.Parallel()
 	s := "a,b,  c, ban nana,d"
 	ls := SplitAndTrim(s, ",")
 	assert.Equal(t, []string{"a", "b", "c", "ban nana", "d"}, ls)

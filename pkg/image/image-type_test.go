@@ -9,6 +9,8 @@ import (
 )
 
 func TestImageTypeUnmarshal(t *testing.T) {
+	t.Parallel()
+
 	type A struct {
 		ImgType ImageType
 	}

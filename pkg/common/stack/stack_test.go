@@ -7,6 +7,7 @@ import (
 )
 
 func TestStack(t *testing.T) {
+	t.Parallel()
 	stack := Stack[string]{}
 
 	stack.Push("a")
@@ -31,6 +32,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestStackFrontPop(t *testing.T) {
+	t.Parallel()
 	stack := NewStackWithCap[string](10)
 
 	stack.Push("a")
@@ -55,6 +57,7 @@ func TestStackFrontPop(t *testing.T) {
 }
 
 func TestStackTraverse(t *testing.T) {
+	t.Parallel()
 	stack := NewStackWithCap[string](10)
 	stack.Push("a", "b", "c")
 
@@ -79,6 +82,7 @@ func TestStackTraverse(t *testing.T) {
 }
 
 func TestStackTraverseUpward(t *testing.T) {
+	t.Parallel()
 	stack := NewStackWithCap[string](10)
 	stack.Push("a", "b", "c")
 
