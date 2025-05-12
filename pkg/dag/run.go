@@ -153,20 +153,20 @@ func ExecuteRunner(
 	stepIdx step.Index,
 	runnerIdx int,
 	runner runner.IRunner,
-	toolchain string,
+	toolchainName string,
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
 ) error {
 	// When the toolchain is 'none', none is needed.
 	skipDispatch := toolchainDispatcher == nil
-	haveToolchain := nix.HaveToolchain(toolchain)
+	haveToolchain := nix.HaveToolchain(toolchainName)
 	noDispatch := skipDispatch || haveToolchain
 
 	log.Info("Start runner.", "step", stepIdx, "runner", runner.ID())
 	log.Info(
 		"Toolchain status.",
-		"Name", toolchain,
+		"Name", toolchainName,
 		"SkipDispatch",
 		skipDispatch,
 		"HaveToolchain",
@@ -178,7 +178,7 @@ func ExecuteRunner(
 			log.Panic(
 				"Something is wrong: \n"+
 					"We dispatch over the toolchain but the toolchain is not detected.",
-				"toolchain", toolchain,
+				"toolchain", toolchainName,
 			)
 		}
 	}
@@ -194,7 +194,7 @@ func ExecuteRunner(
 			gitx:      git.NewCtx(rootDir),
 			comp:      comp,
 			targetID:  targetID,
-			toolchain: toolchain,
+			toolchain: toolchainName,
 			stepIdx:   stepIdx,
 		}
 		err = runner.Run(&ctx)
@@ -208,16 +208,17 @@ func ExecuteRunner(
 		if toolchainDispatcher == nil {
 			log.Panic("Something is wrong: \n"+
 				"We dispatch over the toolchain but no dispatcher is given.",
-				"toolchain", toolchain)
+				"toolchain", toolchainName)
 		}
 
-		err := toolchainDispatcher.Run(rootDir,
-			comp.Root(),
-			targetID,
-			stepIdx,
-			runnerIdx,
-			runner.ID(),
-			toolchain,
+		dArgs := toolchain.DispatchArgs{
+			ComponentDir: comp.Root(),
+			TargetID:     targetID,
+			StepIndex:    stepIdx,
+			RunnerIndex:  runnerIdx,
+			RunnerID:     runner.ID(),
+			Toolchain:    toolchainName}
+		err := toolchainDispatcher.Run(rootDir, &dArgs,
 			config)
 
 		if err != nil {
