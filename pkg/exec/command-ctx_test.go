@@ -83,6 +83,8 @@ func TestCommandCtxExitCode(t *testing.T) {
 	require.ErrorContains(t, err, "new error here")
 }
 
+// Overwrites stdout, stderr.
+// WARNING: You cannot run the tests in parallel!
 func captureOutput(f func() error) (string, string, error) {
 	origStdout := os.Stdout
 	origStderr := os.Stderr
@@ -94,7 +96,13 @@ func captureOutput(f func() error) (string, string, error) {
 
 	os.Stdout = wStdout
 	os.Stderr = wStderr
+	defer func() {
+		os.Stdout = origStdout
+		os.Stderr = origStderr
+	}()
+
 	err := f()
+
 	os.Stdout = origStdout
 	os.Stderr = origStderr
 	wStdout.Close()

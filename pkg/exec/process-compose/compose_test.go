@@ -13,6 +13,7 @@ import (
 )
 
 func TestProcessComposeDevenv(t *testing.T) {
+	t.Parallel()
 	d := t.TempDir()
 	err := fs.CopyFileOrDir("./test/flake.nix", path.Join(d, "flake.nix"), true)
 	require.NoError(t, err)

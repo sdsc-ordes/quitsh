@@ -15,6 +15,8 @@ type TestData struct {
 }
 
 func TestImageName(t *testing.T) {
+	t.Parallel()
+
 	tests := []TestData{
 		{Name: "bla.com/a/b/c/d", Tag: "1.2.3", Valid: true},
 		{

@@ -9,6 +9,7 @@ import (
 )
 
 func TestEnvTypeUnmarshal(t *testing.T) {
+	t.Parallel()
 	type A struct {
 		Env EnvironmentType
 	}

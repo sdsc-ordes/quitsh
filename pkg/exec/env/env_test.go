@@ -8,6 +8,7 @@ import (
 )
 
 func TestEnvListFind(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=fff", "b=ggg"}
 	val := env.FindIdx("a")
 	assert.Equal(t, "fff", val.Value)
@@ -31,6 +32,7 @@ func TestEnvListFind(t *testing.T) {
 }
 
 func TestEnvListFindAll(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=  fff", "b=ggg", "c=ttt  ", "dummy"}
 	m := env.FindAll("a", "c", "dummy")
 	assert.Len(t, m, 3)
@@ -46,6 +48,7 @@ func TestEnvListFindAll(t *testing.T) {
 }
 
 func TestEnvMap(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=  fff", "b=ggg", "c=ttt  ", "dummy"}
 	m := NewEnvMapFromList(env)
 	assert.Len(t, m, 4)
@@ -57,6 +60,7 @@ func TestEnvMap(t *testing.T) {
 }
 
 func TestEnvMapDup(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=  fff", "b=ggg", "c=ttt  ", "a=dummy"}
 	m := NewEnvMapFromList(env)
 	assert.Len(t, m, 3)
@@ -68,6 +72,7 @@ func TestEnvMapDup(t *testing.T) {
 
 //nolint:testifylint // intentional.
 func TestEnvMapDefined(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=", "b=ggg", "c=ttt  "}
 	res := env.FindAll("b", "c")
 	assert.NoError(t, res.AssertDefined())
@@ -83,6 +88,7 @@ func TestEnvMapDefined(t *testing.T) {
 }
 
 func TestEnvListFilter(t *testing.T) {
+	t.Parallel()
 	env := EnvList{"a=", "b=ggg", "c==ttt  "}
 	res := env.Remove("a", "c")
 	assert.Len(t, res, 1)

@@ -9,6 +9,7 @@ import (
 )
 
 func TestPipelineTypeUnmarshal(t *testing.T) {
+	t.Parallel()
 	type A struct {
 		PT PipelineType `yaml:"pt"`
 	}
@@ -27,6 +28,7 @@ func TestPipelineTypeUnmarshal(t *testing.T) {
 }
 
 func TestPipelineTypeUnmarshal2(t *testing.T) {
+	t.Parallel()
 	type A struct {
 		PT PipelineType `yaml:"pt"`
 	}

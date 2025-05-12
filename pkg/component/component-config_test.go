@@ -14,6 +14,7 @@ import (
 )
 
 func TestComponentsConfig(t *testing.T) {
+	t.Parallel()
 	expected := `
 name: comp1
 version: "1.0.0"
@@ -57,6 +58,7 @@ targets:
 }
 
 func TestComponentsConfigFail(t *testing.T) {
+	t.Parallel()
 	file := `
 name: comp1
 version: "1.a"
@@ -73,6 +75,7 @@ targets:
 }
 
 func TestComponentsConfigFail2(t *testing.T) {
+	t.Parallel()
 	file := `
 name: ""
 version: "1.0.0-rc1+build.1234"
@@ -89,6 +92,7 @@ targets:
 }
 
 func TestComponentsConfigRunnerConfig(t *testing.T) {
+	t.Parallel()
 	file := `
 name: test
 version: "1.0.0"

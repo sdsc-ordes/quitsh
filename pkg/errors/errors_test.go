@@ -10,6 +10,7 @@ import (
 )
 
 func TestErrorCombinedHandling(t *testing.T) {
+	t.Parallel()
 	err := errors.New("This is an error.")
 	e := Combine(os.ErrNotExist, err)
 

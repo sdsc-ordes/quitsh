@@ -198,6 +198,7 @@ func validate(t *testing.T, comps ...*component.Component) {
 }
 
 func TestGraphExecOrderSimpleFull(t *testing.T) {
+	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
@@ -252,6 +253,7 @@ func testGenerateCompsFull(
 }
 
 func TestGraphExecOrderSimpleSelection(t *testing.T) {
+	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
@@ -272,6 +274,7 @@ func TestGraphExecOrderSimpleSelection(t *testing.T) {
 }
 
 func TestGraphExecOrderSimpleSelf(t *testing.T) {
+	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
@@ -294,6 +297,7 @@ func TestGraphExecOrderSimpleSelf(t *testing.T) {
 }
 
 func TestGraphExecOrderSimpleCycle1(t *testing.T) {
+	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
@@ -308,6 +312,7 @@ func TestGraphExecOrderSimpleCycle1(t *testing.T) {
 }
 
 func TestGraphExecOrderSimpleCycle2(t *testing.T) {
+	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
@@ -320,6 +325,7 @@ func TestGraphExecOrderSimpleCycle2(t *testing.T) {
 }
 
 func TestGraphExecOrderSimpleCycle3(t *testing.T) {
+	t.Parallel()
 	// Create a simple graph with 2 components an and a cycle.
 	// 1::image -> 2::lint -> 2::test -> 1::image
 	//          -> 2::build
@@ -367,6 +373,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 }
 
 func TestGraphExecOrderSimpleNoConnection(t *testing.T) {
+	t.Parallel()
 	comps, paths := generateTwoCompsWithNoConnection(t)
 
 	rootDir := "/repo"

@@ -1,8 +1,10 @@
 package image
 
 import (
+	"os"
 	"path"
 
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	"github.com/sdsc-ordes/quitsh/pkg/registry"
 
@@ -14,14 +16,28 @@ import (
 // In the form:
 // - `<base-name>-<registry-type>/<packageName>:<version>` for release image names.
 // - `<base-name>-<registry-type>/<packageName>:<version>-<git-hash>` for non-release image names.
+// - If the `registryType` is `RegistryTempTilt` it will be taken from `EXPECTED_REF` env. variable.
 func NewImageRef(
 	gitx git.Context,
 	baseName string,
 	packageName string,
 	version *version.Version,
-	registryType registry.RegistryType,
+	registryType registry.Type,
 	isRelease bool,
 ) (ImageRef, error) {
+
+	if registryType == registry.RegistryTempTilt {
+		ref := os.Getenv("EXPECTED_REF")
+		if ref == "" {
+			return nil, errors.New(
+				"could not get expected image ref from " +
+					"'tilt' env. variable 'EXPECTED_REF', is it defined?",
+			)
+		}
+
+		return NewRefFromString(ref)
+	}
+
 	tag := version.String()
 
 	if !isRelease {

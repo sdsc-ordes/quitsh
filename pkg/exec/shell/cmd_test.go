@@ -7,6 +7,7 @@ import (
 )
 
 func TestCmdString(t *testing.T) {
+	t.Parallel()
 	type D struct {
 		expect string
 		input  []string
@@ -27,6 +28,7 @@ func TestCmdString(t *testing.T) {
 }
 
 func TestCmdStringF(t *testing.T) {
+	t.Parallel()
 	type D struct {
 		expect string
 		input  []string

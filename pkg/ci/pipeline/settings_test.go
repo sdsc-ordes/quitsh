@@ -45,6 +45,7 @@ type All struct {
 func (*All) Init() error { return nil }
 
 func TestPipelineSettings(t *testing.T) {
+	t.Parallel()
 	// Marshal
 	all := All{
 		General: PipelineSettings{Type: TagPipeline},

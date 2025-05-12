@@ -30,6 +30,7 @@ func (s *Settings) Merge(other PipelineAttributes) {
 }
 
 func TestParseCISettings(t *testing.T) {
+	t.Parallel()
 	description := "```yaml {ci}\n" + `
 buildAll: true
 pushManifests: true
@@ -48,6 +49,7 @@ values: ["banana", "monkey"]` + "\n```"
 }
 
 func TestParseCISettingsMerge(t *testing.T) {
+	t.Parallel()
 	description1 := "```yaml {ci}\n" + `
 buildAll: true
 pushManifests: false
@@ -76,6 +78,7 @@ values: ["monkey"]` + "\n```"
 }
 
 func TestParseCISettingsError(t *testing.T) {
+	t.Parallel()
 	description := "```yaml {ci}\n" + `
 buildAll: true
 pushManifests: true
@@ -93,6 +96,7 @@ values: ["banana", "monkey"]`
 }
 
 func TestParseCISettingsError2(t *testing.T) {
+	t.Parallel()
 	description := "```yaml {ci}\n" + `
 buildAll: true
 pushMani` + "\n```\n" + `fests: true

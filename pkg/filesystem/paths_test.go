@@ -10,6 +10,7 @@ import (
 )
 
 func TestPathExists(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	assert.True(t, Exists(dir))
 	assert.False(t, Exists(path.Join(dir, "asdf")))
@@ -24,6 +25,7 @@ func TestPathExists(t *testing.T) {
 }
 
 func TestPathExistsLinks(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	dir2 := t.TempDir()
 
@@ -39,6 +41,7 @@ func TestPathExistsLinks(t *testing.T) {
 }
 
 func TestMakeAbs(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	d := path.Join(dir, "a/b/c")
 	err := os.MkdirAll(d, DefaultPermissionsDir)

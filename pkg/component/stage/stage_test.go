@@ -7,6 +7,7 @@ import (
 )
 
 func TestStagePriority(t *testing.T) {
+	t.Parallel()
 	stages := NewDefaults()
 
 	assert.True(t, stages[0].IsBefore(stages[1]))

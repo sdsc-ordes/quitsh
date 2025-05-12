@@ -8,6 +8,7 @@ import (
 )
 
 func TestUnorderedSetDefault(t *testing.T) {
+	t.Parallel()
 	s := Unordered[int]{}
 	assert.Nil(t, s.set)
 	assert.False(t, s.Exists(10))
@@ -26,6 +27,7 @@ func TestUnorderedSetDefault(t *testing.T) {
 }
 
 func TestUnorderedSetNew(t *testing.T) {
+	t.Parallel()
 	s := NewUnorderedWithCap[int](10)
 	assert.False(t, s.Exists(10))
 	assert.Empty(t, s.set)
@@ -40,6 +42,7 @@ func TestUnorderedSetNew(t *testing.T) {
 }
 
 func TestUnorderedSetInsert(t *testing.T) {
+	t.Parallel()
 	s := NewUnordered(1, 2, 3, 4)
 	assert.True(t, s.Exists(1))
 	assert.True(t, s.Exists(2))
@@ -64,6 +67,7 @@ func TestUnorderedSetInsert(t *testing.T) {
 }
 
 func TestIteration(t *testing.T) {
+	t.Parallel()
 	expect := NewUnordered(1, 4, 9, 16)
 	s := NewUnordered(1, 2, 3, 4)
 
