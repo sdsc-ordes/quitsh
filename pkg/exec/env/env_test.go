@@ -20,7 +20,7 @@ func TestEnvListFind(t *testing.T) {
 	assert.True(t, val.Defined())
 
 	val = env.FindIdx("c")
-	assert.Equal(t, "", val.Value)
+	assert.Empty(t, val.Value)
 	assert.Equal(t, -1, val.Idx())
 	assert.False(t, val.Defined())
 

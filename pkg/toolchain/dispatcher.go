@@ -14,12 +14,7 @@ import (
 type IDispatcher interface {
 	Run(
 		repoDir string,
-		componentDir string,
-		targetID target.ID,
-		stepIndex step.Index,
-		runnerIndex int,
-		runnerID runner.RegisterID,
-		toolchain string,
+		dispatchArgs *DispatchArgs,
 		config config.IConfig,
 	) error
 }

@@ -1,15 +1,24 @@
 package listcmd
 
 import (
+	"io"
+	"os"
+	"text/template"
+
+	"github.com/Masterminds/sprig"
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
+	"github.com/sdsc-ordes/quitsh/pkg/component"
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 
 	"github.com/spf13/cobra"
 )
 
 type listArgs struct {
-	compArgs general.ComponentArgs
+	compArgs   general.ComponentArgs
+	outputFile string
+	format     string
 }
 
 const longDesc = `
@@ -35,6 +44,14 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 		StringArrayVarP(&args.compArgs.ComponentPatterns,
 			"components", "c", []string{"*"}, "Components matched by these patterns are listed.")
 
+	listCmd.Flags().
+		StringVar(&args.outputFile,
+			"output", "", "Output the found components in JSON format to this file (default `stdout`.).")
+
+	listCmd.Flags().
+		StringVar(&args.format,
+			"format", "", "Format string to use for output.")
+
 	parent.AddCommand(listCmd)
 }
 
@@ -57,5 +74,62 @@ func listComponents(cl cli.ICLI, c *listArgs) error {
 		)
 	}
 
+	if c.outputFile != "" || c.format != "" {
+		err := outputJSON(comps, c.outputFile, c.format) //nolint:govet //intentional
+
+		if err != nil {
+			return errors.AddContext(err, "Could not marshal output to JSON.")
+		}
+	}
+
 	return nil
+}
+
+func outputJSON(comps []*component.Component, outputFile, format string) error {
+	var w io.WriteCloser
+
+	if outputFile == "-" || outputFile == "" {
+		w = os.Stdout
+	} else {
+		writer, err := os.Create(outputFile)
+		if err != nil {
+			return err
+		}
+		defer writer.Close()
+	}
+
+	if format == "" {
+		format = "{{ . | toJson }}"
+	}
+
+	type D struct {
+		Root     string
+		OutDir   string
+		Name     string
+		Language string
+	}
+
+	if format == "" {
+		format = "{{ . }}"
+	}
+
+	tmpl, err := template.New("output").Funcs(sprig.FuncMap()).Parse(format)
+	if err != nil {
+		return errors.AddContext(err, "failed to parse template")
+	}
+
+	var configs []D
+	for i := range comps {
+		c := comps[i]
+		configs = append(
+			configs,
+			D{Root: c.Root(), OutDir: c.OutDir(), Name: c.Name(), Language: c.Language()},
+		)
+	}
+
+	if err = tmpl.Execute(w, configs); err != nil {
+		return errors.AddContext(err, "failed to execute template")
+	}
+
+	return err
 }

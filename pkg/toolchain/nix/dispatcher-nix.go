@@ -5,12 +5,9 @@ import (
 	"path"
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
-	"github.com/sdsc-ordes/quitsh/pkg/component/step"
-	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/nix"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
-	"github.com/sdsc-ordes/quitsh/pkg/runner"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 
 	"github.com/goccy/go-yaml"
@@ -63,24 +60,19 @@ func storeConfig(config config.IConfig) (file string, cleanup func(), err error)
 
 func (d *NixDispatcher) Run(
 	rootDir string,
-	componentDir string,
-	targetID target.ID,
-	stepIndex step.Index,
-	runnerIndex int,
-	runnerID runner.RegisterID,
-	toolchain string,
+	dArgs *toolchain.DispatchArgs,
 	config config.IConfig,
 ) error {
 	configCopy := config.Clone()
 
 	// Sett all values.
 	args := d.argsSelector(configCopy)
-	args.ComponentDir = componentDir
-	args.TargetID = targetID
-	args.StepIndex = stepIndex
-	args.RunnerIndex = runnerIndex
-	args.RunnerID = runnerID
-	args.Toolchain = toolchain
+	args.ComponentDir = dArgs.ComponentDir
+	args.TargetID = dArgs.TargetID
+	args.StepIndex = dArgs.StepIndex
+	args.RunnerIndex = dArgs.RunnerIndex
+	args.RunnerID = dArgs.RunnerID
+	args.Toolchain = dArgs.Toolchain
 
 	file, cleanup, err := storeConfig(configCopy)
 	if err != nil {
@@ -89,11 +81,11 @@ func (d *NixDispatcher) Run(
 	defer cleanup()
 
 	flakePath := path.Join(rootDir, d.flakeDirRel)
-	nixToolchainRef := nix.ToolchainInstallable(flakePath, toolchain)
+	nixToolchainRef := nix.ToolchainInstallable(flakePath, dArgs.Toolchain)
 	log.Info("Dispatching to toolchain.", "toolchain", nixToolchainRef)
 
 	// Call the tool again, but over Nix.
-	nixctx := NewCtxBuilder(rootDir, flakePath, toolchain).Build()
+	nixctx := NewCtxBuilder(rootDir, flakePath, dArgs.Toolchain).Build()
 	nixCmd := append([]string{os.Args[0]}, d.command...)
 	nixCmd = append(nixCmd, "--config", file)
 
