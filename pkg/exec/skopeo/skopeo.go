@@ -1,22 +1,40 @@
 package skopeo
 
 import (
+	"fmt"
+
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-type Context struct {
-	*exec.CmdContext
-}
+type (
+	Context struct {
+		*exec.CmdContext
+	}
+
+	Option = func(c exec.CmdContextBuilder)
+)
 
 // NewCtx returns a new `skopeo` command context.
-func NewCtx() Context {
-	return Context{
-		exec.NewCmdCtxBuilder().
-			BaseCmd("skopeo").
-			CredentialFilter(nil).Build()}
+func NewCtx(opts ...Option) Context {
+	b := exec.NewCmdCtxBuilder().
+		BaseCmd("skopeo").
+		CredentialFilter(nil)
+
+	for _, o := range opts {
+		o(b)
+	}
+
+	return Context{b.Build()}
+}
+
+// WithEnableTLS enables TLS (https) on skopeo.
+func WithEnableTLS(enable bool) Option {
+	return func(c exec.CmdContextBuilder) {
+		c.BaseArgs(fmt.Sprintf("--tls-verify=%v", enable))
+	}
 }
 
 // Login logs into the registry.
