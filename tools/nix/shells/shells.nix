@@ -43,16 +43,28 @@ let
   toolchains =
     let
       build-go = [
-        {
-          packages = [
-            pkgs.quitsh.bootstrap
-            pkgsPinned.go
-            # For tests.
-            pkgs.process-compose
-          ];
+        (
+          { config, ... }:
+          {
+            packages = [
+              pkgs.quitsh.bootstrap
+              pkgsPinned.go
 
-          quitsh.toolchain = [ "build-go" ];
-        }
+              # For tests.
+              pkgs.process-compose
+              pkgs.skopeo
+            ];
+
+            env = {
+              # Important to set these variables.
+              GOROOT = pkgsPinned.go + "/share/go";
+              GOPATH = config.env.DEVENV_STATE + "/go";
+              GOTOOLCHAIN = "local";
+            };
+
+            quitsh.toolchain = [ "build-go" ];
+          }
+        )
       ];
 
       lint-go = [

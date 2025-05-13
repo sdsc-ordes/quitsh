@@ -34,6 +34,17 @@ func TestCommandCtxNormal(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestCommandCtxStdErr(t *testing.T) {
+	ctx := NewCommandCtx(".")
+
+	stdout, stderr, err :=
+		ctx.GetStdErr("sh", "-c", "echo 'Banana  ' && echo '  Monkey' >&2")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Banana", stdout)
+	assert.Equal(t, "Monkey", stderr)
+}
+
 func TestCommandCtxBuilderAddArgs(t *testing.T) {
 	ctx := NewCmdCtxBuilder().BaseCmd("ls").
 		BaseArgs("-a").
@@ -185,7 +196,9 @@ func TestCommandCtxPipeStdErr(t *testing.T) {
 }
 
 func TestCommandCtxEnv(t *testing.T) {
-	ctx := NewCmdCtxBuilder().Env("A=banana", "B=monkey", "C=monkey").Build()
+	envs := []string{"A=banana", "B=monkey", "C=monkey"}
+	ctx := NewCmdCtxBuilder().Env(envs...).Build()
+
 	out, err := ctx.Get("env")
 	require.NoError(t, err)
 	assert.Contains(t, out, "A=banana")
@@ -211,7 +224,10 @@ func TestCommandCtxEnv(t *testing.T) {
 }
 
 func TestCommandCtxEnvPure(t *testing.T) {
-	ctx := NewCmdCtxBuilder().EnvEmpty().Env("A=banana", "B=monkey").Build()
+	envs := []string{"A=banana", "B=monkey"}
+	ctx := NewCmdCtxBuilder().EnvEmpty().Env(envs...).Build()
+	assert.Equal(t, envs, ctx.Env())
+
 	out, err := ctx.Get("env")
 	require.NoError(t, err)
 	assert.Contains(t, out, "A=banana")
@@ -286,4 +302,19 @@ func TestCommandGetSplit(t *testing.T) {
 	assert.Len(t, out, 2)
 	assert.Equal(t, "aa", out[0])
 	assert.Equal(t, "b", out[1])
+}
+
+func TestCloneBuilder(t *testing.T) {
+	ctx := NewCmdCtxBuilder().BaseCmd("cmd1").BaseArgs("a", "b")
+	ctx2 := ctx.Clone().BaseCmd("cmd2").BaseArgs("c")
+
+	assert.Equal(t, "cmd1", ctx.cmdCtx.baseCmd)
+	assert.Equal(t, []string{"a", "b"}, ctx.cmdCtx.baseArgs)
+
+	assert.Equal(t, "cmd2", ctx2.cmdCtx.baseCmd)
+	assert.Equal(t, []string{"a", "b", "c"}, ctx2.cmdCtx.baseArgs)
+
+	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
+	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
+	assert.NotSame(t, &ctx.cmdCtx.baseArgs, &ctx2.cmdCtx.baseArgs)
 }

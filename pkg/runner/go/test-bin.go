@@ -96,12 +96,12 @@ func testBinary(
 	modInfo gox.GoModInfo,
 	runnerConf *RunnerConfigTestBin,
 ) error {
+	envs := []string{"GOWORK=off",
+		"QUITSH_BIN_DIR=" + comp.OutCoverageBinDir(),
+		"QUITSH_COVERAGE_DIR=" + comp.OutCoverageDataDir()}
 	goctx := gox.NewCtxBuilder().
 		Cwd(comp.Root()).
-		Env(
-			"GOWORK=off",
-			"QUITSH_BIN_DIR="+comp.OutCoverageBinDir(),
-			"QUITSH_COVERAGE_DIR="+comp.OutCoverageDataDir()).
+		Env(envs...).
 		Build()
 
 	flags := GetBuildFlags(
@@ -117,7 +117,7 @@ func testBinary(
 		true,
 	)
 
-	log.Info("Run Go test for testing binary.")
+	log.Info("Run Go test for testing binary.", "env", envs)
 	cmd := append([]string{"test"}, flags...)
 	cmd = append(cmd, setts.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), runnerConf.TestPkg, "..."))

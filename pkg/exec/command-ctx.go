@@ -36,7 +36,7 @@ type CmdContext struct {
 	// Enables printing the environment in errors.
 	enableEnvPrint bool
 
-	// Dont pipe stdout/stderr.
+	// Enables piping stdout/stderr.
 	pipeOutput bool
 
 	// Disable printing the commands.
@@ -71,6 +71,11 @@ func (c *CmdContext) BaseArgs() []string {
 	return common.CopySlice(c.baseArgs)
 }
 
+// Env returns the environment values.
+func (c *CmdContext) Env() []string {
+	return common.CopySlice(c.env)
+}
+
 // GetSplit executes a command and splits the output by newlines.
 func (c *CmdContext) GetSplit(args ...string) ([]string, error) {
 	return c.GetSplitWithEC(c.exitCodeHandler, args...)
@@ -100,21 +105,68 @@ func (c *CmdContext) GetWithEC(handleExit ExitCodeHandler, args ...string) (stri
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
-	buf := setupCapture(c, cmd)
+	buf := setupCapture(c, cmd, false)
 
 	if c.logCommand {
 		logCommand(c, cmd)
 	}
 	stdout, err := cmd.Output()
-	err = handleExitCode(c, cmd, err, buf, c.enableEnvPrint || EnableEnvPrint, handleExit)
+	err = handleExitCode(
+		c, cmd, err, buf,
+		c.enableEnvPrint || EnableEnvPrint, handleExit,
+	)
 
 	return strings.TrimSpace(string(stdout)), err
+}
+
+// GetStdErrWithEC executes a command and gets the stdout & stderr (white-space trimmed).
+// and custom handles the exit code.
+// Returns `CmdError` on error.
+func (c *CmdContext) GetStdErrWithEC(
+	handleExit ExitCodeHandler,
+	args ...string,
+) (string, string, error) {
+	baseCmd, args, err := c.getCommand(args)
+	if err != nil {
+		return "", "", err
+	}
+
+	cmd := exec.Command(baseCmd, args...)
+	cmd.Dir = c.cwd
+	cmd.Env = c.env
+
+	// Force capturing the stderr.
+	buf := setupCapture(c, cmd, true)
+
+	if c.logCommand {
+		logCommand(c, cmd)
+	}
+	stdout, err := cmd.Output()
+
+	b := buf
+	if !c.captureError {
+		// Set `buf` to `nil` to disable
+		// setting the stderr again on the error.
+		b = nil
+	}
+	err = handleExitCode(
+		c, cmd, err, b,
+		c.enableEnvPrint || EnableEnvPrint, handleExit,
+	)
+
+	return strings.TrimSpace(string(stdout)), strings.TrimSpace(buf.String()), err
 }
 
 // Get executes a command and gets the stdout (white-space trimmed).
 // Returns `CmdError` on error.
 func (c *CmdContext) Get(args ...string) (string, error) {
 	return c.GetWithEC(c.exitCodeHandler, args...)
+}
+
+// Get executes a command and gets the stdout & stderr (white-space trimmed).
+// Returns `CmdError` on error.
+func (c *CmdContext) GetStdErr(args ...string) (string, string, error) {
+	return c.GetStdErrWithEC(c.exitCodeHandler, args...)
 }
 
 // GetCombinedWithEC executes a command and gets the stdout and stderr (white-space trimmed).
@@ -134,7 +186,10 @@ func (c *CmdContext) GetCombinedWithEC(handleExit ExitCodeHandler, args ...strin
 		logCommand(c, cmd)
 	}
 	stdout, err := cmd.CombinedOutput()
-	err = handleExitCode(c, cmd, err, nil, c.enableEnvPrint || EnableEnvPrint, handleExit)
+	err = handleExitCode(
+		c, cmd, err, nil,
+		c.enableEnvPrint || EnableEnvPrint, handleExit,
+	)
 
 	return strings.TrimSpace(string(stdout)), err
 }
@@ -162,7 +217,7 @@ func (c *CmdContext) CheckWithEC(handleExit ExitCodeHandler, args ...string) err
 		cmd.Stdout = os.Stdout
 	}
 
-	buf := setupCapture(c, cmd)
+	buf := setupCapture(c, cmd, false)
 
 	if c.logCommand {
 		logCommand(c, cmd)
@@ -256,8 +311,8 @@ func (c *CmdContext) getCommand(args []string) (baseCmd string, argsOut []string
 	return
 }
 
-func setupCapture(c *CmdContext, cmd *exec.Cmd) (buf *bytes.Buffer) {
-	if c.captureError {
+func setupCapture(c *CmdContext, cmd *exec.Cmd, forceCapture bool) (buf *bytes.Buffer) {
+	if c.captureError || forceCapture {
 		buf = bytes.NewBuffer(nil)
 		if c.pipeOutput {
 			cmd.Stderr = io.MultiWriter(os.Stderr, buf)
