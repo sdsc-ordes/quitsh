@@ -301,5 +301,4 @@ func TestCloneBuilder(t *testing.T) {
 	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
 	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
 	assert.NotSame(t, &ctx.cmdCtx.baseArgs, &ctx2.cmdCtx.baseArgs)
-
 }

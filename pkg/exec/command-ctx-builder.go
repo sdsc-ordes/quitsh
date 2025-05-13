@@ -28,6 +28,7 @@ func NewCmdCtxBuilder() CmdContextBuilder {
 // Clone clones the builder.
 func (c CmdContextBuilder) Clone() CmdContextBuilder {
 	cmd := *c.cmdCtx
+
 	return CmdContextBuilder{&cmd, c.withPathSet}
 }
 
