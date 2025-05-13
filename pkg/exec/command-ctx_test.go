@@ -34,6 +34,17 @@ func TestCommandCtxNormal(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestCommandCtxStdErr(t *testing.T) {
+	ctx := NewCommandCtx(".")
+
+	stdout, stderr, err :=
+		ctx.GetStdErr("sh", "-c", "echo 'Banana  ' && echo '  Monkey' >&2")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Banana", stdout)
+	assert.Equal(t, "Monkey", stderr)
+}
+
 func TestCommandCtxBuilderAddArgs(t *testing.T) {
 	ctx := NewCmdCtxBuilder().BaseCmd("ls").
 		BaseArgs("-a").

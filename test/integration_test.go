@@ -4,10 +4,8 @@ package test
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
-	"strings"
 	"testing"
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
@@ -17,30 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// captureOutput redirects output of stderr/stdout.
-func captureOutput(f func() error) (string, string, error) {
-	origStdout := os.Stdout
-	origStderr := os.Stderr
-
-	rStdout, wStdout, _ := os.Pipe()
-	rStderr, wStderr, _ := os.Pipe()
-	defer wStdout.Close()
-	defer wStderr.Close()
-
-	os.Stdout = wStdout
-	os.Stderr = wStderr
-	err := f()
-	os.Stdout = origStdout
-	os.Stderr = origStderr
-	wStdout.Close()
-	wStderr.Close()
-
-	out, _ := io.ReadAll(rStdout)
-	outErr, _ := io.ReadAll(rStderr)
-
-	return strings.TrimSpace(string(out)), strings.TrimSpace(string(outErr)), err
-}
 
 func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
 	binDir := os.Getenv("QUITSH_BIN_DIR")
@@ -62,10 +36,7 @@ func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
 
 func TestCLIVersion(t *testing.T) {
 	cli := setup(t).Build()
-	stdout, _, err := captureOutput(func() error {
-		return cli.Check("--version")
-
-	})
+	stdout, err := cli.Get("--version")
 
 	require.NoError(t, err)
 	assert.Contains(t, stdout, fmt.Sprintf("version %v", build.GetBuildVersion()))
@@ -74,26 +45,21 @@ func TestCLIVersion(t *testing.T) {
 func TestCLIList(t *testing.T) {
 	cli := setup(t).Build()
 
-	_, stderr, err := captureOutput(func() error {
-		return cli.Check("list", "-C", "../test") // test going back and forward again into test.
-
-	})
+	stdout, err := cli.Get("list", "-C", "../test", "--output", "-")
 
 	require.NoError(t, err)
-	assert.Contains(t, stderr, "component-a")
+	assert.Contains(t, stdout, "component-a")
 }
 
 func TestCLIExecTarget(t *testing.T) {
 	cli := setup(t).Build()
 
-	_, stderr, err := captureOutput(func() error {
-		return cli.Check(
-			"exec-target",
-			"--log-level",
-			"debug",
-			"component-a::build",
-		)
-	})
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build",
+	)
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
@@ -105,14 +71,12 @@ func TestCLIExecTarget(t *testing.T) {
 func TestCLIExecTarget2(t *testing.T) {
 	cli := setup(t).Build()
 
-	_, stderr, err := captureOutput(func() error {
-		return cli.Check(
-			"exec-target",
-			"--log-level",
-			"debug",
-			"component-a::build-banana",
-		)
-	})
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build-banana",
+	)
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
@@ -127,14 +91,12 @@ func TestCLIExecTarget2Arg(t *testing.T) {
 		"QUITSH_NIX_NO_PURE_EVAL=true",
 		"MYARG=banana").Build()
 
-	_, stderr, err := captureOutput(func() error {
-		return cli.Check(
-			"exec-target",
-			"--log-level",
-			"debug",
-			"component-a::build-banana",
-		)
-	})
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build-banana",
+	)
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
@@ -151,18 +113,16 @@ func TestCLIProcessCompose(t *testing.T) {
 	cwd := path.Join(rootDir, "pkg/exec/process-compose/test")
 	cli := setup(t).Cwd(cwd).BaseArgs("--root-dir", cwd).Build()
 
-	_, stderr, err := captureOutput(func() error {
-		return cli.Check(
-			"--root-dir", ".",
-			"--log-level",
-			"debug",
-			"process-compose",
-			"start",
-			"--flake-dir", ".",
-			"--wait-for", "httpbin",
-			"mynamespace.shells.test",
-		)
-	})
+	_, stderr, err := cli.GetStdErr(
+		"--root-dir", ".",
+		"--log-level",
+		"debug",
+		"process-compose",
+		"start",
+		"--flake-dir", ".",
+		"--wait-for", "httpbin",
+		"mynamespace.shells.test",
+	)
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
 	socketPath, err := os.ReadFile(path.Join(cwd, ".pc-socket-path"))
