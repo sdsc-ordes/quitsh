@@ -25,6 +25,12 @@ func NewCmdCtxBuilder() CmdContextBuilder {
 	return CmdContextBuilder{cmdCtx: &ctx}.NoQuiet().CredentialFilter(nil)
 }
 
+// Clone clones the builder.
+func (c CmdContextBuilder) Clone() CmdContextBuilder {
+	cmd := *c.cmdCtx
+	return CmdContextBuilder{&cmd, c.withPathSet}
+}
+
 // Build finalizes the context.
 func (c CmdContextBuilder) Build() *CmdContext {
 	return c.cmdCtx

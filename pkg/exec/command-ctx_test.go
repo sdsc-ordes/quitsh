@@ -287,3 +287,19 @@ func TestCommandGetSplit(t *testing.T) {
 	assert.Equal(t, "aa", out[0])
 	assert.Equal(t, "b", out[1])
 }
+
+func TestCloneBuilder(t *testing.T) {
+	ctx := NewCmdCtxBuilder().BaseCmd("cmd1").BaseArgs("a", "b")
+	ctx2 := ctx.Clone().BaseCmd("cmd2").BaseArgs("c")
+
+	assert.Equal(t, "cmd1", ctx.cmdCtx.baseCmd)
+	assert.Equal(t, []string{"a", "b"}, ctx.cmdCtx.baseArgs)
+
+	assert.Equal(t, "cmd2", ctx2.cmdCtx.baseCmd)
+	assert.Equal(t, []string{"a", "b", "c"}, ctx2.cmdCtx.baseArgs)
+
+	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
+	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
+	assert.NotSame(t, &ctx.cmdCtx.baseArgs, &ctx2.cmdCtx.baseArgs)
+
+}

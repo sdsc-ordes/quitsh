@@ -47,8 +47,10 @@ let
           packages = [
             pkgs.quitsh.bootstrap
             pkgsPinned.go
+
             # For tests.
             pkgs.process-compose
+            pkgs.skopeo
           ];
 
           quitsh.toolchain = [ "build-go" ];

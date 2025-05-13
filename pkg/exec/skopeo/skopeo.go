@@ -12,28 +12,35 @@ import (
 type (
 	Context struct {
 		*exec.CmdContext
+
+		builder contextBuilder
 	}
 
-	Option = func(c exec.CmdContextBuilder)
+	contextBuilder struct {
+		exec.CmdContextBuilder
+		useTLS bool
+	}
+
+	Option = func(c *contextBuilder)
 )
 
 // NewCtx returns a new `skopeo` command context.
 func NewCtx(opts ...Option) Context {
-	b := exec.NewCmdCtxBuilder().
+	b := contextBuilder{exec.NewCmdCtxBuilder().
 		BaseCmd("skopeo").
-		CredentialFilter(nil)
+		CredentialFilter(nil), true}
 
 	for _, o := range opts {
-		o(b)
+		o(&b)
 	}
 
-	return Context{b.Build()}
+	return Context{CmdContext: b.Build(), builder: b}
 }
 
 // WithEnableTLS enables TLS (https) on skopeo.
 func WithEnableTLS(enable bool) Option {
-	return func(c exec.CmdContextBuilder) {
-		c.BaseArgs(fmt.Sprintf("--tls-verify=%v", enable))
+	return func(c *contextBuilder) {
+		c.useTLS = enable
 	}
 }
 
@@ -62,4 +69,28 @@ func (s Context) Login(creds common.Credentials, domain string) (logout func() e
 	}
 
 	return
+}
+
+// InspectCtx returns an inspect ctx.
+func (s Context) InspectCtx() Context {
+	b := s.builder.Clone()
+
+	return Context{
+		CmdContext: addTLS(b.BaseArgs("inspect"), s.builder.useTLS).Build(),
+		builder:    s.builder,
+	}
+}
+
+// CopyCtx returns an copy ctx.
+func (s Context) CopyCtx() Context {
+	b := s.builder.Clone()
+
+	return Context{
+		CmdContext: addTLS(b.BaseArgs("copy"), s.builder.useTLS).Build(),
+		builder:    s.builder,
+	}
+}
+
+func addTLS(b exec.CmdContextBuilder, useTLS bool) exec.CmdContextBuilder {
+	return b.BaseArgs(fmt.Sprintf("--tls-verify=%v", useTLS))
 }
