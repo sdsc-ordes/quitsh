@@ -103,10 +103,10 @@ func outputJSON(comps []*component.Component, outputFile, format string) error {
 	}
 
 	type D struct {
-		Root     string
-		OutDir   string
-		Name     string
-		Language string
+		Root     string `json:"root"`
+		OutDir   string `json:"outDir"`
+		Name     string `json:"name"`
+		Language string `json:"language"`
 	}
 
 	if format == "" {
