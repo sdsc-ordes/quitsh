@@ -185,7 +185,9 @@ func TestCommandCtxPipeStdErr(t *testing.T) {
 }
 
 func TestCommandCtxEnv(t *testing.T) {
-	ctx := NewCmdCtxBuilder().Env("A=banana", "B=monkey", "C=monkey").Build()
+	envs := []string{"A=banana", "B=monkey", "C=monkey"}
+	ctx := NewCmdCtxBuilder().Env(envs...).Build()
+
 	out, err := ctx.Get("env")
 	require.NoError(t, err)
 	assert.Contains(t, out, "A=banana")
@@ -211,7 +213,10 @@ func TestCommandCtxEnv(t *testing.T) {
 }
 
 func TestCommandCtxEnvPure(t *testing.T) {
-	ctx := NewCmdCtxBuilder().EnvEmpty().Env("A=banana", "B=monkey").Build()
+	envs := []string{"A=banana", "B=monkey"}
+	ctx := NewCmdCtxBuilder().EnvEmpty().Env(envs...).Build()
+	assert.Equal(t, envs, ctx.Env())
+
 	out, err := ctx.Get("env")
 	require.NoError(t, err)
 	assert.Contains(t, out, "A=banana")

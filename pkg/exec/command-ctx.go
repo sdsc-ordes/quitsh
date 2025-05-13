@@ -71,6 +71,11 @@ func (c *CmdContext) BaseArgs() []string {
 	return common.CopySlice(c.baseArgs)
 }
 
+// Env returns the environment values.
+func (c *CmdContext) Env() []string {
+	return common.CopySlice(c.env)
+}
+
 // GetSplit executes a command and splits the output by newlines.
 func (c *CmdContext) GetSplit(args ...string) ([]string, error) {
 	return c.GetSplitWithEC(c.exitCodeHandler, args...)
