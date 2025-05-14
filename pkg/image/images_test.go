@@ -22,39 +22,94 @@ func TestImageRef(t *testing.T) {
 	require.NoError(t, e)
 
 	type D struct {
-		b     string
-		p     string
-		r     registry.Type
-		isRel bool
+		domain      string
+		path        string
+		pkg         string
+		regType     registry.Type
+		isRel       bool
+		expectedRef string
 	}
 
-	t.Setenv("EXPECTED_REF", "tilt-chosen:tag")
-	defer os.Unsetenv("EXPECTED_REF")
+	tiltReg := "localhost:4000"
+	t.Setenv("EXPECTED_REGISTRY", tiltReg)
+	defer func() { _ = os.Unsetenv("EXPECTED_REGISTRY") }()
 
 	tests := []D{
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryRelease, isRel: true},
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryRelease, isRel: false},
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryTemp, isRel: true},
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryTemp, isRel: false},
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryTempTilt, isRel: true},
-		{b: "a/b/c", p: "mypkg", r: registry.RegistryTempTilt, isRel: false},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryRelease,
+			isRel:   true,
+		},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryRelease,
+			isRel:   false,
+		},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryTemp,
+			isRel:   true,
+		},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryTemp,
+			isRel:   false,
+		},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryTiltRegistry,
+			isRel:   true,
+		},
+		{
+			domain:  "domain.com",
+			path:    "a/b/c-%s",
+			pkg:     "mypkg",
+			regType: registry.RegistryTiltRegistry,
+			isRel:   false,
+		},
 	}
 
 	for _, te := range tests {
-		ref, e := NewImageRef(gitx, te.b, te.p, v, te.r, te.isRel) //nolint:govet //intentional
-		require.NoError(t, e)
-
-		if te.r == registry.RegistryTempTilt {
-			assert.Equal(t, "tilt-chosen:tag", ref.String())
-
-			continue
-		}
-
 		tag := v.String()
 		if !te.isRel {
 			tag += "-" + commitSHA
 		}
+		if te.regType == registry.RegistryTiltRegistry {
+			te.domain = tiltReg
+		}
+		te.expectedRef = fmt.Sprintf(
+			"%s/%s/%s:%s",
+			te.domain,
+			fmt.Sprintf(te.path, te.regType.String()),
+			te.pkg,
+			tag,
+		)
 
-		assert.Equal(t, fmt.Sprintf("%s-%s/%s:%s", te.b, te.r.String(), te.p, tag), ref.String())
+		ref, e := NewImageRef( //nolint:govet //intentional
+			gitx,
+			te.domain,
+			te.path,
+			te.pkg,
+			v,
+			te.regType,
+			te.isRel,
+		)
+		require.NoError(t, e)
+
+		assert.Equal(
+			t,
+			te.expectedRef,
+			ref.String(),
+		)
 	}
 }

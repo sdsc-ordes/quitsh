@@ -8,9 +8,9 @@ type Type int
 
 const (
 	// If you change this here -> adjust the `New*` functions.
-	RegistryTemp     Type = 0
-	RegistryRelease  Type = 1
-	RegistryTempTilt Type = 2
+	RegistryTemp         Type = 0
+	RegistryRelease      Type = 1
+	RegistryTiltRegistry Type = 2
 
 	RegistryTempName    = "temporary"
 	RegistryReleaseName = "release"
@@ -25,7 +25,7 @@ func NewRegistryType(s string) (Type, error) {
 	case RegistryTempName:
 		return RegistryTemp, nil
 	case RegistryTiltName:
-		return RegistryTempTilt, nil
+		return RegistryTiltRegistry, nil
 	}
 
 	return 0, fmt.Errorf("wrong registry type '%s'", s)
@@ -38,7 +38,7 @@ func (v Type) String() string {
 		return RegistryReleaseName
 	case RegistryTemp:
 		return RegistryTempName
-	case RegistryTempTilt:
+	case RegistryTiltRegistry:
 		return RegistryTiltName
 	}
 
@@ -54,7 +54,7 @@ func (v *Type) Set(s string) (err error) {
 
 // GetAllRegistryTypes returns all registry types.
 func GetAllRegistryTypes() []Type {
-	return []Type{RegistryTemp, RegistryRelease, RegistryTempTilt}
+	return []Type{RegistryTemp, RegistryRelease, RegistryTiltRegistry}
 }
 
 // Implement the pflags Value interface.
