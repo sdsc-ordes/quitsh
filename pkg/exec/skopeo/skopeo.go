@@ -76,7 +76,7 @@ func (s Context) InspectCtx() Context {
 	b := s.builder.Clone()
 
 	return Context{
-		CmdContext: addTLS(b.BaseArgs("inspect"), s.builder.useTLS).Build(),
+		CmdContext: addTLS(b.BaseArgs("inspect"), s.builder.useTLS, false).Build(),
 		builder:    s.builder,
 	}
 }
@@ -86,11 +86,18 @@ func (s Context) CopyCtx() Context {
 	b := s.builder.Clone()
 
 	return Context{
-		CmdContext: addTLS(b.BaseArgs("copy"), s.builder.useTLS).Build(),
+		CmdContext: addTLS(b.BaseArgs("copy"), s.builder.useTLS, true).Build(),
 		builder:    s.builder,
 	}
 }
 
-func addTLS(b exec.CmdContextBuilder, useTLS bool) exec.CmdContextBuilder {
-	return b.BaseArgs(fmt.Sprintf("--tls-verify=%v", useTLS))
+func addTLS(b exec.CmdContextBuilder, useTLS bool, forCopy bool) exec.CmdContextBuilder {
+	if forCopy {
+		return b.BaseArgs(
+			fmt.Sprintf("--src-tls-verify=%v", useTLS),
+			fmt.Sprintf("--dest-tls-verify=%v", useTLS))
+	} else {
+		return b.BaseArgs(
+			fmt.Sprintf("--tls-verify=%v", useTLS))
+	}
 }
