@@ -30,7 +30,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List components",
+		Short: "List components.",
 		Long:  longDesc,
 		PreRunE: func(_cmd *cobra.Command, _args []string) error {
 			return nil
