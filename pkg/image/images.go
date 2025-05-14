@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -19,22 +20,25 @@ import (
 // - If the `registryType` is `RegistryTempTilt` it will be taken from `EXPECTED_REF` env. variable.
 func NewImageRef(
 	gitx git.Context,
-	baseName string,
+	domain string,
+	basePathFmt string,
 	packageName string,
 	version *version.Version,
 	registryType registry.Type,
 	isRelease bool,
 ) (ImageRef, error) {
-	if registryType == registry.RegistryTempTilt {
-		ref := os.Getenv("EXPECTED_REF")
-		if ref == "" {
+	if domain == "" || basePathFmt == "" {
+		return nil, errors.New("domain or base path for image ref must not be empty")
+	}
+
+	if registryType == registry.RegistryTiltRegistry {
+		domain = os.Getenv("EXPECTED_REGISTRY")
+		if domain == "" {
 			return nil, errors.New(
-				"could not get expected image ref from " +
-					"'tilt' env. variable 'EXPECTED_REF', is it defined?",
+				"could not get expected image registry from " +
+					"'tilt' env. variable 'EXPECTED_REGISTRY', is it defined?",
 			)
 		}
-
-		return NewRefFromString(ref)
 	}
 
 	tag := version.String()
@@ -49,5 +53,9 @@ func NewImageRef(
 
 	//NOTE: We cannot use baseName/registryType, as somehow only
 	//      one level of directory is allowed.
-	return NewRef(path.Join(baseName+"-"+registryType.String(), packageName), tag, "")
+	return NewRef(
+		path.Join(domain, fmt.Sprintf(basePathFmt, registryType.String()), packageName),
+		tag,
+		"",
+	)
 }
