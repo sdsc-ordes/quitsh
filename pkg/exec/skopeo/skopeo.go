@@ -92,5 +92,7 @@ func (s Context) CopyCtx() Context {
 }
 
 func addTLS(b exec.CmdContextBuilder, useTLS bool) exec.CmdContextBuilder {
-	return b.BaseArgs(fmt.Sprintf("--tls-verify=%v", useTLS))
+	return b.BaseArgs(
+		fmt.Sprintf("--src-tls-verify=%v", useTLS),
+		fmt.Sprintf("--dest-tls-verify=%v", useTLS))
 }
