@@ -45,6 +45,20 @@ func TestCommandCtxStdErr(t *testing.T) {
 	assert.Equal(t, "Monkey", stderr)
 }
 
+func TestCommandCtxStdIn(t *testing.T) {
+	ctx := NewCommandCtx(".")
+
+	r := strings.NewReader("monkey")
+	c := ctx.WithStdin(r)
+	stdout, err := c.Get("cat")
+	require.NoError(t, err)
+	assert.Equal(t, "monkey", stdout)
+
+	stdout, err = c.Get("cat")
+	require.NoError(t, err)
+	assert.Empty(t, stdout)
+}
+
 func TestCommandCtxBuilderAddArgs(t *testing.T) {
 	ctx := NewCmdCtxBuilder().BaseCmd("ls").
 		BaseArgs("-a").

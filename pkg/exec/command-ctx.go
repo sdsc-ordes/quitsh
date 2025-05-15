@@ -39,6 +39,9 @@ type CmdContext struct {
 	// Enables piping stdout/stderr.
 	pipeOutput bool
 
+	// Std input passed to the command.
+	stdin io.Reader
+
 	// Disable printing the commands.
 	logCommand bool
 	filterArgs ArgsFilter
@@ -74,6 +77,13 @@ func (c *CmdContext) BaseArgs() []string {
 // Env returns the environment values.
 func (c *CmdContext) Env() []string {
 	return common.CopySlice(c.env)
+}
+
+// StdinOnce sets a stdandard input reader to be used once.
+func (c CmdContext) WithStdin(r io.Reader) *CmdContext {
+	c.stdin = r
+
+	return &c
 }
 
 // GetSplit executes a command and splits the output by newlines.
@@ -312,6 +322,10 @@ func (c *CmdContext) getCommand(args []string) (baseCmd string, argsOut []string
 }
 
 func setupCapture(c *CmdContext, cmd *exec.Cmd, forceCapture bool) (buf *bytes.Buffer) {
+	if c.stdin != nil {
+		cmd.Stdin = c.stdin
+	}
+
 	if c.captureError || forceCapture {
 		buf = bytes.NewBuffer(nil)
 		if c.pipeOutput {
