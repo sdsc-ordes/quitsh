@@ -1,10 +1,9 @@
 package general
 
 import (
-	"errors"
-
 	"github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
@@ -52,6 +51,12 @@ func FindComponents(
 			if c.Root() == compDir {
 				comps = []*component.Component{c}
 			}
+		}
+
+		if len(comps) == 0 {
+			err = errors.New("could not find a component having root dir '%v'", compDir)
+
+			return
 		}
 
 	default:
