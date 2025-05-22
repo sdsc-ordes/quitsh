@@ -140,3 +140,23 @@ func TestComponentFindByPattern(t *testing.T) {
 	assert.Len(t, comps, 3, "should return 3 results")
 	findNames(t, comps, names[2:])
 }
+
+func TestComponentFindByPatternZero(t *testing.T) {
+	t.Parallel()
+
+	e := log.Setup("debug")
+	require.NoError(t, e)
+	dir, dirs, _ := setupFiles(t)
+	cG := component.NewComponentCreator("", nil)
+
+	for _, d := range dirs {
+		comps, _, err := FindByPatterns(dir,
+			[]string{"*"}, 1, cG, WithFilterAnd(ComponentDirFilter(d)))
+		require.NoError(t, err, "should find it")
+		assert.Len(t, comps, 1, "should return 1 results '%s'", d)
+	}
+
+	_, _, e = FindByPatterns(dir, []string{"*"}, 1, cG,
+		WithFilterAnd(ComponentDirFilter("non-existing")))
+	require.Error(t, e, "min. count '1' components not found in")
+}

@@ -3,6 +3,7 @@ package general
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
+	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -39,25 +40,17 @@ func FindComponents(
 			compCreator,
 		)
 	case args.ComponentDir != "":
-		_, all, err = query.FindByPatterns(
+		compDir := fs.MakeAbsolute(args.ComponentDir)
+
+		comps, all, err = query.FindByPatterns(
 			rootDir,
 			append([]string{"*"}, defaultCompPatterns...),
 			1,
 			compCreator,
+			query.WithFilterAnd(query.ComponentDirFilter(compDir)),
 		)
 
-		compDir := fs.MakeAbsolute(args.ComponentDir)
-		for _, c := range all {
-			if c.Root() == compDir {
-				comps = []*component.Component{c}
-			}
-		}
-
-		if len(comps) == 0 {
-			err = errors.New("could not find a component having root dir '%v'", compDir)
-
-			return
-		}
+		debug.Assert(len(comps) == 1, "should have length 1")
 
 	default:
 		return nil, nil, errors.New("you need to specify at least components patterns " +
