@@ -83,7 +83,7 @@ func Find(
 		}
 
 		if ignored {
-			log.Warn("Component ignored by Git.", "root", root)
+			log.Trace("Component ignored by Git.", "root", root)
 
 			continue
 		}
