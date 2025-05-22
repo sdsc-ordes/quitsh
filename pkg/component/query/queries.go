@@ -7,6 +7,7 @@ import (
 
 	comp "github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
@@ -18,6 +19,17 @@ import (
 type queryOptions struct {
 	dirFilter      fs.DirFilter
 	configFileName string
+
+	compFilter CompFilter
+}
+
+func newQueryOptions() queryOptions {
+	q := queryOptions{configFileName: comp.ConfigFilename}
+
+	err := WithPathFilterDefault()(&q)
+	debug.Assert(err == nil, "Should not happen!")
+
+	return q
 }
 
 // Find finds all components in directory `root` and loads them.
@@ -26,7 +38,6 @@ type queryOptions struct {
 //nolint:gocognit,funlen
 func Find(
 	rootDir string,
-	filter func(compName string, root string) (matches bool, err error),
 	creator comp.ComponentCreator,
 	opts ...Option,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
@@ -35,7 +46,7 @@ func Find(
 	}
 
 	// Apply options.
-	queryOpts := queryOptions{}
+	queryOpts := newQueryOptions()
 	for i := range opts {
 		err = opts[i](&queryOpts)
 
@@ -50,10 +61,6 @@ func Find(
 		if err != nil {
 			return nil, nil, err
 		}
-	}
-
-	if queryOpts.configFileName == "" {
-		queryOpts.configFileName = comp.ConfigFilename
 	}
 
 	rootDir = fs.MakeAbsolute(rootDir)
@@ -83,7 +90,7 @@ func Find(
 		}
 
 		if ignored {
-			log.Warn("Component ignored by Git.", "root", root)
+			log.Trace("Component ignored by Git.", "root", root)
 
 			continue
 		}
@@ -115,8 +122,9 @@ func Find(
 		all = append(all, comp)
 		visitedComps[c.Name] = root
 
-		if filter != nil {
-			matches, ef := filter(c.Name, root)
+		// Filter on custom stuff.
+		if queryOpts.compFilter != nil {
+			matches, ef := queryOpts.compFilter(c.Name, root)
 			if ef != nil {
 				err = errors.Combine(err, ef)
 
@@ -162,18 +170,19 @@ func splitIntoIncludeAndExcludes(patterns []string) (incls []string, excls []str
 	return
 }
 
-// Find finds components in `rootDir` with names matched by `patterns`.
+// FindByPatterns finds components in `rootDir` with names matched by `patterns`.
 func FindByPatterns(
 	rootDir string,
 	patterns []string,
 	minCount int,
 	creator comp.ComponentCreator,
+	opts ...Option,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
 	incls, excls := splitIntoIncludeAndExcludes(patterns)
 	log.Info("Find components by patterns.",
 		"includes", incls, "excludes", excls, "root", rootDir)
 
-	filter := func(name string, _ string) (matches bool, err error) {
+	filt := func(name string, _ string) (matches bool, err error) {
 		include := false
 		exclude := false
 		for _, pattern := range incls {
@@ -201,7 +210,9 @@ func FindByPatterns(
 		return include && !exclude, nil
 	}
 
-	comps, all, err = Find(rootDir, filter, creator)
+	opts = append([]Option{WithFilterAnd(filt)}, opts...)
+
+	comps, all, err = Find(rootDir, creator, opts...)
 	if err != nil {
 		log.ErrorE(err, "Could not find and load components.", "root", rootDir)
 	} else if len(comps) < minCount {
@@ -229,17 +240,13 @@ func FindInside(
 	}
 
 	// Apply options.
-	queryOpts := queryOptions{}
+	queryOpts := newQueryOptions()
 	for i := range opts {
 		err := opts[i](&queryOpts)
 
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if queryOpts.configFileName == "" {
-		queryOpts.configFileName = comp.ConfigFilename
 	}
 
 	d := fs.MakeAbsolute(dir)

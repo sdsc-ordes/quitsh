@@ -109,9 +109,7 @@ func New(
 				log.Debug("Parsed user config.", "path", rootArgs.ConfigUser)
 			}
 
-			if parsedConfig || parsedConfigUser {
-				log.Debug("Parsed config.", "config", config)
-			}
+			log.Debug("Parsed config.", "config", config)
 
 			return nil
 		},

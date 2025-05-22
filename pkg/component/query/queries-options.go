@@ -8,6 +8,8 @@ import (
 
 type Option func(opts *queryOptions) error
 
+type CompFilter func(_compName, _root string) (_matches bool, _err error)
+
 // WithPathFilter set a custom path filter.
 func WithPathFilter(filter fs.DirFilter) Option {
 	return func(o *queryOptions) error {
@@ -24,6 +26,40 @@ func WithPathFilterDefault() Option {
 			d := path.Base(dir)
 
 			return d != ".git" && d != ".direnv"
+		}
+
+		return nil
+	}
+}
+
+// ComponentDirFilter returns a simple filter which only returns
+// the component with root directory `compDir`.
+func ComponentDirFilter(compDir string) CompFilter {
+	return func(_compName, root string) (matches bool, err error) {
+		if fs.MakeAbsolute(compDir) == root {
+			return true, nil
+		}
+
+		return
+	}
+}
+
+// WithFilterAnd sets another component filter `f` in an `g && f` combination.
+func WithFilterAnd(f CompFilter) Option {
+	return func(o *queryOptions) error {
+		if o.compFilter == nil {
+			o.compFilter = f
+		} else {
+			// Do a mixing.
+			old := o.compFilter
+			o.compFilter = func(compName, root string) (matches bool, err error) {
+				matches, err = old(compName, root)
+				if !matches || err != nil {
+					return
+				}
+
+				return f(compName, root)
+			}
 		}
 
 		return nil
