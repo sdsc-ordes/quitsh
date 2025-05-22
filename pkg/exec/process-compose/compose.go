@@ -103,6 +103,9 @@ func (pc *ProcessComposeCtx) Socket() string {
 
 // Stop stops the process compose.
 func (pc *ProcessComposeCtx) Stop() error {
+	// Just forcefully delete the socket path.
+	defer os.Remove(pc.Socket())
+
 	return pc.Check("down")
 }
 
