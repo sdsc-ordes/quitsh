@@ -75,9 +75,13 @@ func StartFromInstallable(
 	// Attach if the socket path does not exist
 	// (the script already does it)
 	cmd := []string{procfileScript}
-	if !fs.Exists(socketPath) {
-		cmd = append(cmd, "-D")
+	if fs.Exists(socketPath) {
+		log.Warnf("Socket '%s' is already existing. "+
+			"Assume process-compose is started.", socketPath)
+
+		return
 	}
+
 	err = b.Build().Check(cmd...)
 	if err != nil {
 		return pc, errors.AddContext(err, "Could not start procfileScript '%s'.", procfileScript)
