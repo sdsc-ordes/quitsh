@@ -121,8 +121,8 @@ func StartServices(
 	}
 
 	if attach {
-		err := pcCtx.Check("attach")
-		if err != nil {
+		e := pcCtx.Check("attach")
+		if e != nil {
 			log.ErrorE(err, "Error occurred in attach.")
 		}
 	}

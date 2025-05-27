@@ -4,7 +4,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -13,20 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const longDesc = `Start a process-compose definition from a 'devenv.sh' Nix shell
+const longDesc = `Stop a process-compose definition from a 'devenv.sh' Nix shell
 specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installable
 (e.g. './tools/nix#mynamespace.shells.test-dbs')
 in a 'flake.nix' file.`
 
-const timeoutContainers = 100 * time.Second
-
 type startArgs struct {
 	attrPath string
 	flakeDir string
-	waitFor  []string
-
-	socketPathFile string
-	attach         bool
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
@@ -43,10 +36,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 			_, err := StopService(
 				cl.RootDir(),
 				stArgs.flakeDir,
-				stArgs.attrPath,
-				stArgs.waitFor,
-				stArgs.socketPathFile,
-				stArgs.attach)
+				stArgs.attrPath)
 
 			return err
 		},
@@ -65,10 +55,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 func StopService(
 	rootDir string,
 	flakeDir string,
-	devenvShellAttrPath string,
-	waitFor []string,
-	socketPathFile string,
-	attach bool) (
+	devenvShellAttrPath string) (
 	pcCtx processcompose.ProcessComposeCtx,
 	err error,
 ) {
