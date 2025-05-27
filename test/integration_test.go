@@ -124,16 +124,20 @@ func TestCLIProcessCompose(t *testing.T) {
 		"mynamespace.shells.test",
 	)
 	require.NoError(t, err, "Stderr:\n"+stderr)
-
-	socketPath, err := os.ReadFile(path.Join(cwd, ".pc-socket-path"))
-	require.NoError(t, err)
+	assert.Contains(t, stderr, "Inspect processes with")
+	assert.Contains(t, stderr, "Stop processes with")
 
 	defer func() {
-		err = exec.NewCommandCtx(cwd).
-			Check("process-compose", "down", "-u", string(socketPath))
+		_, _, err := cli.GetStdErr(
+			"--root-dir", ".",
+			"--log-level",
+			"debug",
+			"process-compose",
+			"stop",
+			"--flake-dir", ".",
+			"mynamespace.shells.test",
+		)
 		require.NoError(t, err, "Could not stop process-compose.")
 	}()
 
-	assert.Contains(t, stderr, "Inspect processes with")
-	assert.Contains(t, stderr, "Stop processes with")
 }

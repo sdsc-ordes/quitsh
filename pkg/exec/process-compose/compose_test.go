@@ -21,7 +21,7 @@ func TestProcessComposeDevenv(t *testing.T) {
 	require.NoError(t, err)
 
 	logFile := path.Join(d, "process-compose.log")
-	pcCtx, err := Start(d, d, "mynamespace.shells.test", logFile)
+	pcCtx, err := Start(d, d, "mynamespace.shells.test", logFile, false)
 	require.NoError(t, err)
 	defer func() {
 		log, e := os.ReadFile(logFile)
