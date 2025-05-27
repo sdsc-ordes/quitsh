@@ -35,10 +35,11 @@ func Start(
 	flakeDir string,
 	devShellAttrPath string,
 	logFile string,
+	mustBeStarted bool,
 ) (pc ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
-	return StartFromInstallable(rootDir, devShellAttrPath, logFile)
+	return StartFromInstallable(rootDir, devShellAttrPath, logFile, mustBeStarted)
 }
 
 // Start starts the process compose from a Nix
@@ -50,6 +51,7 @@ func StartFromInstallable(
 	rootDir string,
 	devShellInstallable string,
 	logFile string,
+	mustBeStarted bool,
 ) (pc ProcessComposeCtx, err error) {
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
@@ -73,6 +75,10 @@ func StartFromInstallable(
 		Env("PC_LOG_FILE=" + logFile).
 		Build()
 
+	pc = ProcessComposeCtx{
+		CmdContext: b,
+		socket:     socketPath}
+
 	// Start the process compose.
 	// Attach if the socket path does not exist
 	// (the script already does it)
@@ -80,8 +86,13 @@ func StartFromInstallable(
 		log.Warnf("Socket '%s' is already existing. "+
 			"Assume process-compose is started.", socketPath)
 
-		return
+		return pc, nil
 	} else {
+		if mustBeStarted {
+			return pc, errors.New("The process-compose instance must be started already but "+
+				"socket '%s' is not existing.", socketPath)
+		}
+
 		log.Infof("Start process-compose with '%s'.", procCompConfig)
 		err = b.Check("--config", procCompConfig, "--keep-project", "--disable-dotenv", "-D", "up")
 		if err != nil {
@@ -99,9 +110,7 @@ func StartFromInstallable(
 		logFile,
 	)
 
-	return ProcessComposeCtx{
-		CmdContext: b,
-		socket:     socketPath}, nil
+	return pc, nil
 }
 
 // Socket returns the socket used.
