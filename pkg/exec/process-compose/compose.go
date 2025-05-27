@@ -72,7 +72,13 @@ func StartFromInstallable(
 	}
 
 	// Start the process compose.
-	err = b.Build().Check(procfileScript, "-D")
+	// Attach if the socket path does not exist
+	// (the script already does it)
+	cmd := []string{procfileScript}
+	if !fs.Exists(socketPath) {
+		cmd = append(cmd, "-D")
+	}
+	err = b.Build().Check(cmd...)
 	if err != nil {
 		return pc, errors.AddContext(err, "Could not start procfileScript '%s'.", procfileScript)
 	}
