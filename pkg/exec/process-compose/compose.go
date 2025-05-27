@@ -14,6 +14,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/exec/nix"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
+	"golang.org/x/sync/errgroup"
 )
 
 // ProcessComposeCtx represents a `process-compose` context.
@@ -209,8 +210,40 @@ func getSocketPath(
 ) (procCompExe string, socketPath string, err error) {
 	nixx := nix.NewEvalCtx(rootDir)
 
-	manager, err := nixx.Get("--raw", devShellInstallable+".config.process.manager.implementation")
-	if err != nil {
+	var manager string
+	var pcPath string
+
+	g := new(errgroup.Group)
+
+	// Get manager.
+	g.Go(func() error {
+		val, e := nixx.Get("--raw", devShellInstallable+".config.process.manager.implementation")
+		manager = val
+		return e
+	})
+
+	// Get process-compose path.
+	g.Go(func() error {
+		val, e := nixx.Get(
+			"--raw",
+			devShellInstallable+".config.process.managers.process-compose.package.outPath",
+		)
+		pcPath = val
+		return e
+	})
+
+	// Get socket path.
+	g.Go(func() error {
+		val, e := nixx.Get(
+			"--raw",
+			devShellInstallable+".config.process.managers.process-compose.unixSocket.path",
+		)
+		socketPath = val
+		return e
+	})
+
+	// Wait for all goroutines
+	if err = g.Wait(); err != nil {
 		return
 	}
 
@@ -220,17 +253,7 @@ func getSocketPath(
 		return
 	}
 
-	procCompExe, err = nixx.Get(
-		"--raw",
-		devShellInstallable+".config.process.managers.process-compose.package.outPath")
-	if err != nil {
-		return
-	}
-	procCompExe = path.Join(procCompExe, "bin/process-compose")
-
-	socketPath, err = nixx.Get(
-		"--raw",
-		devShellInstallable+".config.process.managers.process-compose.unixSocket.path")
+	procCompExe = path.Join(pcPath, "bin/process-compose")
 
 	return procCompExe, socketPath, err
 }
