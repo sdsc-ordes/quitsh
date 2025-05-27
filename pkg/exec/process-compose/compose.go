@@ -219,6 +219,7 @@ func getSocketPath(
 	g.Go(func() error {
 		val, e := nixx.Get("--raw", devShellInstallable+".config.process.manager.implementation")
 		manager = val
+
 		return e
 	})
 
@@ -229,6 +230,7 @@ func getSocketPath(
 			devShellInstallable+".config.process.managers.process-compose.package.outPath",
 		)
 		pcPath = val
+
 		return e
 	})
 
@@ -239,18 +241,20 @@ func getSocketPath(
 			devShellInstallable+".config.process.managers.process-compose.unixSocket.path",
 		)
 		socketPath = val
+
 		return e
 	})
 
 	// Wait for all goroutines
 	if err = g.Wait(); err != nil {
-		return
+		return "", "", err
 	}
 
 	if manager != "process-compose" {
-		err = errors.New("Only process-manager is supported in dev. shell: manager: '%v'", manager)
-
-		return
+		return "", "", errors.New(
+			"Only process-manager is supported in dev. shell: manager: '%v'",
+			manager,
+		)
 	}
 
 	procCompExe = path.Join(pcPath, "bin/process-compose")
