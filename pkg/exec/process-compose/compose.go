@@ -61,33 +61,36 @@ func StartFromInstallable(
 		return pc, err
 	}
 
-	procfileScript, err := buildProcFileScript(devShellInstallable, rootDir)
+	procCompConfig, err := buildProcComposeConfigFile(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
 	}
 
-	b := exec.NewCmdCtxBuilder().Cwd(rootDir)
-	if logFile != "" {
-		b = b.Env("PC_LOG_FILE=" + logFile)
-	}
+	b := exec.NewCmdCtxBuilder().
+		Cwd(rootDir).
+		BaseCmd(procCompExe).
+		BaseArgs("--unix-socket", socketPath).
+		Env("PC_LOG_FILE=" + logFile).
+		Build()
 
 	// Start the process compose.
 	// Attach if the socket path does not exist
 	// (the script already does it)
-	cmd := []string{procfileScript}
 	if fs.Exists(socketPath) {
 		log.Warnf("Socket '%s' is already existing. "+
 			"Assume process-compose is started.", socketPath)
 
 		return
+	} else {
+		log.Infof("Start process-compose with '%s'.", procCompConfig)
+		err = b.Check("--config", procCompConfig, "--keep-project", "--disable-dotenv", "-D", "up")
+		if err != nil {
+			return pc, errors.AddContext(err, "Could not start process-compose with '%s'.", procCompConfig)
+		}
 	}
 
-	err = b.Build().Check(cmd...)
-	if err != nil {
-		return pc, errors.AddContext(err, "Could not start procfileScript '%s'.", procfileScript)
-	}
 	log.Info(
-		"Launched process-compose for devenv shell.",
+		"Started process-compose for devenv shell.",
 		"shell",
 		devShellInstallable,
 		"socket",
@@ -96,13 +99,8 @@ func StartFromInstallable(
 		logFile,
 	)
 
-	b = exec.NewCmdCtxBuilder().
-		Cwd(rootDir).
-		BaseCmd(procCompExe).
-		BaseArgs("--unix-socket", socketPath)
-
 	return ProcessComposeCtx{
-		CmdContext: b.Build(),
+		CmdContext: b,
 		socket:     socketPath}, nil
 }
 
@@ -228,14 +226,16 @@ func getSocketPath(
 	return procCompExe, socketPath, err
 }
 
-func buildProcFileScript(installable string, rootDir string) (string, error) {
+func buildProcComposeConfigFile(installable string, rootDir string) (string, error) {
 	//nolint:lll
 	// More options on the process managers are here:
 	// https://github.com/cachix/devenv/blob/b2d2d5a20cfff742efb3c6dddbf47c66893b2d61/src/modules/process-managers/process-compose.nix#L96
+	// Devenv start the stuff on the attribute `.config.procfileScript` which we do not use.
+
 	nixCtx := nix.NewBuildCtx(rootDir)
 
-	procFileScript := installable + ".config.procfileScript"
-	js, err := nixCtx.Get("--no-link", "--json", procFileScript)
+	configFile := installable + ".config.process.managers.process-compose.configFile"
+	js, err := nixCtx.Get("--no-link", "--json", configFile)
 	if err != nil {
 		return "", err
 	}

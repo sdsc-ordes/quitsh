@@ -28,6 +28,7 @@ type startArgs struct {
 	waitFor  []string
 
 	socketPathFile string
+	attach         bool
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
@@ -46,7 +47,8 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 				stArgs.flakeDir,
 				stArgs.attrPath,
 				stArgs.waitFor,
-				stArgs.socketPathFile)
+				stArgs.socketPathFile,
+				stArgs.attach)
 
 			return err
 		},
@@ -64,6 +66,10 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		StringVarP(&stArgs.socketPathFile,
 			"socketPathFile", "s", ".pc-socket-path", "The file (JSON) where the process-compose socket path is written to.")
 
+	startCmd.Flags().
+		BoolVarP(&stArgs.attach,
+			"attach", "a", false, "If after start we attach to the process-compose instance.")
+
 	parent.AddCommand(startCmd)
 }
 
@@ -75,7 +81,8 @@ func StartServices(
 	flakeDir string,
 	devenvShellAttrPath string,
 	waitFor []string,
-	socketPathFile string) (
+	socketPathFile string,
+	attach bool) (
 	pcCtx processcompose.ProcessComposeCtx,
 	err error,
 ) {
@@ -106,6 +113,13 @@ func StartServices(
 	err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
 	if err != nil {
 		log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
+	}
+
+	if attach {
+		err := pcCtx.Check("attach")
+		if err != nil {
+			log.ErrorE(err, "Error occurred in attach.")
+		}
 	}
 
 	log.Infof("Inspect processes with 'process-compose attach -u '%s'.", pcCtx.Socket())
