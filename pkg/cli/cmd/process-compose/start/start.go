@@ -118,8 +118,8 @@ func StartServices(
 		}
 	}
 
-	log.Infof("Inspect processes with 'process-compose attach -u '%s'.", pcCtx.Socket())
-	log.Infof("Stop processes with 'process-compose down -u '%s'.", pcCtx.Socket())
+	log.Infof("Inspect processes with 'quitsh process-compose -a ...'.")
+	log.Infof("Stop processes with 'quitsh process-compose stop ...'.")
 
 	return pcCtx, nil
 }

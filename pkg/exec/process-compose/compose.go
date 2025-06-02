@@ -79,7 +79,10 @@ func StartFromInstallable(
 			sha256.Sum256([]byte(procCompConfig))))
 	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
 	if err != nil {
-		return pc, errors.AddContext(err, "could not create process-compose temp dir (logfile etc.).")
+		return pc, errors.AddContext(
+			err,
+			"could not create process-compose temp dir (logfile etc.).",
+		)
 	}
 	logFile := path.Join(dir, "process-compose.log")
 
