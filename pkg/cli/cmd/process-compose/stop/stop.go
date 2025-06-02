@@ -1,8 +1,6 @@
 package processcomposestop
 
 import (
-	"os"
-	"path"
 	"strings"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
@@ -59,21 +57,14 @@ func StopService(
 	pcCtx processcompose.ProcessComposeCtx,
 	err error,
 ) {
-	dir, err := os.MkdirTemp(os.TempDir(), "process-compose-*")
-	if err != nil {
-		return pcCtx, errors.AddContext(err, "could not create process-compose log file.")
-	}
-
-	logFile := path.Join(dir, "process-compose.log")
 	if strings.Contains(devenvShellAttrPath, "#") {
 		pcCtx, err = processcompose.StartFromInstallable(
 			rootDir,
 			devenvShellAttrPath,
-			logFile,
 			true,
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, logFile, true)
+		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, true)
 	}
 
 	if err != nil {
