@@ -20,11 +20,10 @@ func TestProcessComposeDevenv(t *testing.T) {
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
 	require.NoError(t, err)
 
-	logFile := path.Join(d, "process-compose.log")
-	pcCtx, err := Start(d, d, "mynamespace.shells.test", logFile, false)
+	pcCtx, err := Start(d, d, "mynamespace.shells.test", false)
 	require.NoError(t, err)
 	defer func() {
-		log, e := os.ReadFile(logFile)
+		log, e := os.ReadFile(pcCtx.LogFile())
 		require.NoError(t, e)
 		t.Log("Process Compose Log:\n", string(log))
 
