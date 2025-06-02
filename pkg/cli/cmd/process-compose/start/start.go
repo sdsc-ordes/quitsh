@@ -118,7 +118,7 @@ func StartServices(
 		}
 	}
 
-	log.Infof("Inspect processes with 'quitsh process-compose -a ...'.")
+	log.Infof("Inspect processes with 'quitsh process-compose start -a ...'.")
 	log.Infof("Stop processes with 'quitsh process-compose stop ...'.")
 
 	return pcCtx, nil
