@@ -114,13 +114,13 @@ func StartFromInstallable(
 
 		log.Infof("Start process-compose with '%s'.", procCompConfig)
 		err = b.Check(
-			"up",
 			"--config", procCompConfig,
 			"--keep-project",
 			"--disable-dotenv",
 			"--log-file", logFile,
 			"--ordered-shutdown",
-			"-D")
+			"-D",
+			"up")
 		if err != nil {
 			return pc, errors.AddContext(err, "Could not start process-compose with '%s'.", procCompConfig)
 		}
