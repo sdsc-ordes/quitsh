@@ -127,6 +127,19 @@ func TestCLIProcessCompose(t *testing.T) {
 	assert.Contains(t, stderr, "Inspect processes with")
 	assert.Contains(t, stderr, "Stop processes with")
 
+	stdout, _, err := cli.GetStdErr(
+		"--root-dir", ".",
+		"--log-level",
+		"debug",
+		"process-compose",
+		"exec",
+		"--flake-dir", ".",
+		"mynamespace.shells.test",
+		"list",
+	)
+	require.NoError(t, err, "Process compose list failed")
+	assert.Contains(t, stdout, "httpbin")
+
 	defer func() {
 		_, _, err := cli.GetStdErr(
 			"--root-dir", ".",

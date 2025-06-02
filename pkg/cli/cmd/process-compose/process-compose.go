@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
+	processcomposeexec "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose/exec"
 	processcomposestart "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose/start"
 	processcomposestop "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose/stop"
 
@@ -21,6 +22,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, flakeDirDefault string) *cobra.C
 
 	processcomposestart.AddCmd(cl, configCmd, flakeDirDefault)
 	processcomposestop.AddCmd(cl, configCmd, flakeDirDefault)
+	processcomposeexec.AddCmd(cl, configCmd, flakeDirDefault)
 
 	parent.AddCommand(configCmd)
 
