@@ -2,7 +2,9 @@ package processcompose
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"slices"
@@ -21,6 +23,9 @@ import (
 type ProcessComposeCtx struct {
 	*exec.CmdContext
 	socket string
+
+	tempDir string
+	logFile string
 }
 
 // Start starts the process compose from a
@@ -35,12 +40,11 @@ func Start(
 	rootDir string,
 	flakeDir string,
 	devShellAttrPath string,
-	logFile string,
 	mustBeStarted bool,
 ) (pc ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
-	return StartFromInstallable(rootDir, devShellAttrPath, logFile, mustBeStarted)
+	return StartFromInstallable(rootDir, devShellAttrPath, mustBeStarted)
 }
 
 // Start starts the process compose from a Nix
@@ -51,9 +55,9 @@ func Start(
 func StartFromInstallable(
 	rootDir string,
 	devShellInstallable string,
-	logFile string,
 	mustBeStarted bool,
 ) (pc ProcessComposeCtx, err error) {
+
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
@@ -69,16 +73,28 @@ func StartFromInstallable(
 		return pc, err
 	}
 
+	// Compute deterministic temp directory base on `procCompExe`.
+	dir := path.Join(os.TempDir(),
+		fmt.Sprintf("process-compose-%x",
+			sha256.Sum256([]byte(procCompConfig))))
+	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
+	if err != nil {
+		return pc, errors.AddContext(err, "could not create process-compose temp dir (logfile etc.).")
+	}
+	logFile := path.Join(dir, "process-compose.log")
+
 	b := exec.NewCmdCtxBuilder().
 		Cwd(rootDir).
 		BaseCmd(procCompExe).
 		BaseArgs("--unix-socket", socketPath).
-		Env("PC_LOG_FILE=" + logFile).
 		Build()
 
 	pc = ProcessComposeCtx{
 		CmdContext: b,
-		socket:     socketPath}
+		socket:     socketPath,
+		tempDir:    dir,
+		logFile:    logFile,
+	}
 
 	// Start the process compose.
 	// Attach if the socket path does not exist
@@ -95,7 +111,14 @@ func StartFromInstallable(
 		}
 
 		log.Infof("Start process-compose with '%s'.", procCompConfig)
-		err = b.Check("--config", procCompConfig, "--keep-project", "--disable-dotenv", "-D", "up")
+		err = b.Check(
+			"up",
+			"--config", procCompConfig,
+			"--keep-project",
+			"--disable-dotenv",
+			"--log-file", logFile,
+			"--ordered-shutdown",
+			"-D")
 		if err != nil {
 			return pc, errors.AddContext(err, "Could not start process-compose with '%s'.", procCompConfig)
 		}
@@ -119,10 +142,18 @@ func (pc *ProcessComposeCtx) Socket() string {
 	return pc.socket
 }
 
+// LogFile returns the log file used.
+func (pc *ProcessComposeCtx) LogFile() string {
+	return pc.logFile
+}
+
 // Stop stops the process compose.
 func (pc *ProcessComposeCtx) Stop() error {
-	// Just forcefully delete the socket path.
-	defer os.Remove(pc.Socket())
+	// Just forcefully delete the socket path and temp dir.
+	defer func() {
+		os.Remove(pc.socket)
+		os.RemoveAll(pc.tempDir)
+	}()
 
 	return pc.Check("down")
 }

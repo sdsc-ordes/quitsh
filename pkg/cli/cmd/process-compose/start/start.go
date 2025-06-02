@@ -3,7 +3,6 @@ package processcomposestart
 import (
 	"context"
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -86,23 +85,15 @@ func StartServices(
 	pcCtx processcompose.ProcessComposeCtx,
 	err error,
 ) {
-	dir, err := os.MkdirTemp(os.TempDir(), "process-compose-*")
-	if err != nil {
-		return pcCtx, errors.AddContext(err, "could not create process-compose log file.")
-	}
-
-	logFile := path.Join(dir, "process-compose.log")
 	if strings.Contains(devenvShellAttrPath, "#") {
 		pcCtx, err = processcompose.StartFromInstallable(
 			rootDir,
 			devenvShellAttrPath,
-			logFile,
 			false,
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, logFile, false)
+		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, false)
 	}
-
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
