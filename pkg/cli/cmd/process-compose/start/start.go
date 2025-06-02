@@ -2,15 +2,12 @@ package processcomposestart
 
 import (
 	"context"
-	"os"
-	"path"
 	"strings"
 	"time"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	processcompose "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
-	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -27,8 +24,7 @@ type startArgs struct {
 	flakeDir string
 	waitFor  []string
 
-	socketPathFile string
-	attach         bool
+	attach bool
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
@@ -47,7 +43,6 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 				stArgs.flakeDir,
 				stArgs.attrPath,
 				stArgs.waitFor,
-				stArgs.socketPathFile,
 				stArgs.attach)
 
 			return err
@@ -61,10 +56,6 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitFor,
 			"wait-for", "w", nil, "Wait for this processes to be running.")
-
-	startCmd.Flags().
-		StringVarP(&stArgs.socketPathFile,
-			"socketPathFile", "s", ".pc-socket-path", "The file (JSON) where the process-compose socket path is written to.")
 
 	startCmd.Flags().
 		BoolVarP(&stArgs.attach,
@@ -81,28 +72,19 @@ func StartServices(
 	flakeDir string,
 	devenvShellAttrPath string,
 	waitFor []string,
-	socketPathFile string,
 	attach bool) (
 	pcCtx processcompose.ProcessComposeCtx,
 	err error,
 ) {
-	dir, err := os.MkdirTemp(os.TempDir(), "process-compose-*")
-	if err != nil {
-		return pcCtx, errors.AddContext(err, "could not create process-compose log file.")
-	}
-
-	logFile := path.Join(dir, "process-compose.log")
 	if strings.Contains(devenvShellAttrPath, "#") {
 		pcCtx, err = processcompose.StartFromInstallable(
 			rootDir,
 			devenvShellAttrPath,
-			logFile,
 			false,
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, logFile, false)
+		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, false)
 	}
-
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
@@ -115,11 +97,6 @@ func StartServices(
 		return pcCtx, errors.AddContext(err, "failed to wait for processes '%q'.", waitFor)
 	}
 
-	err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
-	if err != nil {
-		log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
-	}
-
 	if attach {
 		e := pcCtx.Check("attach")
 		if e != nil {
@@ -127,8 +104,8 @@ func StartServices(
 		}
 	}
 
-	log.Infof("Inspect processes with 'process-compose attach -u '%s'.", pcCtx.Socket())
-	log.Infof("Stop processes with 'process-compose down -u '%s'.", pcCtx.Socket())
+	log.Infof("Inspect processes with 'quitsh process-compose start -a ...'.")
+	log.Infof("Stop processes with 'quitsh process-compose stop ...'.")
 
 	return pcCtx, nil
 }
