@@ -24,8 +24,7 @@ type startArgs struct {
 	flakeDir string
 	waitFor  []string
 
-	socketPathFile string
-	attach         bool
+	attach bool
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
