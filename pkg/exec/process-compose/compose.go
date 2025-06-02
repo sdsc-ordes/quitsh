@@ -57,7 +57,6 @@ func StartFromInstallable(
 	devShellInstallable string,
 	mustBeStarted bool,
 ) (pc ProcessComposeCtx, err error) {
-
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
