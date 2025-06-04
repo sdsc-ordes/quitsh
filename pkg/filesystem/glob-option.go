@@ -23,7 +23,7 @@ func WithPathFilter(filter DirFilter) Option {
 
 // DefaultIgnoredDirectories returns all by default ignored directories.
 func IgnoredDirectoriesDefault() []string {
-	return []string{".git", ".direnv"}
+	return []string{".git", ".direnv", ".devenv"}
 }
 
 // WithPathFilterDefault sets the default path filter if non it set.
