@@ -1,0 +1,10 @@
+name: component-b
+# Corrupt settings to be ignored by some rules in CLI, for test!
+version: 1.0.0
+language: go
+
+targets:
+  build-banana:
+    steps:
+      - runnerID: non-exist
+    depends: ["self::non-exist"]

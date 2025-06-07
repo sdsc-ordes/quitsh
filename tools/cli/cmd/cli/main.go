@@ -13,7 +13,9 @@ import (
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
+	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	gorunner "github.com/sdsc-ordes/quitsh/pkg/runner/go"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
@@ -32,6 +34,10 @@ func main() {
 		&args,
 		cli.WithName("cli"),
 		cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its build with 'quitsh'."),
+		cli.WithCompFindOptions(
+			query.WithFindOptions(
+				fs.WithGlobDirPatterns(nil,
+					[]string{"**/test/repo/**"}, true))),
 		cli.WithStages("lint", "build", "test"),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithToolchainDispatcherNix(

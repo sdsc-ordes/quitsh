@@ -25,8 +25,8 @@ func FindComponents(
 	args *ComponentArgs,
 	rootDir string,
 	outDirBase string,
-	defaultCompPatterns []string,
 	transformConfig component.ConfigAdjuster,
+	opts ...query.Option,
 ) (comps []*component.Component, all []*component.Component, err error) {
 	compCreator := component.NewComponentCreator(outDirBase, transformConfig)
 
@@ -34,19 +34,20 @@ func FindComponents(
 	case len(args.ComponentPatterns) != 0:
 		comps, all, err = query.FindByPatterns(
 			rootDir,
-			append(args.ComponentPatterns, defaultCompPatterns...),
+			args.ComponentPatterns,
 			1,
 			compCreator,
+			opts...,
 		)
 	case args.ComponentDir != "":
 		compDir := fs.MakeAbsolute(args.ComponentDir)
 
 		comps, all, err = query.FindByPatterns(
 			rootDir,
-			append([]string{"*"}, defaultCompPatterns...),
+			[]string{"*"},
 			1,
 			compCreator,
-			query.WithFilterAnd(query.ComponentDirFilter(compDir)),
+			append(opts, query.WithComponentDirSingle(compDir, true))...,
 		)
 
 	default:

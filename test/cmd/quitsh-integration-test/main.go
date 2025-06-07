@@ -12,7 +12,9 @@ import (
 	processcompose "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
+	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 	gorunner "github.com/sdsc-ordes/quitsh/test/runners/go_test"
@@ -59,6 +61,10 @@ func main() {
 		&args.Commands.Root,
 		&args,
 		cli.WithName("custodian-test"),
+		// Ignore component-b by not searching in this directory.
+		cli.WithCompFindOptions(
+			query.WithFindOptions(
+				fs.WithGlobDirPatterns(nil, []string{"**/component-b"}, true))),
 		cli.WithStages("lint", "build", "test", "monkey-stage", "deploy"),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithToolchainDispatcherNix(

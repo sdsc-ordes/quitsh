@@ -2,40 +2,20 @@ package query
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
 	comp "github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
-	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
-
-	"github.com/bmatcuk/doublestar/v4"
 )
-
-type queryOptions struct {
-	dirFilter      fs.DirFilter
-	configFileName string
-
-	compFilter CompFilter
-}
-
-func newQueryOptions() queryOptions {
-	q := queryOptions{configFileName: comp.ConfigFilename}
-
-	err := WithPathFilterDefault()(&q)
-	debug.Assert(err == nil, "Should not happen!")
-
-	return q
-}
 
 // Find finds all components in directory `root` and loads them.
 // Some directories are by default ignored.
-//
-//nolint:gocognit,funlen
 func Find(
 	rootDir string,
 	creator comp.ComponentCreator,
@@ -47,29 +27,25 @@ func Find(
 
 	// Apply options.
 	queryOpts := newQueryOptions()
-	for i := range opts {
-		err = opts[i](&queryOpts)
-
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	if queryOpts.dirFilter == nil {
-		err = WithPathFilterDefault()(&queryOpts)
-
-		if err != nil {
-			return nil, nil, err
-		}
+	err = queryOpts.Apply(opts)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	rootDir = fs.MakeAbsolute(rootDir)
 	files, traversedFiles, err := fs.FindFiles(
 		rootDir,
-		[]string{queryOpts.configFileName},
-		nil,
-		fs.WithPathFilter(queryOpts.dirFilter),
-		fs.WithMatchFileNameOnly(),
+		append(queryOpts.fsOpts,
+			// Always `&&` the essential last filters:
+			// Only `.component` files.
+			fs.WithPathFilter(func(p string, i os.DirEntry) bool {
+				return i.IsDir() || path.Base(p) == queryOpts.configFileName
+			}, true),
+			// Ignore all non useful files in default dirs.
+			fs.WithPathFilterDefault(true),
+			// Ignore other non useful components dirs.
+			withPathFilterDefault(true),
+		)...,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -122,14 +98,9 @@ func Find(
 		all = append(all, comp)
 		visitedComps[c.Name] = root
 
-		// Filter on custom stuff.
+		// Filter on components partial result `comps` by:
 		if queryOpts.compFilter != nil {
-			matches, ef := queryOpts.compFilter(c.Name, root)
-			if ef != nil {
-				err = errors.Combine(err, ef)
-
-				continue
-			}
+			matches := queryOpts.compFilter(c.Name, root)
 
 			if !matches {
 				log.Debug("Ignoring filtered component.", "name", c.Name)
@@ -178,39 +149,10 @@ func FindByPatterns(
 	creator comp.ComponentCreator,
 	opts ...Option,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
-	incls, excls := splitIntoIncludeAndExcludes(patterns)
 	log.Info("Find components by patterns.",
-		"includes", incls, "excludes", excls, "root", rootDir)
+		"patterns", patterns, "root", rootDir)
 
-	filt := func(name string, _ string) (matches bool, err error) {
-		include := false
-		exclude := false
-		for _, pattern := range incls {
-			matches, err = doublestar.Match(pattern, name)
-			if err != nil {
-				return
-			} else if matches {
-				include = true
-
-				break
-			}
-		}
-
-		for _, pattern := range excls {
-			matches, err = doublestar.Match(pattern, name)
-			if err != nil {
-				return
-			} else if matches {
-				exclude = true
-
-				break
-			}
-		}
-
-		return include && !exclude, nil
-	}
-
-	opts = append([]Option{WithFilterAnd(filt)}, opts...)
+	opts = append(opts, WithCompDirPatternsCombined(patterns, true))
 
 	comps, all, err = Find(rootDir, creator, opts...)
 	if err != nil {
@@ -241,12 +183,9 @@ func FindInside(
 
 	// Apply options.
 	queryOpts := newQueryOptions()
-	for i := range opts {
-		err := opts[i](&queryOpts)
-
-		if err != nil {
-			return nil, err
-		}
+	err := queryOpts.Apply(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	d := fs.MakeAbsolute(dir)
@@ -259,10 +198,10 @@ func FindInside(
 		log.Debug(f)
 
 		if fs.Exists(f) {
-			c, err := config.LoadFromFile[comp.Config](f)
+			c, e := config.LoadFromFile[comp.Config](f)
 
-			if err != nil {
-				return nil, err
+			if e != nil {
+				return nil, e
 			}
 
 			return creator(&c, d)
