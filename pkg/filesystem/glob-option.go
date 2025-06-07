@@ -128,14 +128,19 @@ func (o *queryOptions) Apply(opts []FindOptions) error {
 // Match a string `name` by some include and exclude glob patterns (doublestar allowed).
 // All errors of `doublestar.ErrBadPattern` will be ignored for performance reason.
 // If `includeGlobs` is empty, it acts as `*` include all.
-func MatchByPatterns(s string, includeGlobs, excludeGlobs []string) (matches bool) {
+func MatchByPatterns(s string, includeGlobs, excludeGlobs []string) bool {
 	include := len(includeGlobs) == 0 // include all
 	exclude := false
 
 	if !include {
 		for _, pattern := range includeGlobs {
-			matches, _ = doublestar.Match(pattern, s)
-			if matches {
+			matches, err := doublestar.Match(pattern, s)
+
+			if err != nil {
+				log.Warnf("Include pattern '%s' is invalid.", pattern)
+
+				return false
+			} else if matches {
 				trace("Match include: '%s'", pattern)
 				include = true
 
@@ -145,8 +150,13 @@ func MatchByPatterns(s string, includeGlobs, excludeGlobs []string) (matches boo
 	}
 
 	for _, pattern := range excludeGlobs {
-		matches, _ = doublestar.Match(pattern, s)
-		if matches {
+		matches, err := doublestar.Match(pattern, s)
+
+		if err != nil {
+			log.Warnf("Exclude pattern '%s' is invalid.", pattern)
+
+			return false
+		} else if matches {
 			trace("Match exclude: '%s'", pattern)
 			exclude = true
 

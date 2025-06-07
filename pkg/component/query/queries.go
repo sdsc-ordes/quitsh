@@ -149,11 +149,10 @@ func FindByPatterns(
 	creator comp.ComponentCreator,
 	opts ...Option,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
-	incls, excls := splitIntoIncludeAndExcludes(patterns)
 	log.Info("Find components by patterns.",
-		"includes", incls, "excludes", excls, "root", rootDir)
+		"patterns", patterns, "root", rootDir)
 
-	opts = append(opts, WithCompDirPatterns(incls, excls, true))
+	opts = append(opts, WithCompDirPatternsCombined(patterns, true))
 
 	comps, all, err = Find(rootDir, creator, opts...)
 	if err != nil {

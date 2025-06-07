@@ -76,8 +76,8 @@ func (c *cliApp) FindComponents(
 		args,
 		c.rootArgs.Cwd,
 		outBaseDir,
-		c.componentPatterns,
-		transformConfig)
+		transformConfig,
+		c.compFindOpts...)
 
 	return
 }

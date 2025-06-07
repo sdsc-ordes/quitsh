@@ -4,6 +4,7 @@ import (
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
+	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/runner/factory"
@@ -13,8 +14,8 @@ import (
 )
 
 type ICLI interface {
-	// The root directory from where certain operations are done.
-	// Like finding components.
+	// The root directory from where certain operations are done,
+	// i.e finding components etc.
 	RootDir() string
 
 	// RootCmd returns the root command on the CLI.
@@ -88,7 +89,7 @@ type cliApp struct {
 
 	settings rootcmd.Settings
 
-	componentPatterns []string
+	compFindOpts []query.Option
 
 	stages                  stage.Stages
 	targetNameToStageMapper stage.TargetNameToStageMapper

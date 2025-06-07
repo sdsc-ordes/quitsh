@@ -152,13 +152,13 @@ func TestComponentFindByPatternZero(t *testing.T) {
 	for _, d := range dirs {
 		comps, _, err := FindByPatterns(dir,
 			[]string{"*"}, 1, cG,
-			WithComponentDirSingle(d))
+			WithComponentDirSingle(d, true))
 		require.NoError(t, err, "should find it")
 		assert.Len(t, comps, 1, "should return 1 results '%s'", d)
 	}
 
 	_, _, e = FindByPatterns(dir,
 		[]string{"*"}, 1, cG,
-		WithComponentDirSingle("non-existing"))
+		WithComponentDirSingle("non-existing", true))
 	require.Error(t, e, "min. count '1' components not found in")
 }

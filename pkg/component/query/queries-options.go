@@ -5,10 +5,8 @@ import (
 	"path"
 	"slices"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
-	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
 type (
@@ -43,7 +41,7 @@ func (o *queryOptions) Apply(opts []Option) error {
 	return nil
 }
 
-// WithFsOptions sets [fs.FindOptions] for the search over the directories.
+// WithFindOptions sets [fs.FindOptions] for the search over the directories.
 func WithFindOptions(opts ...fs.FindOptions) Option {
 	return func(o *queryOptions) error {
 		o.fsOpts = opts
@@ -54,12 +52,12 @@ func WithFindOptions(opts ...fs.FindOptions) Option {
 
 // WithComponentDirSingle returns a simple filter which only returns
 // the component with root directory `compDir`.
-func WithComponentDirSingle(compDir string) Option {
+func WithComponentDirSingle(compDir string, useAnd bool) Option {
 	f := func(_compName, root string) bool {
 		return fs.MakeAbsolute(compDir) == root
 	}
 
-	return WithCompDirFilter(f, true)
+	return WithCompDirFilter(f, useAnd)
 }
 
 // WithCompDirFilter combines a component filter.
@@ -82,39 +80,17 @@ func WithCompDirFilter(f CompFilter, useAnd bool) Option {
 	}
 }
 
+// WithCompDirPatternsCombined is the same as WithCompDirPatterns but with exclude syntax `!<pattern>` on the
+func WithCompDirPatternsCombined(patterns []string, useAnd bool) Option {
+	incls, excls := splitIntoIncludeAndExcludes(patterns)
+
+	return WithCompDirPatterns(incls, excls, useAnd)
+}
+
 // WithCompDirPatterns add a component filter based on name patterns.
 func WithCompDirPatterns(incls []string, excls []string, useAnd bool) Option {
 	filt := func(name string, _ string) bool {
-		include := false
-		exclude := false
-
-		for _, pattern := range incls {
-			matches, err := doublestar.Match(pattern, name)
-			if err != nil {
-				log.Warnf("Pattern '%s' is invalid.", pattern)
-
-				return false
-			} else if matches {
-				include = true
-
-				break
-			}
-		}
-
-		for _, pattern := range excls {
-			matches, err := doublestar.Match(pattern, name)
-			if err != nil {
-				log.Warnf("Pattern '%s' is invalid.", pattern)
-
-				return false
-			} else if matches {
-				exclude = true
-
-				break
-			}
-		}
-
-		return include && !exclude
+		return fs.MatchByPatterns(name, incls, excls)
 	}
 
 	return WithCompDirFilter(filt, useAnd)

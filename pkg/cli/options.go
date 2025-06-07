@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	sets "github.com/sdsc-ordes/quitsh/pkg/common/set"
+	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -66,12 +67,11 @@ func WithStages(ss ...stage.Stage) Option {
 	}
 }
 
-// WithComponentPatterns adds glob patterns
-// e.g. includes or excludes with `!component-a`
+// WithCompFindOptions adds component find options
 // which will be added by default to the `FindComponents` command.
-func WithComponentPatterns(patterns ...string) Option {
+func WithCompFindOptions(opts ...query.Option) Option {
 	return func(c *cliApp) error {
-		c.componentPatterns = patterns
+		c.compFindOpts = opts
 
 		return nil
 	}
