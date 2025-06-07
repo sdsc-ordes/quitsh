@@ -80,7 +80,7 @@ func WithCompDirFilter(f CompFilter, useAnd bool) Option {
 	}
 }
 
-// WithCompDirPatternsCombined is the same as WithCompDirPatterns but with exclude syntax `!<pattern>` on the
+// WithCompDirPatternsCombined is the same as WithCompDirPatterns but with exclude syntax `!<pattern>`.
 func WithCompDirPatternsCombined(patterns []string, useAnd bool) Option {
 	incls, excls := splitIntoIncludeAndExcludes(patterns)
 
