@@ -7,30 +7,11 @@ import (
 
 	comp "github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
-	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
-
-	"github.com/bmatcuk/doublestar/v4"
 )
-
-type queryOptions struct {
-	dirFilter      fs.DirFilter
-	configFileName string
-
-	compFilter CompFilter
-}
-
-func newQueryOptions() queryOptions {
-	q := queryOptions{configFileName: comp.ConfigFilename}
-
-	err := WithPathFilterDefault()(&q)
-	debug.Assert(err == nil, "Should not happen!")
-
-	return q
-}
 
 // Find finds all components in directory `root` and loads them.
 // Some directories are by default ignored.
@@ -39,37 +20,31 @@ func newQueryOptions() queryOptions {
 func Find(
 	rootDir string,
 	creator comp.ComponentCreator,
-	opts ...Option,
+	opts []Option,
+	optsFs ...fs.FindOptions,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
 	if creator == nil {
 		log.Panic("Component creator not given.")
 	}
 
 	// Apply options.
-	queryOpts := newQueryOptions()
-	for i := range opts {
-		err = opts[i](&queryOpts)
-
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	if queryOpts.dirFilter == nil {
-		err = WithPathFilterDefault()(&queryOpts)
-
-		if err != nil {
-			return nil, nil, err
-		}
-	}
+	queryOpts := queryOptions{}
+	queryOpts.Apply(opts)
 
 	rootDir = fs.MakeAbsolute(rootDir)
 	files, traversedFiles, err := fs.FindFiles(
 		rootDir,
-		[]string{queryOpts.configFileName},
-		nil,
-		fs.WithPathFilter(queryOpts.dirFilter),
-		fs.WithMatchFileNameOnly(),
+		append(optsFs,
+			// Always `&&` the essential last filters:
+			// Only `.component` files.
+			fs.WithPathFilter(func(p string) bool {
+				return path.Base(p) == queryOpts.configFileName
+			}, true),
+			// Ignore all non useful files in default dirs.
+			fs.WithPathFilterDefault(true),
+			// Ignore other non useful components dirs.
+			withPathFilterDefault(true),
+		)...,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -122,14 +97,9 @@ func Find(
 		all = append(all, comp)
 		visitedComps[c.Name] = root
 
-		// Filter on custom stuff.
+		// Filter on components partial result `comps` by:
 		if queryOpts.compFilter != nil {
-			matches, ef := queryOpts.compFilter(c.Name, root)
-			if ef != nil {
-				err = errors.Combine(err, ef)
-
-				continue
-			}
+			matches := queryOpts.compFilter(c.Name, root)
 
 			if !matches {
 				log.Debug("Ignoring filtered component.", "name", c.Name)
@@ -182,37 +152,9 @@ func FindByPatterns(
 	log.Info("Find components by patterns.",
 		"includes", incls, "excludes", excls, "root", rootDir)
 
-	filt := func(name string, _ string) (matches bool, err error) {
-		include := false
-		exclude := false
-		for _, pattern := range incls {
-			matches, err = doublestar.Match(pattern, name)
-			if err != nil {
-				return
-			} else if matches {
-				include = true
+	opts = append([]Option{WithCompDirPatterns(incls, excls, true)}, opts...)
 
-				break
-			}
-		}
-
-		for _, pattern := range excls {
-			matches, err = doublestar.Match(pattern, name)
-			if err != nil {
-				return
-			} else if matches {
-				exclude = true
-
-				break
-			}
-		}
-
-		return include && !exclude, nil
-	}
-
-	opts = append([]Option{WithFilterAnd(filt)}, opts...)
-
-	comps, all, err = Find(rootDir, creator, opts...)
+	comps, all, err = Find(rootDir, creator, opts)
 	if err != nil {
 		log.ErrorE(err, "Could not find and load components.", "root", rootDir)
 	} else if len(comps) < minCount {
@@ -240,14 +182,8 @@ func FindInside(
 	}
 
 	// Apply options.
-	queryOpts := newQueryOptions()
-	for i := range opts {
-		err := opts[i](&queryOpts)
-
-		if err != nil {
-			return nil, err
-		}
-	}
+	queryOpts := queryOptions{}
+	queryOpts.Apply(opts)
 
 	d := fs.MakeAbsolute(dir)
 	if !fs.Exists(d) {

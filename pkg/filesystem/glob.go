@@ -4,35 +4,58 @@ import (
 	"errors"
 	stdfs "io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/charlievieth/fastwalk"
 )
+
+// Find all files in `rootDir`.
+// This function uses goroutines under to hood.
+func FindFiles(
+	rootDir string,
+	opts ...FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	return FindPaths(rootDir, append(opts, WithWalkDirsOnly(false))...)
+}
 
 // Find all files in `rootDir` which match glob patterns
 // `includePatterns` and not `excludePatterns` (they match the full path).
 // This function uses goroutines under to hood.
-func FindFiles(
+func FindFilesByPatterns(
 	rootDir string,
 	includeGlobPatterns []string,
 	excludeGlobPatterns []string,
-	opts ...Option,
+	opts ...FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	return FindPaths(rootDir,
+		append(opts,
+			WithGlobPatterns(includeGlobPatterns, excludeGlobPatterns, true),
+			WithWalkDirsOnly(false))...,
+	)
+}
+
+// Find all paths in `rootDir`.
+// This function uses goroutines under to hood.
+func FindPaths(
+	rootDir string,
+	opts ...FindOptions,
 ) (files []string, traversedFiles int64, err error) {
 	var query queryOptions
 	for i := range opts {
+		if opts[i] == nil {
+			continue
+		}
 		err = opts[i](&query)
 		if err != nil {
-			return files, traversedFiles, err
+			return nil, 0, err
 		}
 	}
 
-	// Always use the default dir filter.
-	if query.dirFilter == nil {
-		err = WithPathFilterDefault()(&query)
+	// Always use the default path filter.
+	if query.pathFilter == nil {
+		err = WithPathFilterDefault(true)(&query)
 		if err != nil {
 			return files, traversedFiles, err
 		}
@@ -52,10 +75,8 @@ func FindFiles(
 			&countA,
 			&lock,
 			&files,
-			query.dirFilter,
-			includeGlobPatterns,
-			excludeGlobPatterns,
-			query.fileNameOnly,
+			query.dirsOnly,
+			query.pathFilter,
 		),
 	)
 
@@ -73,10 +94,8 @@ func createVisitor(
 	count *atomic.Int64,
 	lock *sync.Mutex,
 	files *[]string,
-	dirFilter DirFilter,
-	includeGlobPatterns []string,
-	excludeGlobPatterns []string,
-	fileNameOnly bool,
+	dirsOnly bool,
+	pathFilter PathFilter,
 ) stdfs.WalkDirFunc {
 	return func(p string, info os.DirEntry, err error) error {
 		count.Add(1)
@@ -86,16 +105,24 @@ func createVisitor(
 			return filepath.SkipDir
 		}
 
-		f := p
-		if fileNameOnly {
-			f = path.Base(p)
+		match := true
+		if pathFilter != nil {
+			match = pathFilter(p)
 		}
 
+		add := false
 		if info.IsDir() {
-			if dirFilter != nil && !dirFilter(p) {
+			if !match {
+				// Directory ignored.
 				return filepath.SkipDir
 			}
-		} else if MatchByPatterns(f, includeGlobPatterns, excludeGlobPatterns) {
+			add = dirsOnly
+		} else {
+			add = !dirsOnly
+		}
+
+		// Add the path if it matches.
+		if add && match {
 			lock.Lock()
 			*files = append(*files, p)
 			lock.Unlock()
@@ -103,30 +130,4 @@ func createVisitor(
 
 		return nil
 	}
-}
-
-// Match a string `name` by some include and exclude glob patterns (doublestar allowed).
-// All errors of `doublestar.ErrBadPattern` will be ignored for performance reason.
-func MatchByPatterns(s string, includeGlobs, excludeGlobs []string) (matches bool) {
-	include := false
-	exclude := false
-	for _, pattern := range includeGlobs {
-		matches, _ = doublestar.Match(pattern, s)
-		if matches {
-			include = true
-
-			break
-		}
-	}
-
-	for _, pattern := range excludeGlobs {
-		matches, _ = doublestar.Match(pattern, s)
-		if matches {
-			exclude = true
-
-			break
-		}
-	}
-
-	return include && !exclude
 }

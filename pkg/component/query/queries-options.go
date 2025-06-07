@@ -2,68 +2,106 @@ package query
 
 import (
 	"path"
+	"slices"
 
+	"github.com/bmatcuk/doublestar/v4"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-type Option func(opts *queryOptions) error
+type (
+	CompFilter func(_compName, _root string) (_matches bool)
 
-type CompFilter func(_compName, _root string) (_matches bool, _err error)
-
-// WithPathFilter set a custom path filter.
-func WithPathFilter(filter fs.DirFilter) Option {
-	return func(o *queryOptions) error {
-		o.dirFilter = filter
-
-		return nil
+	queryOptions struct {
+		configFileName string
+		compFilter     CompFilter
 	}
-}
 
-// WithPathFilterDefault sets the default path filter if non it set.
-func WithPathFilterDefault() Option {
-	return func(o *queryOptions) error {
-		o.dirFilter = func(dir string) bool {
-			d := path.Base(dir)
+	Option func(opts *queryOptions) error
+)
 
-			return d != ".git" && d != ".direnv"
+// Apply applies all options to the config.
+func (o *queryOptions) Apply(opts []Option) error {
+	for i := range opts {
+		if opts[i] == nil {
+			continue
 		}
 
-		return nil
+		err := opts[i](o)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-// ComponentDirFilter returns a simple filter which only returns
+// SingleComponentDirFilter returns a simple filter which only returns
 // the component with root directory `compDir`.
-func ComponentDirFilter(compDir string) CompFilter {
-	return func(_compName, root string) (matches bool, err error) {
-		if fs.MakeAbsolute(compDir) == root {
-			return true, nil
+func SingleComponentDirFilter(compDir string) Option {
+	f := func(_compName, root string) bool {
+		return fs.MakeAbsolute(compDir) == root
+	}
+
+	return WithCompDirFilter(f, true)
+}
+
+// WithCompDirFilter combines a component filter.
+func WithCompDirFilter(f CompFilter, useAnd bool) Option {
+	return func(o *queryOptions) error {
+		if o.compFilter != nil {
+			old := o.compFilter
+			o.compFilter = func(c, r string) bool {
+				if useAnd {
+					return old(c, r) && f(c, r)
+				} else {
+					return old(c, r) || f(c, r)
+				}
+			}
+		} else {
+			o.compFilter = f
 		}
 
-		return
+		return nil
 	}
 }
 
-// WithFilterAnd sets another component filter `f` in an `g && f` combination.
-func WithFilterAnd(f CompFilter) Option {
-	return func(o *queryOptions) error {
-		if o.compFilter == nil {
-			o.compFilter = f
-		} else {
-			// Do a mixing.
-			old := o.compFilter
-			o.compFilter = func(compName, root string) (matches bool, err error) {
-				matches, err = old(compName, root)
-				if !matches || err != nil {
-					return
-				}
+// WithCompDirPatterns add a component filter based on name patterns.
+func WithCompDirPatterns(incls []string, excls []string, useAnd bool) Option {
+	filt := func(name string, _ string) bool {
+		include := false
+		exclude := false
 
-				return f(compName, root)
+		for _, pattern := range incls {
+			matches, err := doublestar.Match(pattern, name)
+			if err != nil {
+				log.Warnf("Pattern '%s' is invalid.", pattern)
+
+				return false
+			} else if matches {
+				include = true
+
+				break
 			}
 		}
 
-		return nil
+		for _, pattern := range excls {
+			matches, err := doublestar.Match(pattern, name)
+			if err != nil {
+				log.Warnf("Pattern '%s' is invalid.", pattern)
+
+				return false
+			} else if matches {
+				exclude = true
+
+				break
+			}
+		}
+
+		return include && !exclude
 	}
+
+	return WithCompDirFilter(filt, useAnd)
 }
 
 // WithComponentConfigFilename sets the components config filename to be used
@@ -74,4 +112,16 @@ func WithComponentConfigFilename(filename string) Option {
 
 		return nil
 	}
+}
+
+// withPathFilterDefault sets the default path filter if non it set.
+// `useAnd` will logically and this  to a default one if set.
+func withPathFilterDefault(useAnd bool) fs.FindOptions {
+	var def = []string{"external"}
+
+	f := func(p string) bool {
+		return !slices.Contains(def, path.Base(p))
+	}
+
+	return fs.WithPathFilter(f, useAnd)
 }
