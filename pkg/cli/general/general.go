@@ -46,7 +46,7 @@ func FindComponents(
 			append([]string{"*"}, defaultCompPatterns...),
 			1,
 			compCreator,
-			query.WithFilterAnd(query.ComponentDirFilter(compDir)),
+			query.WithComponentDirSingle(compDir),
 		)
 
 	default:

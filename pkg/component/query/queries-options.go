@@ -1,10 +1,12 @@
 package query
 
 import (
+	"os"
 	"path"
 	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/sdsc-ordes/quitsh/pkg/component"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
@@ -20,6 +22,10 @@ type (
 
 	Option func(opts *queryOptions) error
 )
+
+func newQueryOptions() queryOptions {
+	return queryOptions{configFileName: component.ConfigFilename}
+}
 
 // Apply applies all options to the config.
 func (o *queryOptions) Apply(opts []Option) error {
@@ -129,7 +135,7 @@ func WithComponentConfigFilename(filename string) Option {
 func withPathFilterDefault(useAnd bool) fs.FindOptions {
 	var def = []string{"external"}
 
-	f := func(p string) bool {
+	f := func(p string, _ os.DirEntry) bool {
 		return !slices.Contains(def, path.Base(p))
 	}
 

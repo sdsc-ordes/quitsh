@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -15,8 +16,6 @@ import (
 
 // Find finds all components in directory `root` and loads them.
 // Some directories are by default ignored.
-//
-//nolint:gocognit,funlen
 func Find(
 	rootDir string,
 	creator comp.ComponentCreator,
@@ -27,8 +26,11 @@ func Find(
 	}
 
 	// Apply options.
-	queryOpts := queryOptions{}
-	queryOpts.Apply(opts)
+	queryOpts := newQueryOptions()
+	err = queryOpts.Apply(opts)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rootDir = fs.MakeAbsolute(rootDir)
 	files, traversedFiles, err := fs.FindFiles(
@@ -36,8 +38,8 @@ func Find(
 		append(queryOpts.fsOpts,
 			// Always `&&` the essential last filters:
 			// Only `.component` files.
-			fs.WithPathFilter(func(p string) bool {
-				return path.Base(p) == queryOpts.configFileName
+			fs.WithPathFilter(func(p string, i os.DirEntry) bool {
+				return i.IsDir() || path.Base(p) == queryOpts.configFileName
 			}, true),
 			// Ignore all non useful files in default dirs.
 			fs.WithPathFilterDefault(true),
@@ -181,8 +183,11 @@ func FindInside(
 	}
 
 	// Apply options.
-	queryOpts := queryOptions{}
-	queryOpts.Apply(opts)
+	queryOpts := newQueryOptions()
+	err := queryOpts.Apply(opts)
+	if err != nil {
+		return nil, err
+	}
 
 	d := fs.MakeAbsolute(dir)
 	if !fs.Exists(d) {
@@ -194,10 +199,10 @@ func FindInside(
 		log.Debug(f)
 
 		if fs.Exists(f) {
-			c, err := config.LoadFromFile[comp.Config](f)
+			c, e := config.LoadFromFile[comp.Config](f)
 
-			if err != nil {
-				return nil, err
+			if e != nil {
+				return nil, e
 			}
 
 			return creator(&c, d)

@@ -9,9 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/charlievieth/fastwalk"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
 // Find all files in `rootDir`.
+// Note: Take care when using [WithPathFilter] or [WithGlobPatterns] because
+// they will influence how the files are walked.
 // This function uses goroutines under to hood.
 func FindFiles(
 	rootDir string,
@@ -31,12 +34,14 @@ func FindFilesByPatterns(
 ) (files []string, traversedFiles int64, err error) {
 	return FindPaths(rootDir,
 		append(opts,
-			WithGlobPatterns(includeGlobPatterns, excludeGlobPatterns, true),
+			WithGlobFilePatterns(includeGlobPatterns, excludeGlobPatterns, true),
 			WithWalkDirsOnly(false))...,
 	)
 }
 
 // Find all paths in `rootDir`.
+// Note: Take care when using [WithPathFilter] or [WithGlobPatterns] because
+// they will influence how the files are walked.
 // This function uses goroutines under to hood.
 func FindPaths(
 	rootDir string,
@@ -98,7 +103,7 @@ func createVisitor(
 	pathFilter PathFilter,
 ) stdfs.WalkDirFunc {
 	return func(p string, info os.DirEntry, err error) error {
-		count.Add(1)
+		log.Tracef("Visit path: '%s'", p)
 
 		if err != nil {
 			// on permission errors we just skip it
@@ -107,18 +112,28 @@ func createVisitor(
 
 		match := true
 		if pathFilter != nil {
-			match = pathFilter(p)
+			match = pathFilter(p, info)
 		}
+		trace("Path match: '%s', '%v'", p, match)
 
-		add := false
+		var add bool
 		if info.IsDir() {
 			if !match {
 				// Directory ignored.
 				return filepath.SkipDir
 			}
-			add = dirsOnly
+
+			if dirsOnly {
+				count.Add(1)
+				add = true
+			}
+			trace("Dir: '%s'", p)
 		} else {
-			add = !dirsOnly
+			if !dirsOnly {
+				count.Add(1)
+				add = true
+			}
+			trace("File: '%s'", p)
 		}
 
 		// Add the path if it matches.
