@@ -15,6 +15,7 @@ type (
 	queryOptions struct {
 		configFileName string
 		compFilter     CompFilter
+		fsOpts         []fs.FindOptions
 	}
 
 	Option func(opts *queryOptions) error
@@ -36,9 +37,18 @@ func (o *queryOptions) Apply(opts []Option) error {
 	return nil
 }
 
-// SingleComponentDirFilter returns a simple filter which only returns
+// WithFsOptions sets [fs.FindOptions] for the search over the directories.
+func WithFindOptions(opts ...fs.FindOptions) Option {
+	return func(o *queryOptions) error {
+		o.fsOpts = opts
+
+		return nil
+	}
+}
+
+// WithComponentDirSingle returns a simple filter which only returns
 // the component with root directory `compDir`.
-func SingleComponentDirFilter(compDir string) Option {
+func WithComponentDirSingle(compDir string) Option {
 	f := func(_compName, root string) bool {
 		return fs.MakeAbsolute(compDir) == root
 	}

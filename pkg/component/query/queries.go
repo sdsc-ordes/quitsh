@@ -20,8 +20,7 @@ import (
 func Find(
 	rootDir string,
 	creator comp.ComponentCreator,
-	opts []Option,
-	optsFs ...fs.FindOptions,
+	opts ...Option,
 ) (comps []*comp.Component, all []*comp.Component, err error) {
 	if creator == nil {
 		log.Panic("Component creator not given.")
@@ -34,7 +33,7 @@ func Find(
 	rootDir = fs.MakeAbsolute(rootDir)
 	files, traversedFiles, err := fs.FindFiles(
 		rootDir,
-		append(optsFs,
+		append(queryOpts.fsOpts,
 			// Always `&&` the essential last filters:
 			// Only `.component` files.
 			fs.WithPathFilter(func(p string) bool {
@@ -152,9 +151,9 @@ func FindByPatterns(
 	log.Info("Find components by patterns.",
 		"includes", incls, "excludes", excls, "root", rootDir)
 
-	opts = append([]Option{WithCompDirPatterns(incls, excls, true)}, opts...)
+	opts = append(opts, WithCompDirPatterns(incls, excls, true))
 
-	comps, all, err = Find(rootDir, creator, opts)
+	comps, all, err = Find(rootDir, creator, opts...)
 	if err != nil {
 		log.ErrorE(err, "Could not find and load components.", "root", rootDir)
 	} else if len(comps) < minCount {

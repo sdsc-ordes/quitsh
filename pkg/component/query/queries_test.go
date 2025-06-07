@@ -113,29 +113,29 @@ func TestComponentFindByPattern(t *testing.T) {
 	cG := component.NewComponentCreator("", nil)
 
 	log.Info("Find all 5.")
-	comps, _, err := FindByPatterns(dir, []string{"*"}, 5, cG)
+	comps, _, err := FindByPatterns(dir, []string{"*"}, 5, cG, nil)
 	require.NoError(t, err, "should find 5")
 	assert.Len(t, comps, 5, "should return 5 results")
 	findNames(t, comps, names)
 
 	log.Info("Find all and fail.")
-	_, _, err = FindByPatterns(dir, []string{"*"}, 6, cG)
+	_, _, err = FindByPatterns(dir, []string{"*"}, 6, cG, nil)
 	require.ErrorContains(t, err, "min. count '6' components not found in")
 
 	log.Info("Find all with excludes.")
-	comps, _, err = FindByPatterns(dir, []string{"*", "!*-sub-*"}, 2, cG)
+	comps, _, err = FindByPatterns(dir, []string{"*", "!*-sub-*"}, 2, cG, nil)
 	require.NoError(t, err, "should find it")
 	assert.Len(t, comps, 2, "should return 2 results")
 	findNames(t, comps, names[0:2])
 
 	log.Info("Find one.")
-	comps, _, err = FindByPatterns(dir, []string{"a"}, 0, cG)
+	comps, _, err = FindByPatterns(dir, []string{"a"}, 0, cG, nil)
 	require.NoError(t, err, "should find it")
 	assert.Len(t, comps, 1, "should return 1 results")
 	findNames(t, comps, names[0:1])
 
 	log.Info("Find sub.")
-	comps, _, err = FindByPatterns(dir, []string{"*-sub-*"}, 0, cG)
+	comps, _, err = FindByPatterns(dir, []string{"*-sub-*"}, 0, cG, nil)
 	require.NoError(t, err, "should find it")
 	assert.Len(t, comps, 3, "should return 3 results")
 	findNames(t, comps, names[2:])
@@ -151,12 +151,14 @@ func TestComponentFindByPatternZero(t *testing.T) {
 
 	for _, d := range dirs {
 		comps, _, err := FindByPatterns(dir,
-			[]string{"*"}, 1, cG, WithFilterAnd(ComponentDirFilter(d)))
+			[]string{"*"}, 1, cG,
+			WithComponentDirSingle(d))
 		require.NoError(t, err, "should find it")
 		assert.Len(t, comps, 1, "should return 1 results '%s'", d)
 	}
 
-	_, _, e = FindByPatterns(dir, []string{"*"}, 1, cG,
-		WithFilterAnd(ComponentDirFilter("non-existing")))
+	_, _, e = FindByPatterns(dir,
+		[]string{"*"}, 1, cG,
+		WithComponentDirSingle("non-existing"))
 	require.Error(t, e, "min. count '1' components not found in")
 }
