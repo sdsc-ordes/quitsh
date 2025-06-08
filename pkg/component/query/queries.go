@@ -42,9 +42,9 @@ func Find(
 				return i.IsDir() || path.Base(p) == queryOpts.configFileName
 			}, true),
 			// Ignore all non useful files in default dirs.
-			fs.WithPathFilterDefault(true),
+			fs.WithWalkDirFilterDefault(true),
 			// Ignore other non useful components dirs.
-			withPathFilterDefault(true),
+			withWalkDirFilterDefault(true),
 		)...,
 	)
 	if err != nil {

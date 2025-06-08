@@ -27,8 +27,9 @@ type (
 	FindOptions func(opts *queryOptions) error
 
 	queryOptions struct {
-		pathFilter PathFilter
-		dirsOnly   bool
+		walkDirFilter PathFilter
+		pathFilter    PathFilter
+		dirsOnly      bool
 	}
 )
 
@@ -52,56 +53,67 @@ func WithPathFilter(f PathFilter, useAnd bool) FindOptions {
 	}
 }
 
-// DefaultIgnoredDirectories returns all by default ignored directories.
-func IgnoredDirectoriesDefault() []string {
-	return []string{".git", ".direnv", ".devenv"}
+// WithWalkDirFilter sets a custom walk filter
+// to determine which directories to skip.
+func WithWalkDirFilter(f PathFilter, useAnd bool) FindOptions {
+	return func(o *queryOptions) error {
+		if o.walkDirFilter != nil {
+			old := o.walkDirFilter
+			o.walkDirFilter = func(p string, i os.DirEntry) bool {
+				if useAnd {
+					return old(p, i) && f(p, i)
+				} else {
+					return old(p, i) || f(p, i)
+				}
+			}
+		} else {
+			o.walkDirFilter = f
+		}
+
+		return nil
+	}
 }
 
-// WithPathFilterDefault sets the default path filter if non it set.
+// DefaultIgnoredDirectories returns all by default ignored directories.
+func IgnoredDirectoriesDefault() []string {
+	return []string{".git", ".direnv", ".devenv", OutputDir}
+}
+
+// WithWalkDirFilterDefault sets the default walk directory filter if non it set.
+// Note: This is not the same as the `[WithPathFilter]` counter part as
+// it determines the discovery of files when walking the tree.
 // `useAnd` will logically and this filter to a default one if set.
-func WithPathFilterDefault(useAnd bool) FindOptions {
+func WithWalkDirFilterDefault(useAnd bool) FindOptions {
 	var def = IgnoredDirectoriesDefault()
 
 	f := func(p string, _ os.DirEntry) bool {
 		return !slices.Contains(def, path.Base(p))
 	}
 
-	return WithPathFilter(f, useAnd)
+	return WithWalkDirFilter(f, useAnd)
 }
 
-// WithGlobPatterns sets the doublestar glob patterns path filter.
-// Note: If you want to filter files use [WithGlobFilePatterns] or
-//
-//	[WithGlobDirPatterns] for directories. This patterns are used when
-//	walking through the filesystem, any ignore on a directory will result in not finding
-//	other files.
+// WithWalkDirFilterPatterns sets doublestar glob patterns to skip directories when
+// walking over the filesystem.
+func WithWalkDirFilterPatterns(include []string, exclude []string, useAnd bool) FindOptions {
+	f := func(p string, _ os.DirEntry) bool { return MatchByPatterns(p, include, exclude) }
+
+	return WithWalkDirFilter(f, useAnd)
+}
+
+// WithPathFilterPatterns sets the doublestar glob patterns path filter
+// on discovered paths.
 //
 // `useAnd` will logically and this filter to a default one if set.
-func WithGlobPatterns(include []string, exclude []string, useAnd bool) FindOptions {
+func WithPathFilterPatterns(include []string, exclude []string, useAnd bool) FindOptions {
 	f := func(p string, _ os.DirEntry) bool { return MatchByPatterns(p, include, exclude) }
 
 	return WithPathFilter(f, useAnd)
 }
 
-// WithGlobFilePatterns sets the doublestar glob patterns for files, (all directory paths are not touched).
-// `useAnd` will logically and this filter to a default one if set.
-func WithGlobFilePatterns(include []string, exclude []string, useAnd bool) FindOptions {
-	f := func(p string, i os.DirEntry) bool { return i.IsDir() || MatchByPatterns(p, include, exclude) }
-
-	return WithPathFilter(f, useAnd)
-}
-
-// WithGlobDirPattern sets the doublestar glob patterns for directory, (all directory paths are not touched).
-// `useAnd` will logically and this filter to a default one if set.
-func WithGlobDirPatterns(include []string, exclude []string, useAnd bool) FindOptions {
-	f := func(p string, i os.DirEntry) bool { return !i.IsDir() || MatchByPatterns(p, include, exclude) }
-
-	return WithPathFilter(f, useAnd)
-}
-
-// WithWalkDirsOnly sets to only walk directories (no files) which means any
+// WithReportOnlyDirs sets to only walk directories (no files) which means any
 // matching filters are done on directory paths only.
-func WithWalkDirsOnly(enable bool) FindOptions {
+func WithReportOnlyDirs(enable bool) FindOptions {
 	return func(o *queryOptions) error {
 		o.dirsOnly = enable
 

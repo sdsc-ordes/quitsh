@@ -36,7 +36,7 @@ func main() {
 		cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its build with 'quitsh'."),
 		cli.WithCompFindOptions(
 			query.WithFindOptions(
-				fs.WithGlobDirPatterns(nil,
+				fs.WithWalkDirFilterPatterns(nil,
 					[]string{"**/test/repo/**"}, true))),
 		cli.WithStages("lint", "build", "test"),
 		cli.WithTargetToStageMapperDefault(),
