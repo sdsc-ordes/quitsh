@@ -106,14 +106,14 @@ func WithComponentConfigFilename(filename string) Option {
 	}
 }
 
-// withPathFilterDefault sets the default path filter if non it set.
+// withWalkDirFilterDefault sets the default path filter if non it set.
 // `useAnd` will logically and this  to a default one if set.
-func withPathFilterDefault(useAnd bool) fs.FindOptions {
+func withWalkDirFilterDefault(useAnd bool) fs.FindOptions {
 	var def = []string{"external"}
 
 	f := func(p string, _ os.DirEntry) bool {
 		return !slices.Contains(def, path.Base(p))
 	}
 
-	return fs.WithPathFilter(f, useAnd)
+	return fs.WithWalkDirFilter(f, useAnd)
 }

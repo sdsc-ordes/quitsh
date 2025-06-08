@@ -10,12 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:funlen
-func TestGlob(t *testing.T) {
-	err := log.Setup("trace")
-	require.NoError(t, err)
-
-	dir := t.TempDir()
+func makeDirs(t testing.TB, dir string) {
 	type d struct {
 		p   string
 		dir bool
@@ -53,10 +48,18 @@ func TestGlob(t *testing.T) {
 	for _, p := range paths {
 		makePaths(p)
 	}
+}
+
+func TestGlob(t *testing.T) {
+	err := log.Setup("trace")
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	makeDirs(t, dir)
 
 	{
 		files, traverseFiles, e := FindFiles(dir,
-			WithGlobFilePatterns([]string{"**/*.txt"}, []string{"**/h.*"}, true))
+			WithPathFilterPatterns([]string{"**/*.txt"}, []string{"**/h.*"}, true))
 		require.NoError(t, e)
 		assert.Equal(t, int64(8), traverseFiles)
 
@@ -72,7 +75,7 @@ func TestGlob(t *testing.T) {
 
 	{
 		files, traverseFiles, e := FindFiles(dir,
-			WithGlobFilePatterns(nil,
+			WithPathFilterPatterns(nil,
 				[]string{"**/h.*", "**/g.txt", "**/ignore*"}, true))
 
 		require.NoError(t, e)
@@ -88,8 +91,8 @@ func TestGlob(t *testing.T) {
 
 	{
 		files, traverseFiles, e := FindFiles(dir,
-			WithGlobDirPatterns(nil, []string{"**/*-1"}, true),
-			WithGlobFilePatterns([]string{"**/*.txt"}, nil, true))
+			WithWalkDirFilterPatterns(nil, []string{"**/*-1"}, true),
+			WithPathFilterPatterns([]string{"**/*.txt"}, nil, true))
 
 		require.NoError(t, e)
 		assert.Equal(t, int64(4), traverseFiles)
@@ -105,8 +108,8 @@ func TestGlob(t *testing.T) {
 	{
 		// And connection.
 		files, traverseFiles, e := FindFiles(dir,
-			WithGlobFilePatterns([]string{"**/f.*"}, nil, true),
-			WithGlobFilePatterns([]string{"**/g.*"}, nil, true))
+			WithPathFilterPatterns([]string{"**/f.*"}, nil, true),
+			WithPathFilterPatterns([]string{"**/g.*"}, nil, true))
 
 		require.NoError(t, e)
 		assert.Equal(t, int64(8), traverseFiles)
@@ -117,8 +120,8 @@ func TestGlob(t *testing.T) {
 	{
 		// Or connection.
 		files, traverseFiles, e := FindFiles(dir,
-			WithGlobFilePatterns([]string{"**/f.*"}, nil, true),
-			WithGlobFilePatterns([]string{"**/g.*"}, nil, false))
+			WithPathFilterPatterns([]string{"**/f.*"}, nil, true),
+			WithPathFilterPatterns([]string{"**/g.*"}, nil, false))
 
 		require.NoError(t, e)
 		assert.Equal(t, int64(8), traverseFiles)
@@ -131,5 +134,31 @@ func TestGlob(t *testing.T) {
 		}
 
 		assert.Len(t, files, 4)
+	}
+}
+
+func TestGlobDirs(t *testing.T) {
+	err := log.Setup("trace")
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	makeDirs(t, dir)
+	{
+		// Walk dirs only.
+		paths, _, e := FindPaths(dir,
+			WithReportOnlyDirs(true),
+			// a-3 and b-3 are skipped.
+			WithWalkDirFilterPatterns(nil, []string{"**/*-3"}, true),
+			// only report a-2 and b-2
+			WithPathFilterPatterns([]string{"**/*-2"}, nil, true))
+
+		require.NoError(t, e)
+		for _, s := range []string{
+			path.Join(dir, "a/a-1/a-2"),
+			path.Join(dir, "b/b-1/b-2")} {
+			assert.Contains(t, paths, s)
+		}
+
+		assert.Len(t, paths, 2)
 	}
 }

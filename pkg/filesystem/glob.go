@@ -13,14 +13,14 @@ import (
 )
 
 // Find all files in `rootDir`.
-// Note: Take care when using [WithPathFilter] or [WithGlobPatterns] because
+// Note: Take care when using [WithPathFilter] or [WithPathFilterPatterns] because
 // they will influence how the files are walked.
 // This function uses goroutines under to hood.
 func FindFiles(
 	rootDir string,
 	opts ...FindOptions,
 ) (files []string, traversedFiles int64, err error) {
-	return FindPaths(rootDir, append(opts, WithWalkDirsOnly(false))...)
+	return FindPaths(rootDir, append(opts, WithReportOnlyDirs(false))...)
 }
 
 // Find all files in `rootDir` which match glob patterns
@@ -34,13 +34,13 @@ func FindFilesByPatterns(
 ) (files []string, traversedFiles int64, err error) {
 	return FindPaths(rootDir,
 		append(opts,
-			WithGlobFilePatterns(includeGlobPatterns, excludeGlobPatterns, true),
-			WithWalkDirsOnly(false))...,
+			WithPathFilterPatterns(includeGlobPatterns, excludeGlobPatterns, true),
+			WithReportOnlyDirs(false))...,
 	)
 }
 
 // Find all paths in `rootDir`.
-// Note: Take care when using [WithPathFilter] or [WithGlobPatterns] because
+// Note: Take care when using [WithPathFilter] or [WithPathFilterPatterns] because
 // they will influence how the files are walked.
 // This function uses goroutines under to hood.
 func FindPaths(
@@ -58,9 +58,10 @@ func FindPaths(
 		}
 	}
 
-	// Always use the default path filter.
-	if query.pathFilter == nil {
-		err = WithPathFilterDefault(true)(&query)
+	// Always use the default walk filter to
+	// ignore annoying directories.
+	if query.walkDirFilter == nil {
+		err = WithWalkDirFilterDefault(true)(&query)
 		if err != nil {
 			return files, traversedFiles, err
 		}
@@ -70,6 +71,7 @@ func FindPaths(
 		ToSlash: true,
 	}
 
+	// TODO: Use a channel and a collecting goroutine here instead of locking etc.
 	lock := sync.Mutex{}
 	countA := atomic.Int64{}
 
@@ -81,6 +83,7 @@ func FindPaths(
 			&lock,
 			&files,
 			query.dirsOnly,
+			query.walkDirFilter,
 			query.pathFilter,
 		),
 	)
@@ -95,11 +98,13 @@ func FindPaths(
 	return files, traversedFiles, err
 }
 
+//nolint:gocognit
 func createVisitor(
 	count *atomic.Int64,
 	lock *sync.Mutex,
-	files *[]string,
+	paths *[]string,
 	dirsOnly bool,
+	walkDirFilter PathFilter,
 	pathFilter PathFilter,
 ) stdfs.WalkDirFunc {
 	return func(p string, info os.DirEntry, err error) error {
@@ -110,6 +115,15 @@ func createVisitor(
 			return filepath.SkipDir
 		}
 
+		// Check on directories if we skip this dir and also dont
+		// report it.
+		if info.IsDir() && walkDirFilter != nil {
+			match := walkDirFilter(p, info)
+			if !match {
+				return filepath.SkipDir
+			}
+		}
+
 		match := true
 		if pathFilter != nil {
 			match = pathFilter(p, info)
@@ -118,11 +132,6 @@ func createVisitor(
 
 		var add bool
 		if info.IsDir() {
-			if !match {
-				// Directory ignored.
-				return filepath.SkipDir
-			}
-
 			if dirsOnly {
 				count.Add(1)
 				add = true
@@ -139,7 +148,7 @@ func createVisitor(
 		// Add the path if it matches.
 		if add && match {
 			lock.Lock()
-			*files = append(*files, p)
+			*paths = append(*paths, p)
 			lock.Unlock()
 		}
 

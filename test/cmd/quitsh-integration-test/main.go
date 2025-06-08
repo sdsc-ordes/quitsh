@@ -64,7 +64,7 @@ func main() {
 		// Ignore component-b by not searching in this directory.
 		cli.WithCompFindOptions(
 			query.WithFindOptions(
-				fs.WithGlobDirPatterns(nil, []string{"**/component-b"}, true))),
+				fs.WithWalkDirFilterPatterns(nil, []string{"**/component-b"}, true))),
 		cli.WithStages("lint", "build", "test", "monkey-stage", "deploy"),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithToolchainDispatcherNix(
