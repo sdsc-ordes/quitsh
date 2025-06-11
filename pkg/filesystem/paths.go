@@ -3,6 +3,7 @@ package fs
 import (
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -111,4 +112,12 @@ func MakeAllAbsoluteTo(base string, p ...string) []string {
 	}
 
 	return p
+}
+
+// MakeRelativeTo makes a `path` relative to `base`.
+func MakeRelativeTo(base string, path string) (s string, e error) {
+	s, e = filepath.Rel(base, path)
+	s = filepath.ToSlash(s)
+
+	return
 }

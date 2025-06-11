@@ -57,3 +57,23 @@ func TestMakeAbs(t *testing.T) {
 	assert.Equal(t, d, MakeAbsolute("."))
 	assert.Equal(t, []string{d, path.Join(d, "a")}, MakeAllAbsolute(".", "./a"))
 }
+
+func TestMakeRelativeTo(t *testing.T) {
+	t.Parallel()
+
+	p, e := MakeRelativeTo("/a/b/c/d/e//../..", "/a/b/c/d/e")
+	require.NoError(t, e)
+	assert.Equal(t, "d/e", p)
+
+	p, e = MakeRelativeTo("b/c", "b/c/d")
+	require.NoError(t, e)
+	assert.Equal(t, "d", p)
+
+	p, e = MakeRelativeTo("b", "b/c/d")
+	require.NoError(t, e)
+	assert.Equal(t, "c/d", p)
+
+	p, e = MakeRelativeTo("a/b/c", "b/c")
+	require.NoError(t, e)
+	assert.Equal(t, "../../../b/c", p)
+}
