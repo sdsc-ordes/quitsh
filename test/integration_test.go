@@ -68,6 +68,23 @@ func TestCLIExecTarget(t *testing.T) {
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
+func TestCLISetConfigValues(t *testing.T) {
+	cli := setup(t).Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
 func TestCLIExecTarget2(t *testing.T) {
 	cli := setup(t).Build()
 
