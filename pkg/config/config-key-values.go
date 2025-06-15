@@ -10,9 +10,9 @@ import (
 )
 
 // ApplyKeyValues applies key,value pairs to a config, e.g. `a.b.c: {"a": 4}`
-// would apply `4` in the nested struct fields as in Go code `a.b.c = 4`.
-// The apply is ordered, succesivce pairs overwrite/merge what previous
-// pairs have produced.
+// would apply `4` in the nested struct fields as in Go code `a.b.c.a = 4`.
+// The apply is ordered, successive pairs overwrite/merge with previous
+// pairs.
 func ApplyKeyValues(keyValues []string, config any) error {
 	for i := range keyValues {
 		m, err := parseToNestedMap(keyValues[i])
