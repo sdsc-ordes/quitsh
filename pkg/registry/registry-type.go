@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -18,7 +19,7 @@ const (
 	RegistryTiltName = "tilt"
 )
 
-func NewRegistryType(s string) (Type, error) {
+func NewType(s string) (Type, error) {
 	switch s {
 	case RegistryReleaseName:
 		return RegistryRelease, nil
@@ -47,7 +48,7 @@ func (v Type) String() string {
 
 // Implement the pflags Value interface.
 func (v *Type) Set(s string) (err error) {
-	*v, err = NewRegistryType(s)
+	*v, err = NewType(s)
 
 	return
 }
@@ -70,7 +71,7 @@ func (v *Type) UnmarshalYAML(unmarshal func(any) error) (err error) {
 		return
 	}
 
-	*v, err = NewRegistryType(s)
+	*v, err = NewType(s)
 
 	return
 }
@@ -79,4 +80,17 @@ func (v *Type) UnmarshalYAML(unmarshal func(any) error) (err error) {
 // Note: needs to be value-receiver to be called!
 func (v Type) MarshalYAML() (any, error) {
 	return v.String(), nil
+}
+
+// Implement the [config.UnmarshalMapstruct] interface.
+func (v *Type) UnmarshalMapstruct(data any) error {
+	d, ok := data.(string)
+	if !ok {
+		return errors.New("can only unmarshal from 'string' into 'EnvironmentType'")
+	}
+
+	var err error
+	*v, err = NewType(d)
+
+	return err
 }
