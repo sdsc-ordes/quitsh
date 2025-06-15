@@ -2,6 +2,8 @@ package common
 
 import (
 	"fmt"
+
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
 type BuildType int
@@ -85,4 +87,17 @@ func (v *BuildType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 // Note: needs to be value-receiver to be called!
 func (v BuildType) MarshalYAML() (any, error) {
 	return v.String(), nil
+}
+
+// Implement the [config.UnmarshalMapstruct] interface.
+func (v *BuildType) UnmarshalMapstruct(data any) error {
+	d, ok := data.(string)
+	if !ok {
+		return errors.New("can only unmarshal from 'string' into 'BuildType'")
+	}
+
+	var err error
+	*v, err = NewBuildType(d)
+
+	return err
 }
