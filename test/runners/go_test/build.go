@@ -49,6 +49,10 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 			"GOWORK=off").
 		Build()
 
+	if r.settings.BuildType == common.BuildRelease {
+		log.Info("Hurrey building release version")
+	}
+
 	log.Info("Run Go install.")
 	cmd := []string{"install"}
 	cmd = append(cmd, path.Join(comp.Root(), "..."))
