@@ -1,0 +1,28 @@
+# 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
+#
+# Quitsh
+#
+# You are looking at quitsh's own component
+# definition which defines some targets
+# which will run steps over runners (Go code).
+# Each runner will dispatch over a Nix development shell which
+# makes the stuff very stable.
+#
+# 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
+
+name: cli
+version: 0.1.0
+language: go
+
+inputs:
+  srcs:
+    patterns:
+      - "^.*$"
+
+targets:
+  build:
+    steps:
+      - runner: go
+  lint:
+    steps:
+      - runner: go
