@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
@@ -77,6 +78,31 @@ func TestCLISetConfigValues(t *testing.T) {
 		"--log-level",
 		"debug",
 		"-k", "build.buildType: release",
+		"component-a::build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hurrey building release version")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLISetConfigValuesStdin(t *testing.T) {
+	cli := setup(t).Build()
+
+	config := `
+	build:
+	    buildType: release
+	`
+	r := strings.NewReader(config)
+
+	_, stderr, err := cli.WithStdin(r).GetStdErr(
+		"--config", "-",
+		"exec-target",
+		"--log-level",
+		"debug",
 		"component-a::build",
 	)
 
