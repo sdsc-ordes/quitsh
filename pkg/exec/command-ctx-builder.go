@@ -37,21 +37,19 @@ func (c CmdContextBuilder) Build() *CmdContext {
 	return c.cmdCtx
 }
 
-// Quiet disables pipeing stdout,stderr and logging the commands.
+// Quiet disables pipeing stdout,stderr, logging commands is still performed.
 // Error reporting is not affected.
 func (c CmdContextBuilder) Quiet() CmdContextBuilder {
 	c.cmdCtx.pipeOutput = false
-	c.cmdCtx.logCommand = false
 	c.cmdCtx.captureError = true
 
 	return c
 }
 
-// NoQuiet pipes stdout,stderr and logs the commands (default)
+// NoQuiet pipes stdout,stderr (default).
 // Error reporting is not affected.
 func (c CmdContextBuilder) NoQuiet() CmdContextBuilder {
 	c.cmdCtx.pipeOutput = true
-	c.cmdCtx.logCommand = true
 	c.cmdCtx.captureError = false
 
 	return c
