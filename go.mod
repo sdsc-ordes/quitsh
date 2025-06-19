@@ -1,6 +1,6 @@
 module github.com/sdsc-ordes/quitsh
 
-go 1.24.2
+go 1.24
 
 require (
 	deedles.dev/xiter v0.2.1
