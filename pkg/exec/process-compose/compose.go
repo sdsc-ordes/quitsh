@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"time"
 
@@ -19,14 +18,27 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ProcessComposeCtx represents a `process-compose` context.
-type ProcessComposeCtx struct {
-	*exec.CmdContext
-	socket string
+const ProcessRunning ProcessState = 0
+const ProcessReady ProcessState = 1
+const ProcessCompleted ProcessState = 2
 
-	tempDir string
-	logFile string
-}
+// ProcessComposeCtx represents a `process-compose` context.
+type (
+	ProcessComposeCtx struct {
+		*exec.CmdContext
+		socket string
+
+		tempDir string
+		logFile string
+	}
+
+	ProcessState int
+
+	ProcessCond struct {
+		Name  string
+		State ProcessState
+	}
+)
 
 // Start starts the process compose from a
 // `devShellAttrPath` (e.g. `custodian.shells.test-dbs`
@@ -163,9 +175,10 @@ func (pc *ProcessComposeCtx) Stop() error {
 // Check if processes in the process compose is running.
 //
 //nolint:gocognit // The goroutine polling is fairily simple to understand.
-func (pc *ProcessComposeCtx) WaitTillRunning(
+func (pc *ProcessComposeCtx) WaitTill(
 	ctx context.Context,
-	procs ...string) (isRunning bool, err error) {
+	checkInterval time.Duration,
+	procs ...ProcessCond) (fulfilled bool, err error) {
 	if len(procs) == 0 {
 		return true, nil
 	}
@@ -187,8 +200,9 @@ func (pc *ProcessComposeCtx) WaitTillRunning(
 			}
 
 			type Data struct {
-				Status string `json:"status"`
-				Name   string `json:"name"`
+				Status  string `json:"status"`
+				IsReady string `json:"is_ready"` //nolint:tagliatelle // external input
+				Name    string `json:"name"`
 			}
 			var d []Data
 
@@ -198,25 +212,39 @@ func (pc *ProcessComposeCtx) WaitTillRunning(
 					errors.AddContext(err, "Could not unmarshall output from process-compose.")
 			}
 
-			countRunning := 0
-			for i := range d {
-				if !slices.Contains(procs, d[i].Name) {
-					continue
-				}
-				s := strings.ToLower(d[i].Status)
+			condsFulfilled := 0
 
-				switch s {
-				case "completed":
-					// If any is completed just report back.
-					return false, nil
-				case "running":
-					countRunning += 1
+			for j := range d {
+				for i := range procs {
+					cond := &procs[i]
+					if cond.Name != d[j].Name {
+						continue
+					}
+
+					status := strings.ToLower(d[j].Status)
+					ready := strings.ToLower(d[j].IsReady)
+
+					switch {
+					case cond.State == ProcessRunning && status == "running":
+						fallthrough
+					case cond.State == ProcessReady && ready == "ready":
+						fallthrough
+					case cond.State == ProcessCompleted && status == "completed":
+						condsFulfilled += 1
+					}
 				}
 			}
 
-			if countRunning == len(procs) {
+			if condsFulfilled == len(procs) {
 				return true, nil
 			}
+		}
+
+		// Sleep for or until context is cancelled or check interval reached.
+		select {
+		case <-ctx.Done():
+			return false, nil
+		case <-time.After(checkInterval):
 		}
 	}
 }
