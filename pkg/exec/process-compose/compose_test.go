@@ -37,6 +37,8 @@ func TestProcessComposeDevenv(t *testing.T) {
 	running, err := pcCtx.WaitTill(ctx,
 		10*time.Millisecond,
 		ProcessCond{Name: "httpbin", State: ProcessRunning},
+		ProcessCond{Name: "keycloak", State: ProcessReady},
+		ProcessCond{Name: "completed", State: ProcessCompleted},
 	)
 	require.NoError(t, err)
 	assert.True(t, running)
