@@ -101,7 +101,6 @@ go-build-integration-test:
 
 # Test the integration test.
 # To execute specific tests you can use `-run regexp`.
-[private]
 go-test-integration *args: go-build-integration-test
     mkdir -p "{{out_dir}}/coverage"
 

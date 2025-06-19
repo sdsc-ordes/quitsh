@@ -8,7 +8,7 @@
   go = pkgs.mkShell {
     QUITSH_TOOLCHAINS = "go";
     packages = [
-      pkgs.go
+      pkgs.go_1_24
     ];
   };
   # =============================================
