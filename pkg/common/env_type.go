@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -108,4 +109,17 @@ func (v *EnvironmentType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 // Note: needs to be value-receiver to be called!
 func (v EnvironmentType) MarshalYAML() (any, error) {
 	return v.String(), nil
+}
+
+// Implement the [config.UnmarshalMapstruct] interface.
+func (v *EnvironmentType) UnmarshalMapstruct(data any) error {
+	d, ok := data.(string)
+	if !ok {
+		return errors.New("can only unmarshal from 'string' into 'EnvironmentType'")
+	}
+
+	var err error
+	*v, err = NewEnvironmentType(d)
+
+	return err
 }

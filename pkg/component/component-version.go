@@ -35,3 +35,13 @@ func (cv *Version) UnmarshalText(bytes []byte) error {
 
 	return p.UnmarshalText(bytes)
 }
+
+// Implement the [config.UnmarshalMapstruct] interface.
+func (v *Version) UnmarshalMapstruct(data any) error {
+	d, ok := data.(string)
+	if !ok {
+		return errors.New("can only unmarshal from 'string' into 'Version'")
+	}
+
+	return v.Set(d)
+}

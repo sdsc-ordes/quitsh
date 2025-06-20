@@ -79,11 +79,11 @@ func (c *CmdContext) Env() []string {
 	return common.CopySlice(c.env)
 }
 
-// StdinOnce sets a stdandard input reader to be used once.
-func (c CmdContext) WithStdin(r io.Reader) *CmdContext {
+// StdinOnce sets a standard input reader to be used once.
+func (c *CmdContext) WithStdin(r io.Reader) *CmdContext {
 	c.stdin = r
 
-	return &c
+	return c
 }
 
 // GetSplit executes a command and splits the output by newlines.
@@ -324,6 +324,7 @@ func (c *CmdContext) getCommand(args []string) (baseCmd string, argsOut []string
 func setupCapture(c *CmdContext, cmd *exec.Cmd, forceCapture bool) (buf *bytes.Buffer) {
 	if c.stdin != nil {
 		cmd.Stdin = c.stdin
+		c.stdin = nil // only use stdin exactly once
 	}
 
 	if c.captureError || forceCapture {

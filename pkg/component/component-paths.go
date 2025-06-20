@@ -69,7 +69,7 @@ func (c *Component) ImagesDir(p ...string) string {
 }
 
 // ImagesContainerfile returns the image file of the component for the image type.
-func (c *Component) ImagesContainerfile(imageType image.ImageType) string {
+func (c *Component) ImagesContainerfile(imageType image.Type) string {
 	return c.ImagesDir(imageType.String(), "Containerfile")
 }
 
