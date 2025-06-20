@@ -12,12 +12,17 @@
     # The devenv module to create good development shells.
     devenv = {
       url = "github:cachix/devenv";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgsDevenv";
     };
+    # We have to lock somehow the pkgs in `mkShell` here:
+    # https://github.com/cachix/devenv/issues/1797
+    # `nixpkgs` is used in the devShell modules.
+    nixpkgsDevenv.url = "github:cachix/devenv-nixpkgs/rolling";
     devenv-root = {
       url = "file+file:///dev/null";
       flake = false;
     };
+
   };
   outputs =
     { nixpkgs, devenv, ... }@inputs:
@@ -66,6 +71,7 @@
             (args: {
               devenv.root = lib.mkIf (root != "") root;
 
+              # Has no ready probe.
               services.httpbin = {
                 enable = true;
                 bind = [
@@ -73,6 +79,19 @@
                 ];
               };
 
+              # Has ready probe.
+              processes = {
+                keycloak = {
+                  exec = "${pkgs.coreutils}/bin/tail -f /dev/null";
+                  process-compose = {
+                    readiness_probe.exec.command = "${pkgs.coreutils}/bin/true";
+                    depends_on.httpbin.condition = "process_started";
+                  };
+                };
+                completed = {
+                  exec = "${pkgs.coreutils}/bin/true";
+                };
+              };
             })
           ];
         };

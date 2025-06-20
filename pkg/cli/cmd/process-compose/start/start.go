@@ -8,7 +8,7 @@ import (
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
-	processcompose "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
+	pc "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/spf13/cobra"
@@ -22,9 +22,10 @@ in a 'flake.nix' file.`
 const timeoutContainers = 100 * time.Second
 
 type startArgs struct {
-	attrPath string
-	flakeDir string
-	waitFor  []string
+	attrPath     string
+	flakeDir     string
+	waitFor      []string
+	waitForReady []string
 
 	attach         bool
 	socketPathFile string
@@ -46,6 +47,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 				stArgs.flakeDir,
 				stArgs.attrPath,
 				stArgs.waitFor,
+				stArgs.waitForReady,
 				stArgs.socketPathFile,
 				stArgs.attach)
 
@@ -59,7 +61,11 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitFor,
-			"wait-for", "w", nil, "Wait for this processes to be running.")
+			"wait-for", "w", nil, "Wait for these processes to be running.")
+
+	startCmd.Flags().
+		StringArrayVarP(&stArgs.waitFor,
+			"wait-for-ready", "r", nil, "Wait for these processes to be ready.")
 
 	startCmd.Flags().
 		StringVarP(&stArgs.socketPathFile,
@@ -79,20 +85,21 @@ func StartServices(
 	rootDir string,
 	flakeDir string,
 	devenvShellAttrPath string,
-	waitFor []string,
+	waitForRunning []string,
+	waitForReady []string,
 	socketPathFile string,
 	attach bool) (
-	pcCtx processcompose.ProcessComposeCtx,
+	pcCtx pc.ProcessComposeCtx,
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
-		pcCtx, err = processcompose.StartFromInstallable(
+		pcCtx, err = pc.StartFromInstallable(
 			rootDir,
 			devenvShellAttrPath,
 			false,
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, false)
+		pcCtx, err = pc.Start(rootDir, flakeDir, devenvShellAttrPath, false)
 	}
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
@@ -101,9 +108,18 @@ func StartServices(
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutContainers)
 	defer cancel()
 
-	isRunning, err := pcCtx.WaitTillRunning(ctx, waitFor...)
+	var conds []pc.ProcessCond
+	for i := range waitForRunning {
+		conds = append(conds, pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
+	}
+	for i := range waitForReady {
+		conds = append(conds, pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
+	}
+
+	isRunning, err := pcCtx.WaitTill(ctx, 100*time.Millisecond, conds...) //nolint:mnd
 	if err != nil || !isRunning {
-		return pcCtx, errors.AddContext(err, "failed to wait for processes '%q'.", waitFor)
+		return pcCtx, errors.AddContext(err,
+			"failed to wait for processes '%q', '%q'", waitForRunning, waitForReady)
 	}
 
 	if socketPathFile != "" {

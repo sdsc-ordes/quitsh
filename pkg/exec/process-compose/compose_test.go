@@ -34,7 +34,12 @@ func TestProcessComposeDevenv(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	running, err := pcCtx.WaitTillRunning(ctx, "httpbin")
+	running, err := pcCtx.WaitTill(ctx,
+		10*time.Millisecond,
+		ProcessCond{Name: "httpbin", State: ProcessRunning},
+		ProcessCond{Name: "keycloak", State: ProcessReady},
+		ProcessCond{Name: "completed", State: ProcessCompleted},
+	)
 	require.NoError(t, err)
 	assert.True(t, running)
 }

@@ -14,6 +14,7 @@ let
   # Override the buildGoModule function to use the specified Go package.
   buildGoModule = pkgs.buildGoModule.override { inherit (pkgsPinned) go; };
   buildWithSpecificGo = pkg: pkg.override { inherit buildGoModule; };
+  buildWithSpecificGoL = pkg: pkg.override { buildGoLatestModule = buildGoModule; };
 
   # Creates some options in the devenv module system to be used
   # for quitsh.
@@ -96,7 +97,7 @@ let
               # Linting and LSP and debuggers.
               (buildWithSpecificGo pkgs.delve)
               (buildWithSpecificGo pkgs.gotools)
-              (buildWithSpecificGo pkgs.gopls)
+              (buildWithSpecificGoL pkgs.gopls)
               (buildWithSpecificGo pkgs.golines)
               pkgs.golangci-lint-langserver
               pkgs.typos-lsp
