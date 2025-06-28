@@ -38,11 +38,6 @@ func Setup(level string) (err error) {
 }
 
 func initLog(level string) (logger, error) {
-	if ciRunning() && ForceColorInCI {
-		// We force here a color profile
-		lipgloss.SetColorProfile(termenv.TrueColor)
-	}
-
 	l := chlog.NewWithOptions(
 		os.Stderr, chlog.Options{
 			ReportCaller:    false,
@@ -58,11 +53,19 @@ func initLog(level string) (logger, error) {
 	styles := getStyles()
 	l.SetStyles(styles)
 
+	if ciRunning() && ForceColorInCI {
+		// We force here the color profile for CI.
+		l.SetColorProfile(termenv.TrueColor)
+	}
+
 	return logger{l: l}, nil
 }
 
 func getStyles() *chlog.Styles {
 	styles := chlog.DefaultStyles()
+
+	styles.Message = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#1b4796", Dark: "#58A6FF"})
 
 	styles.Levels[TraceLevel] = lipgloss.NewStyle().
 		SetString("TRACE").
