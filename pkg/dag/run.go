@@ -120,7 +120,7 @@ func executeRunners(
 			toolchainDispatcher,
 			config,
 			rootDir,
-			false,
+			true,
 		)
 
 		if e != nil {
@@ -198,6 +198,7 @@ func ExecuteRunner(
 		if err != nil {
 			return err
 		}
+		log := log.NewLogger(logPrefix)
 
 		ctx := context{
 			gitx:      git.NewCtx(rootDir),
@@ -205,7 +206,7 @@ func ExecuteRunner(
 			targetID:  targetID,
 			toolchain: toolchainName,
 			stepIdx:   stepIdx,
-			log:       log.NewLogger(logPrefix),
+			log:       log,
 		}
 		err = runner.Run(&ctx)
 

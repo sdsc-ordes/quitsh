@@ -2,7 +2,6 @@ package dag
 
 import (
 	"fmt"
-	"runtime"
 	"sync"
 
 	taskflow "github.com/noneback/go-taskflow"
@@ -16,6 +15,12 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 )
 
+const MaxCoroutineConcurrency = 10000
+
+// ExecuteDAGParallel executes the targets in parallel.
+// TODO: Refactor to better length.
+//
+//nolint:gocognit,funlen
 func ExecuteDAGParallel(
 	targetNodes TargetNodeMap,
 	runnerFactory factory.IFactory,
@@ -23,7 +28,7 @@ func ExecuteDAGParallel(
 	config config.IConfig,
 	rootDir string,
 ) (allErrors error) {
-	executor := taskflow.NewExecutor(uint(runtime.NumCPU()-1) * 10000) //nolint:gosec,mnd
+	executor := taskflow.NewExecutor(MaxCoroutineConcurrency)
 	tf := taskflow.NewTaskFlow("DAG")
 
 	var buildError error

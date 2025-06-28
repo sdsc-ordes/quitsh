@@ -53,7 +53,6 @@ func SaveInterfaceToFile(
 		defer func() {
 			err = errors.Combine(err, f.Close())
 		}()
-
 	} else {
 		f = os.Stdout
 	}

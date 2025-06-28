@@ -17,13 +17,13 @@ func ciRunning() bool {
 
 const TraceLevel = chlog.DebugLevel - 10
 
-var ForceColorInCI = true
+var ForceColorInCI = true //nolint:gochecknoglobals // Intended, to be disabled if really needed.
 
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
-var globalLogger = logger{
+var globalLogger = logger{ //nolint:gochecknoglobals // Accepted as only for logging.
 	l: chlog.New(os.Stderr),
-} //nolint:gochecknoglobals // Accepted as only for logging.
+}
 
 // Setup sets up the default loggers .
 func Setup(level string) (err error) {
@@ -69,6 +69,7 @@ func getStyles() *chlog.Styles {
 		Padding(0, 1, 0, 1).
 		Background(lipgloss.Color("#a4a4a4")).
 		Foreground(lipgloss.Color("0")).Bold(true)
+
 	styles.Levels[chlog.DebugLevel] = lipgloss.NewStyle().
 		SetString("DEBUG").
 		Padding(0, 1, 0, 1).
