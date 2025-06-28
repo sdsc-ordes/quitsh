@@ -43,8 +43,8 @@ constrained by specific technologies.
 - Tasks are defined primarily in code, avoiding declarative configurations or
   templated non-typed languages, which often add unnecessary complexity despite
   their flexibility.
-  _Note: Supporting configuration languages like `jsonnet` or "turing-complete" YAML etc. is
-  particularly avoided. **Everything stays strongly-typed and fast compiled._
+  _Note: Supporting configuration languages like `jsonnet` or "turing-complete"
+  YAML etc. is particularly avoided. **Everything stays strongly-typed and fast compiled.**_
 
 #### Component Identification
 
