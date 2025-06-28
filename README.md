@@ -122,12 +122,14 @@ The `pkg` folder offers utilities for common development needs, such as:
 
 ---
 
-# How We Use It?
+# How To Use It?
 
-Using this library follows instantiating the CLI like also used in this
+Using this library follows instantiating the CLI (also demonstrated in this
 repository in [`main.go`](./tools/cli/cmd/cli/main.go), e.g.:
 
 ```go
+args := cliconfig.New()
+
 cli, err := cli.New(
   &args.Commands.Root,
   &args,
@@ -149,6 +151,46 @@ cli, err := cli.New(
   ),
 )
 ```
+
+You can now add runners and your own commands depending on the needs of your
+repository. For example in [`main.go`](./tools/cli/cmd/cli/main.go):
+
+```go
+execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
+exectarget.AddCmd(cli, cli.RootCmd())
+listcmd.AddCmd(cli, cli.RootCmd())
+```
+
+adds essential `quitsh` commands
+
+- `exectarget` to execute specific targets.
+- `execrunner` to let `quitsh` dispatch over toolchains (see
+  `cli.WithToolchainDispatcherNix` above).
+- `listcmd` to list all components etc.
+
+There are lots of more useful commands in [`pkg/cli/cmd`](./pkg/cli/cmd) which
+you might use.
+
+## Config
+
+Quitsh runs with global config YAML file which it loads (or defaults) at startup
+for any invocation. The above CLI instantiation constructs a new config with
+`cliconfig.New()` (this is custom for each usecase and can be adjusted and
+modified). The config defines global settings (output directories, logging etc.)
+and also various custom, use-case specific settings. These might include
+settings which runners (or custom commands) might use during execution. For
+example build runners might use a
+[`build.BuildType`](./tools/cli/pkg/config/config.go) property which could be
+`debug` or `release` etc. The CLI does not care about your custom settings, they
+only need to be fully serializable to YAML (for toolchain dispatching) and you
+can override defaults from custom added commands for example.
+
+### Modifying Config Values
+
+You have the ability to set the config file `quitsh` uses with `--config` or
+read it from stdin with `--config -` or set options (YAML) on the command line
+with `--config-value`. For example `--config-value "build.buildType: release"`
+would set the `build.BuildType` setting to `release` on startup.
 
 ## Components
 

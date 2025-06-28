@@ -163,10 +163,10 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 	flags.
 		StringArrayVarP(
 			&args.ConfigKeyValues,
-			"config-value",
+			"config-val",
 			"k",
 			args.ConfigKeyValues,
-			"Config key,values pairs to override nested config values, e.g. `\"a.b.c: {\\\"a\\\": 3}\"`.",
+			"Config key/YAML-value pairs to override nested config values, e.g. `\"a.b.c: {\\\"a\\\": 3}\"`.",
 		)
 
 	flags.
