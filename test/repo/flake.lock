@@ -574,14 +574,21 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "path": "../../tools/nix",
-        "type": "path"
+        "dir": "tools/nix",
+        "lastModified": 1751115883,
+        "narHash": "sha256-qa/rD0zOZWwrnCRut8K0CTpEHiS2GNAGQeTEcVzswDY=",
+        "owner": "sdsc-ordes",
+        "repo": "quitsh",
+        "rev": "f36705f797e287109a56d781754e391c5b6f0ba8",
+        "type": "github"
       },
       "original": {
-        "path": "../../tools/nix",
-        "type": "path"
-      },
-      "parent": []
+        "dir": "tools/nix",
+        "owner": "sdsc-ordes",
+        "ref": "feat/add-stdin-parse-and-key-value-pairs",
+        "repo": "quitsh",
+        "type": "github"
+      }
     },
     "root": {
       "inputs": {
