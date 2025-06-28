@@ -68,10 +68,7 @@ let
             # pkgs.quitsh.cli
           ];
 
-          env = {
-            GOTOOLCHAIN = "local";
-          };
-
+          quitsh.languages.go.enable = true;
           quitsh.toolchains = [ "ci" ];
         }
       ] ++ build-go;
