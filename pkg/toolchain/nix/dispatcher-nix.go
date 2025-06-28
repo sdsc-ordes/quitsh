@@ -6,6 +6,7 @@ import (
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/nix"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
@@ -45,12 +46,22 @@ func storeConfig(config config.IConfig) (file string, cleanup func(), err error)
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer func() {
+		e := f.Close()
+		if e != nil {
+			err = errors.Combine(err, e)
+		}
+	}()
 
-	e := yaml.NewEncoder(f)
-	defer e.Close()
+	enc := yaml.NewEncoder(f)
+	defer func() {
+		e := enc.Close()
+		if e != nil {
+			err = errors.Combine(err, e)
+		}
+	}()
 
-	err = e.Encode(config)
+	err = enc.Encode(config)
 	if err != nil {
 		return
 	}

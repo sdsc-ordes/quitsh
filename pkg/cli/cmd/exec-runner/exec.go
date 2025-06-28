@@ -155,5 +155,6 @@ func runExec(cli cli.ICLI, args *toolchain.DispatchArgs) error {
 		dispatcher,
 		cli.Config(),
 		rootDir,
+		true,
 	)
 }

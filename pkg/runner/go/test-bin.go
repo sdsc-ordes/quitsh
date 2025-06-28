@@ -63,6 +63,7 @@ func buildBinary(
 	}
 
 	flags := GetBuildFlags(
+		log,
 		comp.Root(),
 		setts.BuildType(),
 		cm.EnvironmentDev,
@@ -107,6 +108,7 @@ func testBinary(
 		Build()
 
 	flags := GetBuildFlags(
+		log,
 		comp.Root(),
 		setts.BuildType(),
 		cm.EnvironmentDev,

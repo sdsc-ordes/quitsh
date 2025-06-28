@@ -9,6 +9,7 @@ import (
 	cliGoRunner "quitsh-cli/pkg/runner/go"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
+	configcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config"
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
@@ -27,11 +28,11 @@ func main() {
 		log.PanicE(err, "Could not setup logger.")
 	}
 
-	args := cliconfig.New()
+	conf := cliconfig.New()
 
 	cli, err := cli.New(
-		&args.Commands.Root,
-		&args,
+		&conf.Commands.Root,
+		&conf,
 		cli.WithName("cli"),
 		cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its build with 'quitsh'."),
 		cli.WithCompFindOptions(
@@ -54,11 +55,12 @@ func main() {
 	}
 
 	// Setup quitsh provided helper commands.
-	execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
-	exectarget.AddCmd(cli, cli.RootCmd())
 	listcmd.AddCmd(cli, cli.RootCmd())
+	configcmd.AddCmd(cli.RootCmd(), &conf)
+	exectarget.AddCmd(cli, cli.RootCmd())
+	execrunner.AddCmd(cli, cli.RootCmd(), &conf.Commands.DispatchArgs)
 
-	registerRunners(cli, &args)
+	registerRunners(cli, &conf)
 
 	// Run the app.
 	err = cli.Run()

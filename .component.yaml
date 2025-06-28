@@ -11,7 +11,7 @@
 # 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
 
 name: quitsh
-version: 0.26.0
+version: 0.27.0
 language: go
 
 inputs:
@@ -23,6 +23,9 @@ targets:
   test:
     steps:
       - runner: go
+
+  test-integration:
+    steps:
       - runner: go-bin
         config:
           # Build everything instrumented.

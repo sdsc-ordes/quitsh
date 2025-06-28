@@ -84,6 +84,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	}
 
 	flags := GetBuildFlags(
+		log,
 		comp.Root(),
 		r.settings.BuildType(),
 		cm.EnvironmentDev,

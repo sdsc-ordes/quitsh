@@ -156,17 +156,19 @@ You can now add runners and your own commands depending on the needs of your
 repository. For example in [`main.go`](./tools/cli/cmd/cli/main.go):
 
 ```go
-execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
-exectarget.AddCmd(cli, cli.RootCmd())
 listcmd.AddCmd(cli, cli.RootCmd())
+configcmd.AddCmd(cli.RootCmd(), &conf)
+exectarget.AddCmd(cli, cli.RootCmd())
+execrunner.AddCmd(cli, cli.RootCmd(), &conf.Commands.DispatchArgs)
 ```
 
 adds essential `quitsh` commands
 
-- `exectarget` to execute specific targets.
+- `listcmd` to list all components etc: `quitsh list`.
+- `configcmd` to inspect/write the config file: `quitsh config ...`.
+- `exectarget` to execute specific targets `quitsh exec-target`.
 - `execrunner` to let `quitsh` dispatch over toolchains (see
-  `cli.WithToolchainDispatcherNix` above).
-- `listcmd` to list all components etc.
+  `cli.WithToolchainDispatcherNix` above): `quitsh exec-runner ...`
 
 There are lots of more useful commands in [`pkg/cli/cmd`](./pkg/cli/cmd) which
 you might use.
@@ -318,6 +320,10 @@ implementing the interface [`Runner`](./pkg/runner/runner.go) inside
 [`./pkg/runner/runners`](./pkg/runner/runners) and registering them in
 [`./pkg/runner/factory/init-runners.go`], for example
 [here](./tools/cli/pkg/runner/go/register.go).
+
+> [!NOTE]
+>
+> **You can execute targets in parallel with `--parallel`**.
 
 ## Runner Configuration
 

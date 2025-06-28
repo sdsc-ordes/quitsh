@@ -18,8 +18,7 @@ func AddCmd(root *cobra.Command, config config.IConfig) {
 	}
 
 	ciCmd.Flags().
-		StringVarP(&output, "output", "o", "quitsh.yaml", "The output path of the config.")
-	_ = ciCmd.MarkFlagRequired("output")
+		StringVarP(&output, "output", "o", "-", "The output path of the config.")
 
 	root.AddCommand(ciCmd)
 }

@@ -42,7 +42,9 @@ targets:
 	rr, e := os.OpenFile(rfile, os.O_RDONLY, fs.DefaultPermissionsFile)
 	require.NoError(t, e)
 	c, e := config.LoadFromReader[Config](rr)
-	rr.Close()
+	require.NoError(t, e)
+	e = rr.Close()
+	require.NoError(t, e)
 
 	require.NoError(t, e)
 	assert.Equal(t, "comp1", c.Name)

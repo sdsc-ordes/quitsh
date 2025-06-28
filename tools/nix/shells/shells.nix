@@ -57,6 +57,8 @@ let
 
               pkgs.golangci-lint-langserver
               pkgs.typos-lsp
+
+              pkgs.hyperfine
             ];
           }
         ];

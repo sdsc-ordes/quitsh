@@ -21,9 +21,11 @@ func SaveToWriter[T any](
 func SaveInterfaceToWriter(
 	conf any,
 	writer io.Writer,
-) error {
+) (err error) {
 	encoder := yaml.NewEncoder(writer)
-	defer encoder.Close()
+	defer func() {
+		err = errors.Combine(err, encoder.Close())
+	}()
 
 	return encoder.Encode(conf)
 }
@@ -41,15 +43,19 @@ func SaveInterfaceToFile(
 	file string,
 	conf any,
 ) (err error) {
-	f, err := os.Create(file)
-	if err != nil {
-		return
-	}
+	var f *os.File
+	if file != "-" {
+		f, err = os.Create(file)
+		if err != nil {
+			return
+		}
 
-	defer func() {
-		e := f.Close()
-		err = errors.Combine(err, e)
-	}()
+		defer func() {
+			err = errors.Combine(err, f.Close())
+		}()
+	} else {
+		f = os.Stdout
+	}
 
 	return SaveInterfaceToWriter(conf, f)
 }
