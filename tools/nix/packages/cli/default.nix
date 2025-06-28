@@ -28,7 +28,7 @@ let
 
     modRoot = "./tools/cli";
 
-    vendorHash = "sha256-mIIBbULdHJmLGU5yfW9q75Ezs7RQmAz4DecQPh8Eqlg=";
+    vendorHash = "sha256-4NOTnfbo1KlwVmXM6Bco30a5cLcn53xJomJ8iryRpOM=";
     proxyVendor = true;
 
     nativeBuildInputs = [ installShellFiles ];
