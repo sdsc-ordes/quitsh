@@ -259,7 +259,7 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 	var f io.Reader
 	switch configPath {
 	case "-":
-		f = os.Stdout
+		f = os.Stdin
 	default:
 		exists := fs.Exists(configPath)
 

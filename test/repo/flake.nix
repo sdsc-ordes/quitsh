@@ -14,8 +14,25 @@
   };
 
   inputs = {
-    # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # The devenv module to create good development shells.
+    devenv = {
+      url = "github:cachix/devenv/latest";
+      inputs.nixpkgs.follows = "nixpkgsDevenv";
+    };
+    # We have to lock somehow the pkgs in `mkShell` here:
+    # https://github.com/cachix/devenv/issues/1797
+    # `nixpkgs` is used in the devShell modules.
+    nixpkgsDevenv.url = "github:cachix/devenv-nixpkgs/rolling";
+    devenv-root = {
+      url = "file+file:///dev/null";
+      flake = false;
+    };
+
+    quitsh = {
+      url = "path:../../tools/nix";
+    };
   };
   outputs =
     inputs:
@@ -58,6 +75,12 @@
         );
     in
     {
-      devShells = forEachSupportedSystem ({ pkgs, ... }: import ./shells.nix { inherit pkgs; });
+      devShells = forEachSupportedSystem (
+        { pkgs, ... }:
+        import ./shells.nix {
+          inherit pkgs;
+          inherit inputs;
+        }
+      );
     };
 }

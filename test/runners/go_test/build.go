@@ -46,7 +46,9 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	goctx := gox.NewCtxBuilder().
 		Cwd(comp.Root()).
 		Env("GOBIN="+binDir,
-			"GOWORK=off").
+			"GOWORK=off",
+			"GOTOOLCHAIN=local",
+		).
 		Build()
 
 	if r.settings.BuildType == common.BuildRelease {

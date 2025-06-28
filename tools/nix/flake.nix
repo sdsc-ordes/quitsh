@@ -21,7 +21,7 @@
 
     # The devenv module to create good development shells.
     devenv = {
-      url = "github:cachix/devenv";
+      url = "github:cachix/devenv/main";
       inputs.nixpkgs.follows = "nixpkgsDevenv";
     };
     # We have to lock somehow the pkgs in `mkShell` here:

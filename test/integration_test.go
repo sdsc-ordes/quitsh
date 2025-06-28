@@ -27,6 +27,11 @@ func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
 	covDir := os.Getenv("QUITSH_COVERAGE_DIR")
 	require.DirExists(t, covDir, "QUITSH_COVERAGE_DIR=%s must exist.", covDir)
 
+	// Remove output
+	f := path.Join("repo/component-a/.output")
+	err := os.RemoveAll(f)
+	require.NoError(t, err)
+
 	return exec.NewCmdCtxBuilder().
 		BaseCmd(quitshExe).
 		BaseArgs("--root-dir", "repo").
@@ -92,10 +97,7 @@ func TestCLISetConfigValues(t *testing.T) {
 func TestCLISetConfigValuesStdin(t *testing.T) {
 	cli := setup(t).Build()
 
-	config := `
-	build:
-	    buildType: release
-	`
+	config := "build:\n  buildType: release"
 	r := strings.NewReader(config)
 
 	_, stderr, err := cli.WithStdin(r).GetStdErr(
