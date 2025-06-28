@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -119,6 +120,7 @@ func executeRunners(
 			toolchainDispatcher,
 			config,
 			rootDir,
+			false,
 		)
 
 		if e != nil {
@@ -157,6 +159,7 @@ func ExecuteRunner(
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
+	addPrefix bool,
 ) error {
 	// When the toolchain is 'none', none is needed.
 	skipDispatch := toolchainDispatcher == nil
@@ -183,6 +186,12 @@ func ExecuteRunner(
 		}
 	}
 
+	var logPrefix string
+
+	if addPrefix {
+		logPrefix = fmt.Sprintf("[%s]", targetID.String())
+	}
+
 	if noDispatch { //nolint: nestif,nolintlint
 		// Change to repo root and run the runner.
 		err := os.Chdir(rootDir)
@@ -196,6 +205,7 @@ func ExecuteRunner(
 			targetID:  targetID,
 			toolchain: toolchainName,
 			stepIdx:   stepIdx,
+			log:       log.NewLogger(logPrefix),
 		}
 		err = runner.Run(&ctx)
 
@@ -218,8 +228,7 @@ func ExecuteRunner(
 			RunnerIndex:  runnerIdx,
 			RunnerID:     runner.ID(),
 			Toolchain:    toolchainName}
-		err := toolchainDispatcher.Run(rootDir, &dArgs,
-			config)
+		err := toolchainDispatcher.Run(rootDir, &dArgs, config)
 
 		if err != nil {
 			log.Info("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
@@ -240,6 +249,7 @@ type context struct {
 	targetID  target.ID
 	toolchain string
 	stepIdx   step.Index
+	log       log.ILog
 }
 
 func (c *context) Root() string {
@@ -247,7 +257,7 @@ func (c *context) Root() string {
 }
 
 func (c *context) Log() log.ILog {
-	return log.NewLoggerST()
+	return c.log
 }
 
 func (c *context) Component() *component.Component {

@@ -101,6 +101,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 
 	// Build everything into `outputDir`.
 	flags := GetBuildFlags(
+		log,
 		comp.Root(),
 		r.settings.BuildType(),
 		r.settings.EnvironmentType(),

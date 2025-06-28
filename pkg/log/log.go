@@ -1,256 +1,247 @@
 package log
 
 import (
-	"context"
-	"fmt"
-	"log/slog"
 	"os"
-	"runtime"
 	"time"
 
-	"github.com/golang-cz/devslog"
-	"github.com/mattn/go-isatty"
+	chlog "github.com/charmbracelet/log"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
 func ciRunning() bool {
 	return os.Getenv("CI") == "true"
 }
 
+const TraceLevel = chlog.DebugLevel - 10
+
+var ForceColorInCI = true
+
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
-var levelVar slog.LevelVar        //nolint:gochecknoglobals // Accepted as only for logging.
-var globalLogger = slog.Default() //nolint:gochecknoglobals // Accepted as only for logging.
+var globalLogger = logger{l: chlog.New(os.Stderr)} //nolint:gochecknoglobals // Accepted as only for logging.
 
 // Setup sets up the default loggers .
-func Setup(level string) error {
-	err := SetLevel(level)
+func Setup(level string) (err error) {
+	l, err := initLog(level)
 	if err != nil {
-		return err
+		return
 	}
 
-	initLog()
+	globalLogger = l
 
-	return nil
+	return
 }
 
-func initLog() {
-	addSource := levelVar.Level() == slog.LevelDebug || false
-	writer := os.Stderr
-
-	slogOpts := &slog.HandlerOptions{
-		AddSource: addSource,
-		Level:     &levelVar,
+func initLog(level string) (logger, error) {
+	if ciRunning() && ForceColorInCI {
+		// We force here a color profile
+		lipgloss.SetColorProfile(termenv.TrueColor)
 	}
 
-	haveColor := ciRunning() || isatty.IsTerminal(writer.Fd())
+	l := chlog.NewWithOptions(
+		os.Stderr, chlog.Options{
+			ReportCaller:    false,
+			ReportTimestamp: true,
+			TimeFormat:      time.TimeOnly,
+		})
 
-	opts := &devslog.Options{
-		HandlerOptions:    slogOpts,
-		NoColor:           !haveColor,
-		SortKeys:          true,
-		NewLineAfterLog:   true,
-		MaxSlicePrintSize: 1000000, //nolint:mnd
+	err := setLevel(l, level)
+	if err != nil {
+		return logger{}, err
 	}
 
-	handler := devslog.NewHandler(writer, opts)
+	styles := getStyles()
+	l.SetStyles(styles)
 
-	globalLogger = slog.New(handler)
-	slog.SetDefault(globalLogger)
+	return logger{l: l}, nil
 }
 
-const TraceLevel = slog.LevelDebug - 10
+func getStyles() *chlog.Styles {
+	styles := chlog.DefaultStyles()
 
-// Sets the log level on the logger.
+	styles.Levels[TraceLevel] = lipgloss.NewStyle().
+		SetString("TRACE").
+		Padding(0, 1, 0, 1).
+		Foreground(lipgloss.Color("#a4a4a4")).Bold(true)
+
+	styles.Levels[chlog.DebugLevel] = lipgloss.NewStyle().
+		SetString("DEBUG").
+		Padding(0, 1, 0, 1).
+		Foreground(lipgloss.Color("#00e6ff")).Bold(true)
+
+	styles.Levels[chlog.InfoLevel] = lipgloss.NewStyle().
+		SetString("INFO").
+		Padding(0, 1, 0, 1).
+		Foreground(lipgloss.Color("#00c900")).Bold(true)
+
+	styles.Levels[chlog.WarnLevel] = lipgloss.NewStyle().
+		SetString("WARN").
+		Padding(0, 1, 0, 1).
+		Background(lipgloss.Color("#ff7400")).
+		Foreground(lipgloss.Color("0")).Bold(true)
+
+	styles.Levels[chlog.ErrorLevel] = lipgloss.NewStyle().
+		SetString("ERROR").
+		Padding(0, 1, 0, 1).
+		Background(lipgloss.Color("#ff0000")).
+		Foreground(lipgloss.Color("0")).Bold(true)
+
+	styles.Prefix = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#007399", Dark: "#44b5c3"}).
+		Italic(true)
+
+	styles.Caller = lipgloss.NewStyle().Italic(true)
+
+	styles.Key = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#007399", Dark: "#44b5c3"}).
+		Bold(true)
+
+	styles.Keys["err"] = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000"))
+	styles.Keys["error"] = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000"))
+	styles.Values["err"] = lipgloss.NewStyle().Bold(true)
+	styles.Values["error"] = lipgloss.NewStyle().Bold(true)
+
+	return styles
+}
+
 func SetLevel(level string) error {
-	var l slog.Level
+	return setLevel(globalLogger.l, level)
+}
+
+// SetLevel sets the log level on the logger.
+func setLevel(logger *chlog.Logger, level string) (err error) {
+	var l chlog.Level
 	if level == "trace" {
 		l = TraceLevel
 	} else {
-		err := l.UnmarshalText([]byte(level))
-
-		if err != nil {
-			return err
-		}
+		l, err = chlog.ParseLevel(level)
 	}
 
-	levelVar.Set(l)
-
-	if l <= slog.LevelDebug {
-		// On debug (or smaller), we need to reinitialize for sources.
-		initLog()
+	if err != nil {
+		return errors.AddContext(err, "Could not parse log level.")
 	}
+
+	if l <= chlog.DebugLevel {
+		logger.SetReportCaller(true)
+	}
+
+	logger.SetLevel(l)
 
 	return nil
 }
 
-// Checks if debug is enabled on the log.
+// IsDebug checks if debug is enabled on the log.
 func IsDebug() bool {
-	return levelVar.Level() == slog.LevelDebug
+	return globalLogger.l.GetLevel() == chlog.DebugLevel
 }
 
-// createRecord creates a record with the proper source level.
-func createRecord(skipFns int, level slog.Level, msg string, args ...any) slog.Record {
-	var pc uintptr
-
-	if levelVar.Level() == slog.LevelDebug {
-		var pcs [1]uintptr
-		runtime.Callers(
-			3+skipFns, //nolint: mnd
-			pcs[:],
-		) // skip [Callers, createRecord, callers function]
-		pc = pcs[0]
-	}
-
-	r := slog.NewRecord(time.Now(), level, msg, pc)
-	r.Add(args...)
-
-	return r
-}
-
-// Trace will log a trace info with formatting.
+// Tracef will log a trace info with formatting.
 func Tracef(msg string, args ...any) {
-	Trace(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Tracef(msg, args...)
 }
 
 // Trace will log a trace info.
 func Trace(msg string, args ...any) {
-	msg = fmt.Sprintf(msg, args...)
-	ctx := context.Background()
-	const level = TraceLevel
-
-	if !globalLogger.Enabled(ctx, level) {
-		return
-	}
-	r := createRecord(0, level, msg)
-	_ = slog.Default().Handler().Handle(ctx, r)
+	globalLogger.l.Helper()
+	globalLogger.Trace(msg, args...)
 }
 
-// Debug will log a debug info with formatting.
+// Debugf will log a debug info with formatting.
 func Debugf(msg string, args ...any) {
-	Debug(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Debugf(msg, args...)
 }
 
 // Debug will log a debug info.
 func Debug(msg string, args ...any) {
-	ctx := context.Background()
-	const level = slog.LevelDebug
-
-	if !globalLogger.Enabled(ctx, level) {
-		return
-	}
-	r := createRecord(0, level, msg, args...)
-	_ = slog.Default().Handler().Handle(ctx, r)
+	globalLogger.l.Helper()
+	globalLogger.Debug(msg, args...)
 }
 
-// Info will log an info with formatting.
+// Infof will log an info with formatting.
 func Infof(msg string, args ...any) {
-	Info(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Infof(msg, args...)
 }
 
 // Info will log an info.
 func Info(msg string, args ...any) {
-	ctx := context.Background()
-	const level = slog.LevelInfo
-
-	if !globalLogger.Enabled(ctx, level) {
-		return
-	}
-	r := createRecord(0, level, msg, args...)
-	_ = slog.Default().Handler().Handle(ctx, r)
+	globalLogger.l.Helper()
+	globalLogger.Info(msg, args...)
 }
 
-// Warn will log a warning info with formatting.
+// Warnf will log a warning info with formatting.
 func Warnf(msg string, args ...any) {
-	Warn(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Warnf(msg, args...)
 }
 
 // Warn will log an warning info.
 func Warn(msg string, args ...any) {
-	warnS(0, msg, args...)
+	globalLogger.l.Helper()
+	globalLogger.Warn(msg, args...)
 }
 
-// Warn will log a warning for an error `err` with formatting.
+// WarnEf will log a warning for an error `err` with formatting.
 func WarnEf(err error, msg string, args ...any) {
-	WarnE(err, fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.WarnEf(err, msg, args...)
 }
 
-// Warn will log a warning for an error `err`.
+// WarnE will log a warning for an error `err`.
 func WarnE(err error, msg string, args ...any) {
-	a := make([]any, 0, 2+len(args)) //nolint: mnd
-	a = append(a, "error", err)
-	a = append(a, args...)
-	warnS(0, msg, a...)
+	globalLogger.l.Helper()
+	globalLogger.WarnE(err, msg, args...)
 }
 
-// Error will log an error with formatting.
+// Errorf will log an error with formatting.
 func Errorf(msg string, args ...any) {
-	Error(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Errorf(msg, args...)
 }
 
 // Error will log an error.
 func Error(msg string, args ...any) {
-	errorS(0, msg, args...)
+	globalLogger.l.Helper()
+	globalLogger.Error(msg, args...)
 }
 
-// Error will log an error for `err` with formatting.
+// ErrorEf will log an error for `err` with formatting.
 func ErrorEf(err error, msg string, args ...any) {
-	ErrorE(err, fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.ErrorEf(err, msg, args...)
 }
 
-// Error will log an error for `err`.
+// ErrorE will log an error for `err`.
 func ErrorE(err error, msg string, args ...any) {
-	errorES(0, err, msg, args...)
+	globalLogger.l.Helper()
+	globalLogger.ErrorE(err, msg, args...)
 }
 
-// Panic will log and panic with formatting.
+// Panicf will log and panic with formatting.
 func Panicf(msg string, args ...any) {
-	Panic(fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.Panicf(msg, args...)
 }
 
 // Panic will log and panic.
 func Panic(msg string, args ...any) {
-	errorS(0, msg, args...)
-	panic(msg)
+	globalLogger.l.Helper()
+	globalLogger.Panic(msg, args...)
 }
 
-// Panic will log and panic with formatting.
+// PanicEf will log and panic with formatting.
 func PanicEf(err error, msg string, args ...any) {
-	PanicE(err, fmt.Sprintf(msg, args...))
+	globalLogger.l.Helper()
+	globalLogger.PanicEf(err, msg, args...)
 }
 
 // PanicE will log and panic if `err` is not `nil`.
 func PanicE(err error, msg string, args ...any) {
-	if err != nil {
-		errorES(0, err, msg, args...)
-		panic(err)
-	}
-}
-
-func warnS(skipFns int, msg string, args ...any) {
-	ctx := context.Background()
-	const level = slog.LevelWarn
-
-	if !globalLogger.Enabled(ctx, level) {
-		return
-	}
-	r := createRecord(skipFns+1, level, msg, args...)
-	_ = slog.Default().Handler().Handle(ctx, r)
-}
-
-func errorS(skipFns int, msg string, args ...any) {
-	ctx := context.Background()
-	const level = slog.LevelError
-
-	if !globalLogger.Enabled(ctx, level) {
-		return
-	}
-	r := createRecord(skipFns+1, level, msg, args...)
-	_ = slog.Default().Handler().Handle(ctx, r)
-}
-
-func errorES(skipFns int, err error, msg string, args ...any) {
-	a := make([]any, 0, 2+len(args)) //nolint: mnd
-	a = append(a, args...)
-	a = append(a, "error", err)
-	errorS(skipFns+1, msg, a...)
+	globalLogger.l.Helper()
+	globalLogger.PanicE(err, msg, args...)
 }

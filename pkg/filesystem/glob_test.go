@@ -41,7 +41,7 @@ func makeDirs(t testing.TB, dir string) {
 		} else {
 			f, e := os.Create(p.p)
 			require.NoError(t, e)
-			f.Close()
+			_ = f.Close()
 		}
 	}
 

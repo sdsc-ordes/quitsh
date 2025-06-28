@@ -79,7 +79,8 @@ func ExecuteDAGParallel(
 						r.Toolchain,
 						toolchainDispatcher,
 						config,
-						rootDir)
+						rootDir,
+						true)
 				})
 
 			runnerTasks = append(runnerTasks, runnerTask)
@@ -121,7 +122,9 @@ func ExecuteDAGParallel(
 		for _, b := range t.Backward {
 			t, ok := tasks[b.Target.ID]
 			if !ok {
-				log.Panic("Could not find task for target '%v'. Something is wrong with the DAG!")
+				log.Panic(
+					"Could not find task for target '%v'. " +
+						"Something is wrong with the DAG!")
 			}
 
 			task.Succeed(t)

@@ -14,6 +14,7 @@ import (
 )
 
 func GetBuildFlags(
+	log log.ILog,
 	compDir string,
 	buildType cm.BuildType,
 	envType cm.EnvironmentType,
