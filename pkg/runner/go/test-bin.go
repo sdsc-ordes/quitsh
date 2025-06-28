@@ -96,7 +96,9 @@ func testBinary(
 	modInfo gox.GoModInfo,
 	runnerConf *RunnerConfigTestBin,
 ) error {
-	envs := []string{"GOWORK=off",
+	envs := []string{
+		"GOWORK=off",
+		"GOTOOLCHAIN=local",
 		"QUITSH_BIN_DIR=" + comp.OutCoverageBinDir(),
 		"QUITSH_COVERAGE_DIR=" + comp.OutCoverageDataDir()}
 	goctx := gox.NewCtxBuilder().
