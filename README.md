@@ -321,6 +321,10 @@ implementing the interface [`Runner`](./pkg/runner/runner.go) inside
 [`./pkg/runner/factory/init-runners.go`], for example
 [here](./tools/cli/pkg/runner/go/register.go).
 
+> [!NOTE]
+>
+> **You can execute targets in parallel with `--parallel`**.
+
 ## Runner Configuration
 
 Runners can load independent YAML config under `config` to make them
