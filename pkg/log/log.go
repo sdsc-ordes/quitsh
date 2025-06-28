@@ -11,13 +11,8 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
-func ciRunning() bool {
-	return os.Getenv("CI") == "true"
-}
-
-const TraceLevel = chlog.DebugLevel - 10
-
 var ForceColorInCI = true //nolint:gochecknoglobals // Intended, to be disabled if really needed.
+const TraceLevel = chlog.DebugLevel - 10
 
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
@@ -35,6 +30,10 @@ func Setup(level string) (err error) {
 	globalLogger = l
 
 	return
+}
+
+func ciRunning() bool {
+	return os.Getenv("CI") == "true"
 }
 
 func initLog(level string) (logger, error) {
