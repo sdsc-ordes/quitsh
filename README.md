@@ -22,7 +22,7 @@
 > [!CAUTION]
 >
 > This repository is in `beta` and not stable enough since the design space of
-> this tool is still explored.
+> this tool is still explored. Documentation is incomplete.
 
 The `quitsh` framework (`/kwɪʧ/`) is a build-tooling CLI framework designed to
 replace loosely-typed scripting languages (e.g., `bash`, `python`, and similar
@@ -122,20 +122,92 @@ The `pkg` folder offers utilities for common development needs, such as:
 
 ---
 
-# How We Use It?
+# How To Use It?
 
-TODO: unfinished.
+Using this library follows instantiating the CLI (also demonstrated in this
+repository in [`main.go`](./tools/cli/cmd/cli/main.go), e.g.:
 
-Understand what this framework does, is best accomplished by understanding how
-we use this framework in our
-[components repo (mono-repo)](https://gitlab.com/data-custodian/custodian).
+```go
+args := cliconfig.New()
+
+cli, err := cli.New(
+  &args.Commands.Root,
+  &args,
+  cli.WithName("cli"),
+  cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its build with 'quitsh'."),
+  cli.WithCompFindOptions(
+    query.WithFindOptions(
+      fs.WithWalkDirFilterPatterns(nil,
+        []string{"**/test/repo/**"}, true))),
+  cli.WithStages("lint", "build", "test"),
+  cli.WithTargetToStageMapperDefault(),
+  cli.WithToolchainDispatcherNix(
+    "tools/nix",
+    func(c config.IConfig) *toolchain.DispatchArgs {
+      cc := common.Cast[*cliconfig.Config](c)
+
+      return &cc.Commands.DispatchArgs
+    },
+  ),
+)
+```
+
+You can now add runners and your own commands depending on the needs of your
+repository. For example in [`main.go`](./tools/cli/cmd/cli/main.go):
+
+```go
+execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
+exectarget.AddCmd(cli, cli.RootCmd())
+listcmd.AddCmd(cli, cli.RootCmd())
+```
+
+adds essential `quitsh` commands
+
+- `exectarget` to execute specific targets.
+- `execrunner` to let `quitsh` dispatch over toolchains (see
+  `cli.WithToolchainDispatcherNix` above).
+- `listcmd` to list all components etc.
+
+There are lots of more useful commands in [`pkg/cli/cmd`](./pkg/cli/cmd) which
+you might use.
+
+## Useful References
+
+A reference repository with commands and runner can be looked at here:
+
+- [`Custodian`](https://gitlab.com/data-custodian/custodian/tree/main/tools/quitsh)
+- [`DAC-Portal`](https://gitlab.com/data-custodian/dac-portal/tree/main/tools/quitsh)
+- [`Quitsh (this repo)`](https://github.com/sdsc-ordes/quitsh)
+
+## Config
+
+Quitsh runs with global config YAML file which it loads (or defaults) at startup
+for any invocation. The above CLI instantiation constructs a new config with
+`cliconfig.New()` (this is custom for each usecase and can be adjusted and
+modified). The config defines global settings (output directories, logging etc.)
+and also various custom, use-case specific settings. These might include
+settings which runners (or custom commands) might use during execution. For
+example build runners might use a
+[`build.BuildType`](./tools/cli/pkg/config/config.go) property which could be
+`debug` or `release` etc. The CLI does not care about your custom settings, they
+only need to be fully serializable to YAML (for toolchain dispatching) and you
+can override defaults from custom added commands for example.
+
+### Modifying Config Values
+
+You have the ability to set the config file `quitsh` uses with `--config` or
+read it from stdin with `--config -` or set options (YAML) on the command line
+with `--config-value`. For example `--config-value "build.buildType: release"`
+would set the `build.BuildType` setting to `release` on startup.
 
 ## Components
 
-Our major components are located in
-[./components](https://gitlab.com/data-custodian/custodian/-/tree/main/components).
-Each component in `quitsh` is defined by a `.component.yaml` (name is
-customizable) file which more or less looks like:
+Quitsh builds around **components**. A **component** should be treated as an own
+compartment/Git repository or directory with its own independent source code and
+output.
+
+A component in `quitsh` is defined by a `.component.yaml` (name is
+configurable):
 
 ```yaml
 # The name of the component: Must be a unique.
@@ -169,6 +241,7 @@ targets:
 
     # Defining when this target is considered changed:
     # i.e. whenever `self::sources` input change set is changed.
+    # `self` maps to this component.
     inputs: ["self::sources"]
 
     # Defining dependencies on other targets such that this
@@ -195,88 +268,101 @@ inputs:
       - '^./src/.*\.go$'
 ```
 
-- Quitsh's own [`.component.yaml`](./.component.yaml)
+## Execution of Targets
 
-<!---->
-<!-- The tool provides entry points for all scripting needs in this monorepo. To -->
-<!-- facilitate this and have the notion of components covered for this monorepo, the -->
-<!-- `quitsh` streamlines functionality for each component in -->
-<!-- [`components`](../../components) by providing: -->
-<!---->
-<!-- - Executing common steps such as: -->
-<!---->
-<!--   - `lint` -->
-<!--   - `build` -->
-<!--   - `test` -->
-<!--   - `build-image` -->
-<!---->
-<!--   for each component in a monorepo backed by **runners**. -->
-<!---->
-<!-- - Providing other CI scripts and automation for task usually written in `bash` -->
-<!--   or `python` backed by additional subcommands on `quitsh`. -->
-<!---->
+The execution of steps by `quitsh` is done by reading a
+[`.component.yaml`](.component.yaml) for each component. The
+[`.component.yaml`](.component.yaml) file contains _inputs_ and _targets_.
 
-<!---->
-<!-- ## Execution of Steps -->
-<!---->
-<!-- The execution of steps by `quitsh` is done by reading a `.component.yaml` for -->
-<!-- each component. The [`.component.yaml`](.component.yaml) file contains -->
-<!-- information for each step the `quitsh` provides, e.g. `lint`, `build`, `test`, -->
-<!-- `package`, etc. The `.component.yaml` for the `quitsh` itself looks like: -->
-<!---->
-<!-- ```yaml -->
-<!-- name: quitsh -->
-<!-- version: 0.0.5 -->
-<!-- language: go -->
-<!---->
-<!-- steps: -->
-<!--   lint: -->
-<!--     - runner: go -->
-<!--   test: -->
-<!--     - runner: go -->
-<!--   build: -->
-<!--     - runner: go -->
-<!--   package: -->
-<!--     - runner: nix-image -->
-<!-- ``` -->
-<!---->
-<!-- The logic which is executed behind each step is specified by the field `runner`. -->
-<!-- A runner is Go code applicable for a certain step which should work for all -->
-<!-- components. The runner is registered in -->
-<!-- [ `factory` ](./pkg/runner/factory/runner.go). Runners can be written by -->
-<!-- implementing the interface [`Runner`](./pkg/runner/runner.go) inside -->
-<!-- [`./pkg/runner/runners`](./pkg/runner/runners) and registering them in -->
-<!-- [`./pkg/runner/factory/init-runners.go`]. -->
-<!---->
-<!-- ## Extending Functionality in `quitsh` -->
-<!---->
-<!-- If you need new functionality for CI and local development which you normally -->
-<!-- would write in `bash`/`python` follow the following steps: -->
-<!---->
-<!-- - If the functionality is **a feature needed in an existing runner and step**: -->
-<!--   Extend the runner and make it work with your new test/build/lint feature. -->
-<!---->
-<!-- - If the functionality is **not related to a runner or the same for each -->
-<!--   component with that language**: Extend the `quitsh`s by providing another -->
-<!--   subcommand which does what you need, see -->
-<!--   [`generate-version`](./cmd/quitsh/cmd/generate-version/generate-version.go). -->
-<!---->
-<!-- - If the functionality is **for a certain language, e.g. `go` or `python` and -->
-<!--   applies to each component which is written in that language**: consider adding -->
-<!--   a new runner for an already pre-defined step. If you also need a new destinct -->
-<!--   step, discuss the step name with the authors of this tool and -->
-<!--   [integrate it here](./pkg/common/step_type.go). -->
-<!---->
-<!-- ### Additional Runner Config -->
-<!---->
-<!-- Also there is the possibility to load additional runner specific YAML configs, -->
-<!-- e.g. the `go` build runner loads the following -->
-<!-- [config](./pkg/runner/runners/go/build-config.go): -->
-<!---->
-<!-- ```yaml -->
-<!-- steps: -->
-<!--   build: -->
-<!--     - runner: go -->
-<!--       config: -->
-<!--         version-module: "pkg/myversion-module" # defaults to `pkg/build` -->
-<!-- ``` -->
+Quitsh's own [`.component.yaml`](./.component.yaml) looks like:
+
+```yaml
+name: quitsh
+language: go
+
+inputs:
+  srcs:
+    patterns:
+      - "^.*$"
+
+targets:
+  test:
+    stage: test
+    steps:
+      - runner: go
+      - runner: go-bin
+        config:
+          # Build everything instrumented.
+          # Execute the binaries via a `go test` provided in the following
+          # pkg and with tags.
+          buildPkg: test/cmd
+          testPkg: test
+          buildTags: ["integration"]
+          testTags: ["integration"]
+
+  build:
+    steps:
+      - runner: go
+  lint:
+    steps:
+      - runner: go
+```
+
+Each **target** defines is a set of **steps** which itself are further specified
+by the field `runner`. A **runner** is **Go code** applicable for a certain step
+which should work for all components.
+
+A runner is registered in [`factory`](./pkg/runner/factory/runner.go), for
+example [here](./tools/cli/pkg/runner/go/lint.go). Runners can be written by
+implementing the interface [`Runner`](./pkg/runner/runner.go) inside
+[`./pkg/runner/runners`](./pkg/runner/runners) and registering them in
+[`./pkg/runner/factory/init-runners.go`], for example
+[here](./tools/cli/pkg/runner/go/register.go).
+
+## Runner Configuration
+
+Runners can load independent YAML config under `config` to make them
+configurable, e.g. the `go` build runner loads the following
+[config](./pkg/runner/runners/go/build-config.go):
+
+```yaml
+steps:
+  build:
+    - runner: go
+      config:
+        version-module: "pkg/myversion-module" # defaults to `pkg/build`
+```
+
+## Target Stages
+
+Each target also maps to a _stage_ which `quitsh` uses to group targets together
+if you want to find them and make gathering commands such as the example
+[`build` here](https://gitlab.com/data-custodian/custodian/-/blob/main/tools/quitsh/cmd/quitsh/cmd/build/build.go#L83).
+It collects and runs all targets in the stage `build`.
+
+## How to Extend Functionality
+
+For users using the `quitsh` CLI framework, it is suggested to follow the
+following points when thinking about new functionality in a repository which
+uses this library. If you need new functionality for CI and local development
+which you normally would write in `bash`/`python` follow the following steps:
+
+- If the functionality is **a feature needed in an existing runner and step**:
+  Extend the runner and make it work with your new test/build/lint feature.
+
+- If the functionality is **not related to a runner or the same for each
+  component with that language**: Extend `quitsh` by providing another
+  subcommand which does what you need, see this example
+  [`fix-hash`](https://gitlab.com/data-custodian/custodian/-/blob/main/tools/quitsh/cmd/quitsh/cmd/nix/fix-hash/fix.go).
+
+- If the functionality is **for a certain language, e.g. `go` or `python` and
+  applies to each component which is written in that language**: consider adding
+  a new runner for an already pre-defined stage, e.g. `lint`, `build` etc.
+
+## Example Applications
+
+Understand what this framework does, is best accomplished by understanding how
+we use this framework in our
+[components repo (mono-repo)](https://gitlab.com/data-custodian/custodian). Our
+major components are located in
+[./components](https://gitlab.com/data-custodian/custodian/-/tree/main/components).

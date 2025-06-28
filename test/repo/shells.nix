@@ -1,14 +1,18 @@
 # Define different shells.
 {
+  inputs,
   pkgs,
   ...
 }:
 {
   # Toolchain Shells ============================
-  go = pkgs.mkShell {
-    QUITSH_TOOLCHAINS = "go";
-    packages = [
-      pkgs.go_1_24
+  go = inputs.quitsh.lib.mkShell {
+    inherit inputs pkgs;
+    modules = [
+      {
+        quitsh.languages.go.enable = true;
+        quitsh.toolchains = [ "go" ];
+      }
     ];
   };
   # =============================================

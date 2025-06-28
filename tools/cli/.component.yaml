@@ -10,8 +10,8 @@
 #
 # 🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙🐙
 
-name: quitsh
-version: 0.25.0
+name: cli
+version: 0.1.0
 language: go
 
 inputs:
@@ -20,19 +20,6 @@ inputs:
       - "^.*$"
 
 targets:
-  test:
-    steps:
-      - runner: go
-      - runner: go-bin
-        config:
-          # Build everything instrumented.
-          # Execute the binaries via a `go test` provided in the following
-          # pkg and with tags.
-          buildPkg: test/cmd
-          testPkg: test
-          buildTags: ["integration"]
-          testTags: ["integration"]
-
   build:
     steps:
       - runner: go

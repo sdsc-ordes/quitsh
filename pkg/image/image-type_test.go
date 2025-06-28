@@ -12,7 +12,7 @@ func TestImageTypeUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	type A struct {
-		ImgType ImageType
+		ImgType Type
 	}
 
 	for _, k := range GetAllImageTypes() {

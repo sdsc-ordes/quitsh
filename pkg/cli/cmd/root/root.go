@@ -2,9 +2,13 @@ package rootcmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 
+	e "errors"
+
 	"github.com/sdsc-ordes/quitsh/pkg/build"
+	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
@@ -16,11 +20,16 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// Root arguments.
+// NOTE: ALl fields need proper default values (here mostly empty).
 type Args struct {
 	// The config YAML from which we read parameters for the CLI.
 	Config string `yaml:"-"`
 	// The config YAML (user overlay).
 	ConfigUser string `yaml:"-"`
+	// Config key,value arguments to override nested config
+	// values by paths e.g. `a.b.c: {"a":3}` on the command line.
+	ConfigKeyValues []string `yaml:"-"`
 
 	// Working directory to switch to at startup.
 	// This will be used to search for components.
@@ -75,10 +84,19 @@ func (s *Settings) applyDefaults() {
 	}
 }
 
-// Create a new `quitsh` CLI with settings `setts` and
+// Create a new `quitsh` root command with settings `setts` and
 // root arguments `rootArgs`. The full argument structure `allArgs` is treated
 // as `any` and will be used to parse the configuration files `--config`
 // (`--config-user`) into before startup.
+//
+// WARNING: The default values here set and in any subcommand, are unimportant!
+// We load the config (the ground truth) always afterwards and before
+// any arguments are parsed.
+// The sequence is as follows:
+//   - Cobra sets defaults valutes in command definitions (unimportant).
+//   - The `preExecFunc`: We pass the config (hopefully defaulted),
+//     load potentially from `--config`, `--config-user` and `--config-values`.
+//   - Cobra executes and sets CLI arguments to override stuff as a final step.
 func New(
 	setts *Settings,
 	rootArgs *Args,
@@ -118,53 +136,16 @@ func New(
 		},
 	}
 
-	rootCmd.PersistentFlags().
-		StringVar(&rootArgs.Config, "config", "", "The global configuration file")
-	rootCmd.PersistentFlags().
-		StringVar(&rootArgs.ConfigUser, "config-user", "", "The global user configuration file (overlay), can not exist.")
-	rootCmd.PersistentFlags().
-		StringVarP(&rootArgs.Cwd,
-			"cwd", "C", ".",
-			"Set the current working directory "+
-				"(note: '--root-dir' = Git root dir evaluated from '--cwd').")
-	rootCmd.PersistentFlags().
-		StringVarP(&rootArgs.RootDir,
-			"root-dir", "R", "", "Set the root directory. "+
-				"This is used to define configured relative paths, e.g. flake path etc.")
-	rootCmd.PersistentFlags().
-		StringVarP(&rootArgs.LogLevel,
-			"log-level", "v", "info", "The log level. [debug|info|warn|error]")
-	rootCmd.PersistentFlags().
-		BoolVar(&rootArgs.EnableEnvPrint,
-			"enable-env-print", false, "If env. variables printing for failed commands should be enabled.")
-	rootCmd.PersistentFlags().
-		BoolVar(&rootArgs.SkipToolchainDispatch,
-			"skip-toolchain-dispatch", false,
-			"The flag to denote that we are already inside the toolchain. "+
-				"Skip any invocation to any toolchain dispatcher.",
-		)
-
-	rootCmd.PersistentFlags().
-		BoolVar(&rootArgs.GlobalOutput,
-			"global-output", false, fmt.Sprintf("If a global output directory (repository root dir + '%s').", fs.OutputDir))
-
-	rootCmd.PersistentFlags().
-		StringVar(&rootArgs.GlobalOutputDir,
-			"global-output-dir", "", "Use this as global output directory (more simple: use '--global-output').")
+	addPersistendFlags(rootCmd.PersistentFlags(), rootArgs)
 
 	rootCmd.Flags().
-		BoolVar(&version, "version", false, "Print the version.")
+		BoolVar(&version, "version", version, "Print the version.")
 
 	rootCmd.SilenceErrors = true
 
 	preExecFunc = func() error {
 		var err error
-
-		parsedConfig, parsedConfigUser, err = parseConfigs(
-			rootCmd.PersistentFlags(),
-			rootArgs,
-			config,
-		)
+		parsedConfig, parsedConfigUser, err = parseConfigs(config)
 
 		return err
 	}
@@ -172,33 +153,95 @@ func New(
 	return rootCmd, preExecFunc
 }
 
-func parseConfigs(
-	ss *pflag.FlagSet,
-	rootArgs *Args,
-	config any,
-) (parsedConfig, parsedUserConfig bool, err error) {
-	// Parse here the --config, and --config-user
-	// and init the configs, because that needs to happen before
-	// cobra parses the flags.
+func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
+	flags.
+		StringVar(&args.Config, "config", args.Config,
+			"The global configuration file. If set to '-' then stdin is read.")
+	flags.
+		StringVar(&args.ConfigUser, "config-user", args.ConfigUser,
+			"The global user configuration file (overlay), can not exist.")
+	flags.
+		StringArrayVarP(
+			&args.ConfigKeyValues,
+			"config-val",
+			"k",
+			args.ConfigKeyValues,
+			"Config key/YAML-value pairs to override nested config values, e.g. `\"a.b.c: {\\\"a\\\": 3}\"`.",
+		)
 
-	s := *ss // Copy to not have side effects with `.parsed`
+	flags.
+		StringVarP(&args.Cwd,
+			"cwd", "C", args.Cwd,
+			"Set the current working directory "+
+				"(note: '--root-dir' = Git root dir evaluated from '--cwd').")
+	flags.
+		StringVarP(&args.RootDir,
+			"root-dir", "R", args.RootDir, "Set the root directory. "+
+				"This is used to define configured relative paths, e.g. flake path etc.")
+	flags.
+		StringVarP(&args.LogLevel,
+			"log-level", "v", args.LogLevel, "The log level. [debug|info|warn|error]")
+	flags.
+		BoolVar(
+			&args.EnableEnvPrint,
+			"enable-env-print",
+			args.EnableEnvPrint,
+			"If env. variables printing for failed commands should be enabled.",
+		)
+	flags.
+		BoolVar(&args.SkipToolchainDispatch,
+			"skip-toolchain-dispatch", args.SkipToolchainDispatch,
+			"The flag to denote that we are already inside the toolchain. "+
+				"Skip any invocation to any toolchain dispatcher.",
+		)
+
+	flags.
+		BoolVar(&args.GlobalOutput,
+			"global-output", args.GlobalOutput,
+			fmt.Sprintf("If a global output directory (repository root dir + '%s').", fs.OutputDir))
+
+	flags.
+		StringVar(&args.GlobalOutputDir,
+			"global-output-dir", args.GlobalOutputDir,
+			"Use this as global output directory (more simple: use '--global-output').")
+}
+
+func parseConfigs(
+	conf any,
+) (parsedConfig, parsedUserConfig bool, err error) {
+	// Parse here the --config, and --config-user and `--config-values`
+	// and init the config, because that needs to happen before
+	// cobra parses the flags and set defaults.
+	//
+	// Priorities:
+	// 2. Env. variables, not yet implemented.
+	// 1. Config from `--config` and `--config-user` and `--config-values.`
+	// 0. Command line arguments.
+
+	var args Args
+	s := pflag.NewFlagSet("default", pflag.ContinueOnError)
+	addPersistendFlags(s, &args)
+
 	s.ParseErrorsWhitelist.UnknownFlags = true
 
 	err = s.Parse(os.Args)
-	if err != nil {
+	if e.Is(err, pflag.ErrHelp) {
 		// WARN: any `-h` will get into an error. Noway to disable that.
 		// So we set the error to nil, and return.
-		err = nil
-
-		return //nolint:nilerr // intentional.
+		return false, false, nil
 	}
 
-	parsedConfig, err = initConfig(rootArgs.Config, config, true)
+	parsedConfig, err = initConfig(args.Config, conf, true)
 	if err != nil {
 		return
 	}
 
-	parsedUserConfig, err = initConfig(rootArgs.ConfigUser, config, false)
+	parsedUserConfig, err = initConfig(args.ConfigUser, conf, false)
+	if err != nil {
+		return
+	}
+
+	err = config.ApplyKeyValues(args.ConfigKeyValues, conf)
 	if err != nil {
 		return
 	}
@@ -206,29 +249,41 @@ func parseConfigs(
 	return
 }
 
-func initConfig(config string, args any, errorIfNotExists bool) (bool, error) {
-	if config == "" {
+func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error) {
+	if configPath == "" {
 		return false, nil
 	}
 
-	if exists := fs.Exists(config); !exists {
-		if errorIfNotExists {
-			return false, errors.New("Config file '%s' does not exists", config)
-		} else {
-			return false, nil
-		}
-	}
+	log.Debugf("Parse config from '%s'", configPath)
 
-	f, err := os.OpenFile(config, os.O_RDONLY, fs.DefaultPermissionsFile)
-	if err != nil {
-		return false, errors.New("Could not load config file '%s'", config)
+	var f io.Reader
+	switch configPath {
+	case "-":
+		f = os.Stdin
+	default:
+		exists := fs.Exists(configPath)
+
+		if !exists {
+			if errorIfNotExists {
+				return false, errors.New("Config file '%s' does not exists", configPath)
+			} else {
+				return false, nil
+			}
+		}
+
+		ff, err := os.OpenFile(configPath, os.O_RDONLY, fs.DefaultPermissionsFile)
+		if err != nil {
+			return false, errors.New("Could not load config file '%s'", configPath)
+		}
+		defer ff.Close()
+
+		f = ff
 	}
-	defer f.Close()
 
 	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(args)
+	err := decoder.Decode(conf)
 	if err != nil {
-		return false, errors.AddContext(err, "could not decode config file '%s'", config)
+		return false, errors.AddContext(err, "could not decode config file '%s'", configPath)
 	}
 
 	return true, nil
@@ -250,9 +305,6 @@ func runRoot(rootCmd *cobra.Command, setts *Settings, version bool) error {
 }
 
 func applyGeneralOptions(r *Args) error {
-	// NOTE: No `git` stuff should be done here.
-	// As there are other commands which also need to run like `completion`
-	// which does not need Git etc.
 	if r.LogLevel != "" {
 		err := log.SetLevel(r.LogLevel)
 		if err != nil {

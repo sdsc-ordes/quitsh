@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
@@ -25,6 +26,11 @@ func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
 
 	covDir := os.Getenv("QUITSH_COVERAGE_DIR")
 	require.DirExists(t, covDir, "QUITSH_COVERAGE_DIR=%s must exist.", covDir)
+
+	// Remove output
+	f := path.Join("repo/component-a/.output")
+	err := os.RemoveAll(f)
+	require.NoError(t, err)
 
 	return exec.NewCmdCtxBuilder().
 		BaseCmd(quitshExe).
@@ -64,6 +70,48 @@ func TestCLIExecTarget(t *testing.T) {
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
 	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.NotContains(t, stderr, "Hurrey building release version")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLISetConfigValues(t *testing.T) {
+	cli := setup(t).Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"-k", "build.buildType: release",
+		"component-a::build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hurrey building release version")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLISetConfigValuesStdin(t *testing.T) {
+	cli := setup(t).Build()
+
+	config := "build:\n  buildType: release"
+	r := strings.NewReader(config)
+
+	_, stderr, err := cli.WithStdin(r).GetStdErr(
+		"--config", "-",
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hurrey building release version")
 	assert.Contains(t, stderr, "🌻")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
