@@ -27,6 +27,7 @@ func ExecuteDAGParallel(
 	tf := taskflow.NewTaskFlow("DAG")
 
 	var buildError error
+	var summary RunnerStatuses
 	var lock sync.Mutex
 
 	addRunnerTasks := func(sf *taskflow.Subflow, node *TargetNode, step *step.Config) {
@@ -81,6 +82,19 @@ func ExecuteDAGParallel(
 						config,
 						rootDir,
 						true)
+
+					lock.Lock()
+					defer lock.Unlock()
+					summary = append(
+						summary,
+						RunnerStatus{
+							err != nil,
+							rootDir,
+							node.Target.ID,
+							step.Index,
+							r.RunnerID,
+						},
+					)
 				})
 
 			runnerTasks = append(runnerTasks, runnerTask)
@@ -136,6 +150,8 @@ func ExecuteDAGParallel(
 	}
 
 	executor.Run(tf).Wait()
+
+	summary.Log()
 
 	return allErrors
 }

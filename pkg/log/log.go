@@ -21,7 +21,9 @@ var ForceColorInCI = true
 
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
-var globalLogger = logger{l: chlog.New(os.Stderr)} //nolint:gochecknoglobals // Accepted as only for logging.
+var globalLogger = logger{
+	l: chlog.New(os.Stderr),
+} //nolint:gochecknoglobals // Accepted as only for logging.
 
 // Setup sets up the default loggers .
 func Setup(level string) (err error) {
@@ -65,17 +67,19 @@ func getStyles() *chlog.Styles {
 	styles.Levels[TraceLevel] = lipgloss.NewStyle().
 		SetString("TRACE").
 		Padding(0, 1, 0, 1).
-		Foreground(lipgloss.Color("#a4a4a4")).Bold(true)
-
+		Background(lipgloss.Color("#a4a4a4")).
+		Foreground(lipgloss.Color("0")).Bold(true)
 	styles.Levels[chlog.DebugLevel] = lipgloss.NewStyle().
 		SetString("DEBUG").
 		Padding(0, 1, 0, 1).
-		Foreground(lipgloss.Color("#00e6ff")).Bold(true)
+		Background(lipgloss.Color("#00e6ff")).
+		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.InfoLevel] = lipgloss.NewStyle().
 		SetString("INFO").
 		Padding(0, 1, 0, 1).
-		Foreground(lipgloss.Color("#00c900")).Bold(true)
+		Background(lipgloss.Color("#00c900")).
+		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.WarnLevel] = lipgloss.NewStyle().
 		SetString("WARN").
