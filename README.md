@@ -171,6 +171,14 @@ adds essential `quitsh` commands
 There are lots of more useful commands in [`pkg/cli/cmd`](./pkg/cli/cmd) which
 you might use.
 
+## Useful References
+
+A reference repository with commands and runner can be looked at here:
+
+- [`Custodian`](https://gitlab.com/data-custodian/custodian/tree/main/tools/quitsh)
+- [`DAC-Portal`](https://gitlab.com/data-custodian/dac-portal/tree/main/tools/quitsh)
+- [`Quitsh (this repo)`](https://github.com/sdsc-ordes/quitsh)
+
 ## Config
 
 Quitsh runs with global config YAML file which it loads (or defaults) at startup
