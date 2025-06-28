@@ -31,7 +31,7 @@
     };
 
     quitsh = {
-      url = "path:../../tools/nix";
+      url = "github:sdsc-ordes/quitsh?ref=feat/add-stdin-parse-and-key-value-pairs";
     };
   };
   outputs =
