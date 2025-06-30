@@ -34,7 +34,7 @@ func main() {
 		&conf.Commands.Root,
 		&conf,
 		cli.WithName("cli"),
-		cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its build with 'quitsh'."),
+		cli.WithDescription("This is the 🐔-🥚 CLI tool for 'quitsh', yes its built with 'quitsh'."),
 		cli.WithCompFindOptions(
 			query.WithFindOptions(
 				fs.WithWalkDirFilterPatterns(nil,

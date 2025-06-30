@@ -1,11 +1,12 @@
 {
+  pkgs,
   config,
   lib,
-  pkgs,
   ...
 }:
+
 let
-  cfg = config.quitsh.languages.go;
+  cfg = config.languages.go;
 
   # Override the buildGoModule function to use the specified Go package.
   buildGoModule = pkgs.buildGoModule.override { go = cfg.package; };
@@ -22,7 +23,7 @@ let
       throw "Package ${pkg.pname or "unknown"} does not accept buildGoModule or buildGoLatestModule arguments";
 in
 {
-  options.quitsh.languages.go = {
+  options.languages.go = {
     enable = lib.mkEnableOption "tools for Go development";
 
     package = lib.mkOption {
@@ -46,15 +47,34 @@ in
       # see: https://github.com/golang/vscode-go/blob/72249dc940e5b6ec97b08e6690a5f042644e2bb5/src/goInstallTools.ts#L721
       # see: https://github.com/golang/tools/blob/master/gopls/README.md
       packages = lib.mkOption {
+        type = lib.types.nullOr lib.types.listOf lib.types.package;
+        example = lib.literalExpression "[ pkgs.gopls ]";
+        default = null;
+        description = ''
+          Go packages which need to be built with the chosen Go package.
+          If `null`, then `defaultPackages` will be used.
+        '';
+      };
+
+      defaultPackages = lib.mkOption {
         type = lib.types.listOf lib.types.package;
+        example = lib.literalExpression "[ pkgs.gopls ]";
         default = [
-          # Debugger
+          # Debugger,
           pkgs.delve
-          # LSP
+          # LSP,
           pkgs.gopls
           pkgs.gotools
+          pkgs.gomodifytags
+          # pkgs.impl,
+          pkgs.go-tools
           pkgs.golines
+          pkgs.gotests
+          pkgs.iferr
         ];
+        description = ''
+          Go packages which need to be built with the chosen Go package.
+        '';
       };
     };
 
@@ -66,9 +86,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    packages = [
-      cfg.package
-    ] ++ lib.optionals (cfg.tools.enable) (lib.map (p: buildWithSpecificGo p) cfg.tools.packages);
+    packages =
+      [
+        cfg.package
+      ]
+      ++ lib.optionals (cfg.tools.enable) (
+        lib.map (p: buildWithSpecificGo p) (cfg.tools.packages or cfg.tools.defaultPackages)
+      );
 
     hardeningDisable = lib.optional (cfg.enableHardeningWorkaround) "fortify";
 
