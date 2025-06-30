@@ -75,15 +75,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		return err
 	}
 
-	log.Info("Run Go generate.")
-	err = goctx.Check("generate", "./...")
-	if err != nil {
-		log.ErrorE(err, "Go generate failed.")
-
-		return err
-	}
-
-	flags := GetBuildFlags(
+	flags, tagArgs := GetBuildFlags(
 		log,
 		comp.Root(),
 		r.settings.BuildType(),
@@ -97,10 +89,20 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		true,
 	)
 
+	log.Info("Run Go generate.")
+	cmd := append([]string{"generate"}, tagArgs...)
+	cmd = append(cmd, "./...")
+	err = goctx.Check(cmd...)
+	if err != nil {
+		log.ErrorE(err, "Go generate failed.")
+
+		return err
+	}
+
 	// TODO: Run `go test` over `grc --config root_dir/tools/config/grc/...` to colorize.
 	//       Issue: https://gitlab.com/data-custodian/custodian/-/issues/194
 	log.Info("Run Go test.")
-	cmd := append([]string{"test"}, flags...)
+	cmd = append([]string{"test"}, flags...)
 	cmd = append(cmd, r.settings.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)

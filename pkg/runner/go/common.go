@@ -25,7 +25,7 @@ func GetBuildFlags(
 	versionModule string,
 	buildTags []string,
 	isTest bool,
-) (flags []string) {
+) (flags []string, tagArgs []string) {
 	flags = []string{"-C", compDir}
 
 	bTags := append([]string{}, buildTags...)
@@ -90,9 +90,9 @@ func GetBuildFlags(
 
 	// Append the environment tag.
 	bTags = append(bTags, envType.String())
-
 	if len(bTags) != 0 {
-		flags = append(flags, "--tags", strings.Join(bTags, ","))
+		tagArgs = append(tagArgs, "--tags", strings.Join(bTags, ","))
+		flags = append(flags, tagArgs...)
 	}
 	if len(ldFlags) != 0 {
 		flags = append(flags, "--ldflags", strings.Join(ldFlags, " "))
@@ -105,5 +105,5 @@ func GetBuildFlags(
 
 	log.Info("Build flags.", "flags", flags)
 
-	return flags
+	return flags, tagArgs
 }
