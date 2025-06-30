@@ -1,7 +1,6 @@
 package dag
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -140,6 +139,7 @@ func executeRunners(
 		log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
 
 		e := ExecuteRunner(
+			log.NewLogger(rD.targetID.String()),
 			rD.comp,
 			rD.targetID,
 			rD.step.Index,
@@ -149,7 +149,6 @@ func executeRunners(
 			toolchainDispatcher,
 			config,
 			rootDir,
-			true,
 		)
 
 		if e != nil {
@@ -179,6 +178,7 @@ func executeRunners(
 }
 
 func ExecuteRunner(
+	log log.ILog,
 	comp *component.Component,
 	targetID target.ID,
 	stepIdx step.Index,
@@ -188,7 +188,6 @@ func ExecuteRunner(
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
-	addPrefix bool,
 ) error {
 	// When the toolchain is 'none', none is needed.
 	skipDispatch := toolchainDispatcher == nil
@@ -215,19 +214,12 @@ func ExecuteRunner(
 		}
 	}
 
-	var logPrefix string
-
-	if addPrefix {
-		logPrefix = fmt.Sprintf("[%s]", targetID.String())
-	}
-
 	if noDispatch { //nolint: nestif,nolintlint
 		// Change to repo root and run the runner.
 		err := os.Chdir(rootDir)
 		if err != nil {
 			return err
 		}
-		log := log.NewLogger(logPrefix)
 
 		ctx := context{
 			gitx:      git.NewCtx(rootDir),

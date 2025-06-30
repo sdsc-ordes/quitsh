@@ -1,13 +1,17 @@
 package log
 
 import (
+	"fmt"
 	"os"
+	"path"
+	"sync"
 	"time"
 
 	chlog "github.com/charmbracelet/log"
+	"github.com/gofrs/flock"
+	"github.com/muesli/termenv"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
@@ -16,8 +20,42 @@ const TraceLevel = chlog.DebugLevel - 10
 
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
-var globalLogger = logger{ //nolint:gochecknoglobals // Accepted as only for logging.
-	l: chlog.New(os.Stderr),
+//
+//nolint:gochecknoglobals // intended
+var (
+	globalLogger logger
+	initOnce     sync.Once
+)
+
+//nolint:gochecknoinits // intended
+func init() {
+	// NOTE: We need to do this as multiple subprocesses are started and
+	// the logger tries to aquire the terminal state through terminal capabilities
+	// which is a synchronous operation.
+	// We could try to configure the logger differently, but its a bit unsafe
+	// as we need to be sure to control the underlying library correctly.
+	// (lipgloss.Renderer)
+	lockFile := path.Join(os.TempDir(), "quitsh-logger-init.lock")
+	lock := flock.New(lockFile)
+	err := lock.Lock()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not aquire lock '%s', delete that file.", lockFile)
+		panic("error could not aquire logger init lock")
+	}
+	defer lock.Close()
+
+	initOnce.Do(func() {
+		// This block of code is guaranteed to run exactly once.
+		// We perform a basic, default initialization here.
+		globalLogger = logger{
+			l: chlog.New(os.Stderr),
+		}
+	})
+}
+
+// Global returns the global logger.
+func Global() ILog {
+	return globalLogger
 }
 
 // Setup sets up the default loggers .
