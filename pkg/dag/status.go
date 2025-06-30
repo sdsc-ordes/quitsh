@@ -56,7 +56,3 @@ func (s RunnerStatuses) Log() {
 
 	log.Info(sb.String())
 }
-
-func (s RunnerStatuses) Len() int {
-	return s.Len()
-}
