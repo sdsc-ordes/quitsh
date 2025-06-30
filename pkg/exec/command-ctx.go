@@ -412,5 +412,5 @@ func logCommand(c *CmdContext, cmd *exec.Cmd) {
 		a = c.filterArgs(cmd.Args)
 	}
 
-	log.Debug("Executing.", "cmd", fmt.Sprintf("%q", a))
+	log.Debugf("Executing. cmd: '%q'", a)
 }
