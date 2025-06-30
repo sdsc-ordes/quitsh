@@ -146,6 +146,7 @@ func runExec(cli cli.ICLI, args *toolchain.DispatchArgs) error {
 	}
 
 	return dag.ExecuteRunner(
+		log.Global(),
 		comp,
 		target.ID,
 		step.Index,
@@ -155,6 +156,5 @@ func runExec(cli cli.ICLI, args *toolchain.DispatchArgs) error {
 		dispatcher,
 		cli.Config(),
 		rootDir,
-		true,
 	)
 }

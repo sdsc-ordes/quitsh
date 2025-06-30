@@ -61,6 +61,9 @@ func ExecuteConcurrent(
 		runnerTasks := []*taskflow.Task{}
 		for runnerIdx, r := range runners {
 			n := fmt.Sprintf("%v::step-%v::%v", node.Target.ID, step.Index, runnerIdx)
+
+			logger := log.NewLogger(node.Target.ID.String())
+
 			runnerTask := sf.NewTask(
 				n,
 				func() {
@@ -77,6 +80,7 @@ func ExecuteConcurrent(
 					}()
 
 					err = ExecuteRunner(
+						logger,
 						node.Comp,
 						node.Target.ID,
 						step.Index,
@@ -86,7 +90,7 @@ func ExecuteConcurrent(
 						toolchainDispatcher,
 						config,
 						rootDir,
-						true)
+					)
 
 					lock.Lock()
 					defer lock.Unlock()

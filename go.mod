@@ -15,6 +15,7 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-yaml v1.17.1
+	github.com/gofrs/flock v0.12.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.7.0
 	github.com/huandu/go-clone v1.7.2

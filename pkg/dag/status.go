@@ -1,7 +1,9 @@
 package dag
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
@@ -27,6 +29,10 @@ func (s RunnerStatuses) Log() {
 	const failedS = "❌"
 	const successS = "🌻"
 	var failed string
+
+	slices.SortFunc(s, func(a, b RunnerStatus) int {
+		return cmp.Compare(a.TargetID, b.TargetID)
+	})
 
 	for i := range s {
 		var s = &s[i]
