@@ -64,20 +64,13 @@ func runExec(cli cli.ICLI, args *execTargetArgs) error {
 		dispatcher = cli.ToolchainDispatcher()
 	}
 
-	if cli.RootArgs().Parallel {
-		return dag.ExecuteDAGParallel(
-			targets,
-			cli.RunnerFactory(),
-			dispatcher,
-			cli.Config(),
-			rootDir)
-	} else {
-		return dag.ExecuteDAG(
-			prios,
-			cli.RunnerFactory(),
-			dispatcher,
-			cli.Config(),
-			rootDir,
-		)
-	}
+	return dag.Execute(
+		targets,
+		prios,
+		cli.RunnerFactory(),
+		dispatcher,
+		cli.Config(),
+		rootDir,
+		cli.RootArgs().Parallel,
+	)
 }

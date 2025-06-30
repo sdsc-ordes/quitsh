@@ -17,11 +17,11 @@ import (
 
 const MaxCoroutineConcurrency = 10000
 
-// ExecuteDAGParallel executes the targets in parallel.
+// ExecuteConcurrent executes the DAG concurrent.
 // TODO: Refactor to better length.
 //
 //nolint:gocognit,funlen
-func ExecuteDAGParallel(
+func ExecuteConcurrent(
 	targetNodes TargetNodeMap,
 	runnerFactory factory.IFactory,
 	toolchainDispatcher toolchain.IDispatcher,

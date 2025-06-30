@@ -25,9 +25,38 @@ type RunnerData struct {
 	inst      factory.RunnerInstance
 }
 
-// ExecuteDAG executes the DAG.
-// If not dispatcher is given, the toolchain dispatch is not done.
-func ExecuteDAG(
+// Execute executes the DAG.
+// If no dispatcher is given, the toolchain dispatch is not done.
+func Execute(
+	targets TargetNodeMap,
+	prios Priorities,
+	runnerFactory factory.IFactory,
+	dispatcher toolchain.IDispatcher,
+	config config.IConfig,
+	rootDir string,
+	parallel bool,
+) error {
+	if parallel {
+		return ExecuteConcurrent(
+			targets,
+			runnerFactory,
+			dispatcher,
+			config,
+			rootDir)
+	} else {
+		return ExecuteNormal(
+			prios,
+			runnerFactory,
+			dispatcher,
+			config,
+			rootDir,
+		)
+	}
+}
+
+// ExecuteNormal executes the DAG non-concurrent.
+// If no dispatcher is given, the toolchain dispatch is not done.
+func ExecuteNormal(
 	prios Priorities,
 	runnerFactory factory.IFactory,
 	toolchainDispatcher toolchain.IDispatcher,
