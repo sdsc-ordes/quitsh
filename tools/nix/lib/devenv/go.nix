@@ -23,7 +23,7 @@ let
       throw "Package ${pkg.pname or "unknown"} does not accept buildGoModule or buildGoLatestModule arguments";
 in
 {
-  options.languages.go = {
+  options.quitsh.languages.go = {
     enable = lib.mkEnableOption "tools for Go development";
 
     package = lib.mkOption {
