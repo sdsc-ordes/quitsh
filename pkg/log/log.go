@@ -81,7 +81,7 @@ func getStyles() *chlog.Styles {
 	styles.Levels[chlog.InfoLevel] = lipgloss.NewStyle().
 		SetString("INFO").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#00c900")).
+		Background(lipgloss.Color("#00c41a")).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.WarnLevel] = lipgloss.NewStyle().
