@@ -8,7 +8,9 @@ import (
 
 // This string is set in the Go runner with
 // `-ldflags -X ".../pkg/build.buildVersion=..."`.
-var buildVersion = "0.14.0" //nolint:gochecknoglobals // Allowed for version.
+// but here it needs to be correct to make other CLI users of
+// quitsh have the correct version.
+var buildVersion = "0.27.0" //nolint:gochecknoglobals // Allowed for version.
 
 func GetBuildVersion() *version.Version {
 	ver, err := version.NewVersion(buildVersion)

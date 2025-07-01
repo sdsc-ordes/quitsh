@@ -24,39 +24,54 @@
 > This repository is in `beta` and not stable enough since the design space of
 > this tool is still explored. Documentation is incomplete.
 
-The `quitsh` framework (`/kwɪʧ/`) is a build-tooling CLI framework designed to
-replace loosely-typed scripting languages (e.g., `bash`, `python`, and similar
-alternatives) with the statically-typed language `Go`. Its goal is to simplify
-tooling tasks while providing robust, extendable solutions for component
-repositories (mono-repositories).
+The `quitsh` framework (`/kwɪʧ/`) is a build-tooling **CLI framework** designed
+to replace loosely-typed scripting languages (e.g., `bash`, `python`, and
+similar alternatives) with the statically-typed language `Go`. Its goal is to
+simplify tooling tasks while providing robust, extendable solutions for
+component repositories (mono-repositories).
 
 `quitsh` is an opinionated framework born out of frustration with the lack of
 simple and extendable tooling for mono-repos. It is language-agnostic and
 toolchain-independent, allowing users to focus on their workflows without being
 constrained by specific technologies.
 
-### Key Features
+Quitsh can be used in two non-coupled ways (enhancing each other):
 
-#### Code-First Approach
+- Build/use & extend the CLI `quitsh` for your tooling/CI/CD scripts in your
+  repository. You write `quitsh mycommand --do-it` and decide what it does,
+  using the [library modules](#built-in-libraries) for running subprocesses,
+  logging etc.
+
+- Use its [component feature](#component-system) which gives you the ability to
+  register your tooling scripts (build/lint/test etc.) as
+  [runners](#runner-system) which can be reused across
+  [components](#components). Since runners depend heavily on available
+  executables in your `PATH`, runners run over a toolchain (currently Nix
+  development shell etc.).
+
+## Key Features
+
+### Code-First Approach
 
 - All tooling logic is implemented in `Go`.
-- Tasks are defined primarily in code, avoiding declarative configurations or
-  templated non-typed languages, which often add unnecessary complexity despite
-  their flexibility. _Note: Supporting configuration languages like `jsonnet` or
-  "turing-complete" YAML etc. is particularly avoided. **Everything stays
-  strongly-typed and fast compiled.**_
+- Tooling logic is defined primarily in code, avoiding declarative
+  configurations or templated non-typed languages, which often add unnecessary
+  complexity despite their flexibility. _Note: Supporting configuration
+  languages like `jsonnet` or "turing-complete" YAML etc. is particularly
+  avoided. **Everything stays strongly-typed and fast compiled.**_
 
-#### Component Identification
-
-- Components (i.e., buildable units) are identified by placing a configuration
-  file (default: `.component.yaml`) in the corresponding subdirectory.
-
-#### Extendability
+### Extendability
 
 - `quitsh` serves as a library to build **your customized** CLI tool for your
   specific tasks.
 - Users can add custom commands and specialized tooling features using libraries
-  like [`cobra`](https://github.com/spf13/cobra).
+  like [`cobra`](https://github.com/spf13/cobra), `quitsh mycommand --do-it`.
+
+### Component System
+
+- [Components](#components) (i.e., buildable units) are identified by placing a
+  configuration file (default: `.component.yaml`) in the corresponding
+  subdirectory.
 
 #### Targets and Steps
 
@@ -94,7 +109,7 @@ constrained by specific technologies.
 
   </p>
 
-#### Built-in Libraries
+### Built-in Libraries
 
 The `pkg` folder offers utilities for common development needs, such as:
 
@@ -113,14 +128,15 @@ The `pkg` folder offers utilities for common development needs, such as:
 
 - Since all tooling is written in `Go`, `quitsh` provides type safety and fast
   performance by default.
-- Combined with Nix-based toolchain dispatch and the ability to write tests
+- Combined with a Nix-based toolchain dispatch and the ability to write tests
   easily, the framework significantly accelerates the "change, test, improve"
   workflow.
 
 #### Nix Integration
 
-- CLI tools built with `quitsh` can be seamlessly packaged into Nix development
-  shells, ensuring accessibility for all users of a given repository.
+- A CLI tool built with `quitsh` can be
+  [seamlessly packaged](./tools/nix/packages/cli) into a Nix development shells,
+  ensuring accessibility for all users of a given repository.
 
 ---
 
