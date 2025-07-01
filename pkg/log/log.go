@@ -39,8 +39,8 @@ func init() {
 	lock := flock.New(lockFile)
 	err := lock.Lock()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not aquire lock '%s', delete that file.", lockFile)
-		panic("error could not aquire logger init lock")
+		fmt.Fprintf(os.Stderr, "Could not acquire lock '%s', delete that file.", lockFile)
+		panic("error could not acquire logger init lock")
 	}
 	defer lock.Close()
 
@@ -92,7 +92,7 @@ func initLog(level string) (logger, error) {
 
 	if ciRunning() && ForceColorInCI {
 		// We force here the color profile for CI.
-		l.SetColorProfile(termenv.TrueColor)
+		l.SetColorProfile(termenv.ANSI256)
 	}
 
 	return logger{l: l}, nil
