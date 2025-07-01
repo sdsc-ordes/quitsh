@@ -18,44 +18,48 @@ type Credentials struct {
 
 // NewCredentials returns new credentials from env. variables.
 func NewCredentials(envs CredentialsEnv) (c Credentials, err error) {
-	err = env.AssertProperEnvKey(envs.UserEnv, envs.TokenEnv)
-	if err != nil {
-		return
-	}
-
-	l := env.EnvList(os.Environ()).FindAll(envs.UserEnv, envs.TokenEnv)
-	err = l.AssertNotEmpty()
-	if err != nil {
-		return
-	}
-
-	return Credentials{
-		user:  l[envs.UserEnv].Value,
-		token: l[envs.TokenEnv].Value}, nil
+	return envs.Resolve(false)
 }
 
 // NewCredentialsTokenOnly creates credentials only for the token (user is `quitsh`).
 func NewCredentialsTokenOnly(tokenEnv string) (c Credentials, err error) {
-	err = env.AssertProperEnvKey(tokenEnv)
+	env := CredentialsEnv{TokenEnv: tokenEnv}
+
+	return env.Resolve(true)
+}
+
+// Resolve all credential env variables.
+func (e *CredentialsEnv) Resolve(tokenOnly bool) (c Credentials, err error) {
+	all := []string{e.TokenEnv}
+	if !tokenOnly {
+		all = []string{e.UserEnv, e.TokenEnv}
+	}
+
+	err = env.AssertProperEnvKey(all...)
 	if err != nil {
 		return
 	}
 
-	l := env.EnvList(os.Environ()).FindAll(tokenEnv)
+	l := env.EnvList(os.Environ()).FindAll(all...)
 	err = l.AssertNotEmpty()
 	if err != nil {
 		return
 	}
 
+	user := "quitsh"
+	if !tokenOnly {
+		user = l[e.UserEnv].Value
+	}
+
 	return Credentials{
-		user:  "quitsh",
-		token: l[tokenEnv].Value}, nil
+		user:  user,
+		token: l[e.TokenEnv].Value}, nil
 }
 
-func (c Credentials) User() string {
+func (c *Credentials) User() string {
 	return c.user
 }
 
-func (c Credentials) Token() string {
+func (c *Credentials) Token() string {
 	return c.token
 }
