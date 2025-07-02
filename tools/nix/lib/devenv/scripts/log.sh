@@ -8,7 +8,7 @@ function quitsh::_print() {
     local prefix="• 🐙 "
 
     local hasColor="0"
-    if [ -t 1 ] || [ "$CI" = "true" ]; then
+    if [ -t 1 ] || [ "${CI:-}" = "true" ]; then
         hasColor="1"
     fi
 
