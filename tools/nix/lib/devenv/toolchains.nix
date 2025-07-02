@@ -46,7 +46,7 @@ in
 
       enterShell = ''
         export QUITSH_TOOLCHAINS=$("${merge}/bin/merge" "${toolchains}")
-        quitsh-log info "Entering Quitsh DevShell: Toolchains active '$QUITSH_TOOLCHAINS'";
+        ${cfg.log.package}/bin/log info "Quitsh toolchains active: '$QUITSH_TOOLCHAINS'";
       '';
     };
 }

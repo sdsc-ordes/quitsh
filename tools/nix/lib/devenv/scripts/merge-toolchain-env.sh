@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Merges QUITSH_TOOLCHAINS with `$1` for layering DevShells.
 
 old="${QUITSH_TOOLCHAINS:-}"
 new="$1"
