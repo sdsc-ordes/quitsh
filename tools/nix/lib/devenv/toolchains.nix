@@ -24,7 +24,8 @@ in
         default = [ ];
         description = ''
           The toolchain names ('[a-z0-9-]+') quitsh uses to detect the correct toolchain.
-          Corresponds to an env. variable `QUITSH_TOOLCHAINS` which get populated.
+          An env. variable `QUITSH_TOOLCHAINS` will get populated by these names.
+          Works with nesteed shells.
         '';
       };
     };
