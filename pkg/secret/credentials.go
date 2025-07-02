@@ -1,4 +1,4 @@
-package common
+package secret
 
 import (
 	"os"
@@ -12,8 +12,8 @@ type CredentialsEnv struct {
 }
 
 type Credentials struct {
-	user  string `yaml:"-"`
-	token string `yaml:"-"`
+	user  RedactedString
+	token RedactedString
 }
 
 // NewCredentials returns new credentials from env. variables.
@@ -28,8 +28,8 @@ func NewCredentialsTokenOnly(tokenEnv string) (c Credentials, err error) {
 	return env.Resolve(true)
 }
 
-// Resolve all credential env variables.
-func (e *CredentialsEnv) Resolve(tokenOnly bool) (c Credentials, err error) {
+// ResolveFrom resolves credentials from the given environment.
+func (e *CredentialsEnv) ResolveFrom(tokenOnly bool, environ []string) (c Credentials, err error) {
 	all := []string{e.TokenEnv}
 	if !tokenOnly {
 		all = []string{e.UserEnv, e.TokenEnv}
@@ -40,7 +40,7 @@ func (e *CredentialsEnv) Resolve(tokenOnly bool) (c Credentials, err error) {
 		return
 	}
 
-	l := env.EnvList(os.Environ()).FindAll(all...)
+	l := env.EnvList(environ).FindAll(all...)
 	err = l.AssertNotEmpty()
 	if err != nil {
 		return
@@ -52,14 +52,19 @@ func (e *CredentialsEnv) Resolve(tokenOnly bool) (c Credentials, err error) {
 	}
 
 	return Credentials{
-		user:  user,
-		token: l[e.TokenEnv].Value}, nil
+		user:  RedactedString(user),
+		token: RedactedString(l[e.TokenEnv].Value)}, nil
+}
+
+// Resolve all credential env variables from the `os` environment.
+func (e *CredentialsEnv) Resolve(tokenOnly bool) (c Credentials, err error) {
+	return e.ResolveFrom(tokenOnly, os.Environ())
 }
 
 func (c *Credentials) User() string {
-	return c.user
+	return string(c.user)
 }
 
 func (c *Credentials) Token() string {
-	return c.token
+	return string(c.token)
 }
