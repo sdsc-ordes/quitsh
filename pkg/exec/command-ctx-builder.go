@@ -14,11 +14,13 @@ type CmdContextBuilder struct {
 }
 
 // NewCommandCtx returns a simple command context.
+// By default: not quiet.
 func NewCommandCtx(cwd string) *CmdContext {
 	return NewCmdCtxBuilder().Cwd(cwd).Build()
 }
 
 // NewCmdCtxBuilder returns a builder to build a command context.
+// By default: not quiet.
 func NewCmdCtxBuilder() CmdContextBuilder {
 	ctx := CmdContext{}
 

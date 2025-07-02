@@ -3,10 +3,10 @@ package skopeo
 import (
 	"fmt"
 
-	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
+	"github.com/sdsc-ordes/quitsh/pkg/secret"
 )
 
 type (
@@ -45,7 +45,7 @@ func WithEnableTLS(enable bool) Option {
 }
 
 // Login logs into the registry.
-func (s Context) Login(creds common.Credentials, domain string) (logout func() error, err error) {
+func (s Context) Login(creds secret.Credentials, domain string) (logout func() error, err error) {
 	log.Info("Login to registry.", "domain", domain)
 
 	err = s.Check("login",
