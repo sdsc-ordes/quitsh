@@ -16,9 +16,17 @@ in
     };
   };
 
-  config = {
-    env = {
-      QUITSH_TOOLCHAINS = "${lib.concatStringsSep "," cfg.toolchains}";
+  config =
+    let
+      toolchains = "${lib.concatStringsSep ", " cfg.toolchains}";
+    in
+    {
+      env = {
+        QUITSH_TOOLCHAINS = toolchains;
+      };
+
+      enterShell = ''
+        quitsh-log info "Entering Quitsh DevShell: Toolchains active '${toolchains}'";
+      '';
     };
-  };
 }
