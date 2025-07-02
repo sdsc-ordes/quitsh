@@ -4,7 +4,6 @@ let
     name = "quitsh-log";
     text = builtins.readFile ./scripts/log.sh;
     runtimeInputs = [
-      pkgs.bash
       pkgs.coreutils
     ];
   };
