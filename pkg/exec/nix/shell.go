@@ -48,7 +48,7 @@ func HaveToolchain(toolchain string) bool {
 
 	if InBuild() || InShell() {
 		tcs := os.Getenv(EnvVarQuitshToolchain)
-		toolchains := strings.Split(tcs, ",")
+		toolchains := strings.Split(strings.ReplaceAll(tcs, " ", ""), ",")
 
 		return slices.Contains(toolchains, toolchain)
 	}
