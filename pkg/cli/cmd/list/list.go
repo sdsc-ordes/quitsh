@@ -104,8 +104,19 @@ func outputToFile(comps []*component.Component, outputFile, format string) error
 	}
 
 	type D struct {
-		Root     string `json:"root"`
-		OutDir   string `json:"outDir"`
+		Root    string `json:"root"`
+		Version string `json:"version"`
+
+		OutDir               string `json:"outDir"`
+		OutBuildDir          string `json:"outBuildDir"`
+		OutBuildBinDir       string `json:"outBuildBinDir"`
+		OutBuildDocsDir      string `json:"outBuildDocsDir"`
+		OutBuildShareDir     string `json:"outBuildShareDir"`
+		OutDirCoverageBinDir string `json:"outDirCoverageBinDir"`
+		OutCoverageDataDir   string `json:"outCoverageDataDir"`
+		OutPackageDir        string `json:"outPackageDir"`
+		OutImageDir          string `json:"outImageDir"`
+
 		Name     string `json:"name"`
 		Language string `json:"language"`
 	}
@@ -124,7 +135,19 @@ func outputToFile(comps []*component.Component, outputFile, format string) error
 		c := comps[i]
 		configs = append(
 			configs,
-			D{Root: c.Root(), OutDir: c.OutDir(), Name: c.Name(), Language: c.Language()},
+			D{Root: c.Root(),
+				Version:              c.Version().String(),
+				OutDir:               c.OutDir(),
+				OutBuildDir:          c.OutBuildDir(),
+				OutBuildBinDir:       c.OutBuildBinDir(),
+				OutBuildDocsDir:      c.OutBuildDocsDir(),
+				OutBuildShareDir:     c.OutBuildShareDir(),
+				OutDirCoverageBinDir: c.OutCoverageBinDir(),
+				OutCoverageDataDir:   c.OutCoverageDataDir(),
+				OutPackageDir:        c.OutPackageDir(),
+				OutImageDir:          c.OutImageDir(),
+				Name:                 c.Name(),
+				Language:             c.Language()},
 		)
 	}
 
