@@ -1,6 +1,7 @@
 package listcmd
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"text/template"
@@ -15,15 +16,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const longDesc = `
+List all components found in the current working directory.
+`
+
+const defaultOutputFormat = "{{ . | toJson }}"
+
 type listArgs struct {
 	compArgs   general.ComponentArgs
 	outputFile string
 	format     string
 }
-
-const longDesc = `
-List all components found in the current working directory.
-`
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 	var args listArgs
@@ -46,11 +49,13 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 
 	listCmd.Flags().
 		StringVar(&args.outputFile,
-			"output", "", "Output the found components in JSON format to this file (default `stdout`.).")
+			"output", "", "Output the found components to this file (if `-` = `stdout`, see `format`).")
 
 	listCmd.Flags().
 		StringVar(&args.format,
-			"format", "", "Format string to use for output.")
+			"format", "",
+			fmt.Sprintf("Template format (Go) string to use for output (defaults to '%s'.", defaultOutputFormat),
+		)
 
 	parent.AddCommand(listCmd)
 }
@@ -75,7 +80,7 @@ func listComponents(cl cli.ICLI, c *listArgs) error {
 	}
 
 	if c.outputFile != "" || c.format != "" {
-		err := outputJSON(comps, c.outputFile, c.format) //nolint:govet //intentional
+		err := outputToFile(comps, c.outputFile, c.format) //nolint:govet //intentional
 
 		if err != nil {
 			return errors.AddContext(err, "Could not marshal output to JSON.")
@@ -85,7 +90,7 @@ func listComponents(cl cli.ICLI, c *listArgs) error {
 	return nil
 }
 
-func outputJSON(comps []*component.Component, outputFile, format string) error {
+func outputToFile(comps []*component.Component, outputFile, format string) error {
 	var w io.WriteCloser
 
 	if outputFile == "-" || outputFile == "" {
@@ -98,10 +103,6 @@ func outputJSON(comps []*component.Component, outputFile, format string) error {
 		defer writer.Close()
 	}
 
-	if format == "" {
-		format = "{{ . | toJson }}"
-	}
-
 	type D struct {
 		Root     string `json:"root"`
 		OutDir   string `json:"outDir"`
@@ -110,7 +111,7 @@ func outputJSON(comps []*component.Component, outputFile, format string) error {
 	}
 
 	if format == "" {
-		format = "{{ . }}"
+		format = defaultOutputFormat
 	}
 
 	tmpl, err := template.New("output").Funcs(sprig.FuncMap()).Parse(format)
