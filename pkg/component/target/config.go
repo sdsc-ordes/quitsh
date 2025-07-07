@@ -1,18 +1,13 @@
 package target
 
 import (
+	"strings"
+
 	"github.com/sdsc-ordes/quitsh/pkg/component/input"
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
-
-type ID string
-
-// String returns the string of the ID.
-func (i *ID) String() string {
-	return (string)(*i)
-}
 
 type Config struct {
 	ID ID `yaml:"-"`
@@ -43,7 +38,9 @@ func (c *Config) Init(id ID) (err error) {
 }
 
 func DefineID(componentName string, inputName string) ID {
-	return ID(componentName + "::" + inputName)
+	return ID(
+		strings.ReplaceAll(componentName, NamespaceSeparator, "-") + "::" +
+			strings.ReplaceAll(inputName, NamespaceSeparator, "-"))
 }
 
 type IConfig interface {
