@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:funlen
 func TestMatchExpr_Matches(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -14,12 +15,6 @@ func TestMatchExpr_Matches(t *testing.T) {
 		tags     []Tag  // passed to Matches
 		expected bool   // expected result
 	}{
-		{
-			name:     "simple match",
-			expr:     "",
-			tags:     []Tag{},
-			expected: true,
-		},
 		{
 			name:     "simple match",
 			expr:     "",
