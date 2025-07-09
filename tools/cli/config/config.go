@@ -3,6 +3,7 @@ package config
 import (
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 
 	"github.com/huandu/go-clone"
@@ -18,6 +19,9 @@ type CommandArgs struct {
 	// command in `quitsh` work. This is used when `quitsh` dispatches over a toolchain
 	// and needs to call it self (see `exec.AddCmd`).
 	DispatchArgs toolchain.DispatchArgs `yaml:"toolchainDispatch"`
+
+	// Exec Arguments.
+	ExecArgs dag.ExecArgs `yaml:"execArgs"`
 }
 
 type Config struct {
@@ -42,7 +46,7 @@ func New() (args Config) {
 	return
 }
 
-// Implement `cli.IConfig` interface.
+// Clone implements `cli.IConfig` interface.
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 

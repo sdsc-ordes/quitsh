@@ -46,7 +46,7 @@ func GetAllBuildTypes() []BuildType {
 	return []BuildType{BuildRelease, BuildDebug}
 }
 
-// Implement the pflags Value interface.
+// String implement the pflags Value interface.
 func (v BuildType) String() string {
 	switch v {
 	case BuildDebug:
@@ -58,14 +58,14 @@ func (v BuildType) String() string {
 	panic("Not implemented.")
 }
 
-// Implement the pflags Value interface.
+// Set implement the pflags Value interface.
 func (v *BuildType) Set(s string) (err error) {
 	*v, err = NewBuildType(s)
 
 	return
 }
 
-// Implement the pflags Value interface.
+// Type implement the pflags Value interface.
 func (v *BuildType) Type() string {
 	return "string"
 }
@@ -89,7 +89,7 @@ func (v BuildType) MarshalYAML() (any, error) {
 	return v.String(), nil
 }
 
-// Implement the [config.UnmarshalMapstruct] interface.
+// UnmarshalMapstruct implement the [config.UnmarshalMapstruct] interface.
 func (v *BuildType) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {

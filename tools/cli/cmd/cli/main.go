@@ -57,7 +57,7 @@ func main() {
 	// Setup quitsh provided helper commands.
 	listcmd.AddCmd(cli, cli.RootCmd())
 	configcmd.AddCmd(cli.RootCmd(), &conf)
-	exectarget.AddCmd(cli, cli.RootCmd())
+	exectarget.AddCmd(cli, cli.RootCmd(), &conf.Commands.ExecArgs)
 	execrunner.AddCmd(cli, cli.RootCmd(), &conf.Commands.DispatchArgs)
 
 	registerRunners(cli, &conf)

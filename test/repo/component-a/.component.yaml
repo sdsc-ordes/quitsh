@@ -10,6 +10,12 @@ targets:
     depends: ["self::build-banana"]
     steps:
       - runner: go-custom
+
+      - runner: echo
+        config:
+          text: excluded-step-should-not-be-run
+        include:
+          tagExpr: do-echo && only-when-a
   lint:
     steps:
       - runner: go-custom

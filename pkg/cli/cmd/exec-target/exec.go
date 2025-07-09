@@ -19,6 +19,7 @@ type execTargetArgs struct {
 func AddCmd(
 	cli cli.ICLI,
 	parent *cobra.Command,
+	execArgs *dag.ExecArgs,
 ) *cobra.Command {
 	var args execTargetArgs
 	execCmd := &cobra.Command{
@@ -28,9 +29,13 @@ func AddCmd(
 		RunE: func(_cmd *cobra.Command, targs []string) error {
 			args.TargetIDs = targs
 
-			return runExec(cli, &args)
+			return runExec(cli, &args, execArgs)
 		},
 	}
+
+	execCmd.Flags().StringArrayVar(&execArgs.Tags, "tag", nil,
+		"The executable tags which will get matched against the "+
+			"`include.tagExpr` on a step to include/exclude steps.")
 
 	_ = execCmd.MarkFlagRequired("component-dir")
 
@@ -39,7 +44,7 @@ func AddCmd(
 	return execCmd
 }
 
-func runExec(cli cli.ICLI, args *execTargetArgs) error {
+func runExec(cli cli.ICLI, args *execTargetArgs, execArgs *dag.ExecArgs) error {
 	log.Info("Executing target ...", "target-ids", args.TargetIDs)
 
 	_, all, rootDir, err := cli.FindComponents(
@@ -72,5 +77,6 @@ func runExec(cli cli.ICLI, args *execTargetArgs) error {
 		cli.Config(),
 		rootDir,
 		cli.RootArgs().Parallel,
+		dag.WithTags(execArgs.Tags...),
 	)
 }
