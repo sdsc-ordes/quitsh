@@ -18,7 +18,7 @@ import (
 const MaxCoroutineConcurrency = 10000
 
 // ExecuteConcurrent executes the DAG concurrent.
-// TODO: Refactor to better length.
+// TODO: Refactor to better length and less nested.
 //
 //nolint:gocognit,funlen
 func ExecuteConcurrent(
@@ -27,7 +27,13 @@ func ExecuteConcurrent(
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
+	opts ...ExecuteOption,
 ) (allErrors error) {
+	opt := execOption{}
+	if e := opt.Apply(opts...); e != nil {
+		return e
+	}
+
 	executor := taskflow.NewExecutor(MaxCoroutineConcurrency)
 	tf := taskflow.NewTaskFlow("DAG")
 
@@ -35,9 +41,21 @@ func ExecuteConcurrent(
 	var summary RunnerStatuses
 	var lock sync.Mutex
 
-	addRunnerTasks := func(sf *taskflow.Subflow, node *TargetNode, step *step.Config) {
+	addRunnerTasks := func(
+		sf *taskflow.Subflow, node *TargetNode,
+		step *step.Config, stepIdx int) {
 		var runners []factory.RunnerInstance
 		var e error
+
+		if !step.Include.TagExpr.Matches(opt.Tags) {
+			log.Debugf(
+				"Target: '%v' -> step idx: '%v' excluded: expr '%v' "+
+					"does not match for tags '%q'",
+				node.Target.ID, stepIdx,
+				step.Include.TagExpr.String(), opt.Tags)
+
+			return
+		}
 
 		if step.RunnerID != "" {
 			runners, e = runnerFactory.CreateByID(
@@ -120,10 +138,12 @@ func ExecuteConcurrent(
 		tgtTask := tf.NewSubflow(node.Target.ID.String(),
 			func(sf *taskflow.Subflow) {
 				stepTasks := []*taskflow.Task{}
-				for i := range node.Target.Steps {
-					stepTask := sf.NewSubflow(fmt.Sprintf("%v::step-%v", node.Target.ID, i),
+				for stepIdx := range node.Target.Steps {
+					stepTask := sf.NewSubflow(fmt.Sprintf("%v::step-%v", node.Target.ID, stepIdx),
 						func(sf *taskflow.Subflow) {
-							addRunnerTasks(sf, node, &node.Target.Steps[i])
+							addRunnerTasks(
+								sf, node,
+								&node.Target.Steps[stepIdx], stepIdx)
 						},
 					)
 					stepTasks = append(stepTasks, stepTask)

@@ -13,16 +13,29 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
 	"github.com/sdsc-ordes/quitsh/pkg/runner/factory"
+	"github.com/sdsc-ordes/quitsh/pkg/tags"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 )
 
-type RunnerData struct {
-	comp      *component.Component
-	targetID  target.ID
-	step      *step.Config
-	runnerIdx int
-	inst      factory.RunnerInstance
-}
+type (
+	RunnerData struct {
+		comp      *component.Component
+		targetID  target.ID
+		step      *step.Config
+		runnerIdx int
+		inst      factory.RunnerInstance
+	}
+
+	ExecArgs struct {
+		Tags []string `yaml:"tags"`
+	}
+
+	ExecuteOption func(*execOption) error
+
+	execOption struct {
+		Tags []tags.Tag
+	}
+)
 
 // Execute executes the DAG.
 // If no dispatcher is given, the toolchain dispatch is not done.
@@ -34,6 +47,7 @@ func Execute(
 	config config.IConfig,
 	rootDir string,
 	parallel bool,
+	opts ...ExecuteOption,
 ) error {
 	if parallel {
 		return ExecuteConcurrent(
@@ -41,14 +55,14 @@ func Execute(
 			runnerFactory,
 			dispatcher,
 			config,
-			rootDir)
+			rootDir, opts...)
 	} else {
 		return ExecuteNormal(
 			prios,
 			runnerFactory,
 			dispatcher,
 			config,
-			rootDir,
+			rootDir, opts...,
 		)
 	}
 }
@@ -61,16 +75,32 @@ func ExecuteNormal(
 	toolchainDispatcher toolchain.IDispatcher,
 	config config.IConfig,
 	rootDir string,
+	opts ...ExecuteOption,
 ) error {
+	opt := execOption{}
+	if e := opt.Apply(opts...); e != nil {
+		return e
+	}
+
 	currCwd, err := os.Getwd()
 	log.PanicE(err, "Cannot get working dir.")
 	defer func() { _ = os.Chdir(currCwd) }()
 
 	allRunners := []RunnerData{}
 
-	addRunners := func(node *TargetNode, step *step.Config) {
+	addRunners := func(node *TargetNode, step *step.Config, stepIdx int) {
 		var runners []factory.RunnerInstance
 		var e error
+
+		if !step.Include.TagExpr.Matches(opt.Tags) {
+			log.Debugf(
+				"Target: '%v' -> step '%v' excluded: expr '%v' "+
+					"does not match for tags '%q'",
+				node.Target.ID, stepIdx,
+				step.Include.TagExpr.String(), opt.Tags)
+
+			return
+		}
 
 		if step.RunnerID != "" {
 			runners, e = runnerFactory.CreateByID(
@@ -84,7 +114,9 @@ func ExecuteNormal(
 		}
 
 		if e != nil {
-			e = errors.AddContext(e, "could not instantiate runner for target '%v'", node.Target.ID)
+			e = errors.AddContext(e,
+				"could not instantiate runner for target '%v'",
+				node.Target.ID)
 			err = errors.Combine(err, e)
 
 			return
@@ -104,8 +136,8 @@ func ExecuteNormal(
 
 	for _, prio := range prios {
 		for _, node := range prio.Nodes {
-			for _, step := range node.Target.Steps {
-				addRunners(node, &step)
+			for stepIdx, step := range node.Target.Steps {
+				addRunners(node, &step, stepIdx)
 			}
 		}
 	}
@@ -264,40 +296,25 @@ func ExecuteRunner(
 	return nil
 }
 
-// context implements the `runner.IContext` interface.
-type context struct {
-	gitx      git.Context
-	comp      *component.Component
-	targetID  target.ID
-	toolchain string
-	stepIdx   step.Index
-	log       log.ILog
+// Apply applies option `opts` to `execOption`.
+func (o *execOption) Apply(opts ...ExecuteOption) error {
+	for i := range opts {
+		e := opts[i](o)
+		if e != nil {
+			return errors.AddContext(e, "could not apply execute option")
+		}
+	}
+
+	return nil
 }
 
-func (c *context) Root() string {
-	return c.gitx.Cwd()
-}
+// WithTags adds executable tags [tags.Tag] to the executable options.
+func WithTags(tag ...string) ExecuteOption {
+	return func(o *execOption) error {
+		for i := range tag {
+			o.Tags = append(o.Tags, tags.NewTag(tag[i]))
+		}
 
-func (c *context) Log() log.ILog {
-	return c.log
-}
-
-func (c *context) Component() *component.Component {
-	return c.comp
-}
-
-func (c *context) Target() target.ID {
-	return c.targetID
-}
-
-func (c *context) Step() step.Index {
-	return c.stepIdx
-}
-
-func (c *context) Toolchain() string {
-	return c.toolchain
-}
-
-func (c *context) Git() git.Context {
-	return c.gitx
+		return nil
+	}
 }

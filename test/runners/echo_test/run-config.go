@@ -1,6 +1,6 @@
 //go:build test
 
-package gorunner
+package echorunner
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
@@ -9,20 +9,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type GoBuildConfig struct {
-	VersionModule string `yaml:"versionModule" default:"pkg/build"`
-
-	// Additional build tags.
-	BuildTags []string `yaml:"buildTags" default:"[]"`
+type EchoConfig struct {
+	Text string
 }
 
-func (c *GoBuildConfig) Validate() error {
+func (c *EchoConfig) Validate() error {
 	return validator.New().Struct(c)
 }
 
-// UnmarshalBuildConfig is the unmarshaller for the [GoBuildConfig].
-func UnmarshalBuildConfig(raw step.AuxConfigRaw) (step.AuxConfig, error) {
-	config := &GoBuildConfig{}
+// UnmarshalEchoConfig is the unmarshaller for the [EchoConfig].
+func UnmarshalEchoConfig(raw step.AuxConfigRaw) (step.AuxConfig, error) {
+	config := &EchoConfig{}
 	err := defaults.Set(config)
 	if err != nil {
 		return nil, err

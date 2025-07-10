@@ -16,7 +16,7 @@ import (
 const GoBuildRunnerID = "integration-test::build-go"
 
 type GoBuildRunner struct {
-	runnerConfig *RunnerConfigBuild
+	runnerConfig *GoBuildConfig
 	settings     *setts.BuildSettings
 }
 
@@ -25,7 +25,7 @@ func NewGoBuildRunner(config any, settings *setts.BuildSettings) (runner.IRunner
 	debug.Assert(config != nil, "config is nil")
 
 	return &GoBuildRunner{
-		runnerConfig: common.Cast[*RunnerConfigBuild](config),
+		runnerConfig: common.Cast[*GoBuildConfig](config),
 		settings:     settings,
 	}, nil
 }

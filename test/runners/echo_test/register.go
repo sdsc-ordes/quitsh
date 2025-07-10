@@ -1,6 +1,6 @@
 //go:build test
 
-package gorunner
+package echorunner
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -15,19 +15,19 @@ func Register(
 	buildSettings *settings.BuildSettings,
 	factory factory.IFactory,
 ) (err error) {
-	log.Trace("Register runner.", "id", GoBuildRunnerID)
+	log.Trace("Register runner.", "id", EchoRunnerID)
 
 	e := factory.Register(
-		GoBuildRunnerID,
+		EchoRunnerID,
 		runner.RunnerData{
 			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoBuildRunner(runnerConfig, buildSettings)
+				return NewEchoRunner(runnerConfig, buildSettings)
 			},
-			RunnerConfigUnmarshal: UnmarshalBuildConfig,
+			RunnerConfigUnmarshal: UnmarshalEchoConfig,
 			DefaultToolchain:      "go",
 		})
 	err = errors.Combine(err, e)
-	e = factory.RegisterToKey(runner.NewRegisterKey("build", "go-custom"), GoBuildRunnerID)
+	e = factory.RegisterToKey(runner.NewRegisterKey("build", "echo"), EchoRunnerID)
 	err = errors.Combine(err, e)
 
 	return err

@@ -14,9 +14,11 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
+	echorunner "github.com/sdsc-ordes/quitsh/test/runners/echo_test"
 	gorunner "github.com/sdsc-ordes/quitsh/test/runners/go_test"
 	settings "github.com/sdsc-ordes/quitsh/test/runners/settings_test"
 
@@ -31,6 +33,9 @@ type CommandArgs struct {
 	// command in `quitsh` work. This is used when `quitsh` dispatches over a toolchain
 	// and needs to call it self (see `exec.AddCmd`).
 	DispatchArgs toolchain.DispatchArgs `yaml:"toolchainDispatch"`
+
+	// Exec Arguments.
+	ExecArgs dag.ExecArgs `yaml:"execArgs"`
 }
 
 type Config struct {
@@ -82,12 +87,18 @@ func main() {
 
 	// Setup quitsh provided helper commands.
 	execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
-	exectarget.AddCmd(cli, cli.RootCmd())
+	exectarget.AddCmd(cli, cli.RootCmd(), &args.Commands.ExecArgs)
 	listcmd.AddCmd(cli, cli.RootCmd())
 	processcompose.AddCmd(cli, cli.RootCmd(), flakeDir)
 
 	// Register some Go runner.
 	err = gorunner.Register(&args.Build, cli.RunnerFactory())
+	if err != nil {
+		log.PanicE(err, "Could not register runners.")
+	}
+
+	// Register some other dummy runner.
+	err = echorunner.Register(&args.Build, cli.RunnerFactory())
 	if err != nil {
 		log.PanicE(err, "Could not register runners.")
 	}

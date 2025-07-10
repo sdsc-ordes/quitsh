@@ -62,6 +62,7 @@ func TestCLIExecTarget(t *testing.T) {
 
 	_, stderr, err := cli.GetStdErr(
 		"exec-target",
+		"--tag", "do-echo",
 		"--log-level",
 		"debug",
 		"component-a::build",
@@ -71,6 +72,28 @@ func TestCLIExecTarget(t *testing.T) {
 
 	assert.Contains(t, stderr, "Hello from integration test Go runner")
 	assert.NotContains(t, stderr, "Hurrey building release version")
+	assert.NotContains(t, stderr, "excluded-step-should-not-be-run")
+	assert.Contains(t, stderr, "🌻")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLIExecTargetWithExcludedStep(t *testing.T) {
+	cli := setup(t).Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--tag", "do-echo",
+		"--tag", "only-when-a",
+		"--log-level",
+		"debug",
+		"component-a::build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.NotContains(t, stderr, "Hurrey building release version")
+	assert.Contains(t, stderr, "excluded-step-should-not-be-run")
 	assert.Contains(t, stderr, "🌻")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
