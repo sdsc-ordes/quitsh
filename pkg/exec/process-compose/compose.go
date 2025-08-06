@@ -96,10 +96,9 @@ func StartFromInstallable(
 		)
 	}
 	logFile := path.Join(dir, "process-compose.log")
-
-	b := exec.NewCmdCtxBuilder().
+	b := nix.NewDevShellCtxBuilderI(rootDir, devShellInstallable).
 		Cwd(rootDir).
-		BaseCmd(procCompExe).
+		BaseArgs(procCompExe).
 		BaseArgs("--unix-socket", socketPath).
 		Build()
 
