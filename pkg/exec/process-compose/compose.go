@@ -99,18 +99,17 @@ func StartFromInstallable(
 
 	// We need to launch the process-compose over a
 	// devShell to start it properly.
-	b := nix.NewDevShellCtxBuilderI(rootDir, devShellInstallable)
 	build := func(b exec.CmdContextBuilder) *exec.CmdContext {
 		return b.
 			Cwd(rootDir).
-			BaseArgs(procCompExe).
 			BaseArgs("--unix-socket", socketPath).
 			Build()
 	}
-	pcCtxDev := build(b)
+	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
+		rootDir, devShellInstallable).BaseArgs(procCompExe))
 
 	pc = ProcessComposeCtx{
-		CmdContext: build(nix.NewCtxBuilder()),
+		CmdContext: build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		socket:     socketPath,
 		tempDir:    dir,
 		logFile:    logFile,
