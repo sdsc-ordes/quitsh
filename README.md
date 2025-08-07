@@ -21,9 +21,8 @@
 
 > [!CAUTION]
 >
-> This repository is in `beta`. The design space of
-> this tool is still explored and breaking changes might occure. 
-> Documentation is incomplete.
+> This repository is in `beta`. The design space of this tool is still explored
+> and breaking changes might occure. Documentation is incomplete.
 
 The `quitsh` framework (`/kwɪʧ/`) is a build-tooling **CLI framework** designed
 to replace loosely-typed scripting languages (e.g., `bash`, `python`, and
