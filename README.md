@@ -9,6 +9,9 @@
   <a href="https://github.com/sdsc-ordes/quitsh/releases/latest">
     <img src="https://img.shields.io/github/release/sdsc-ordes/quitsh.svg?label=release" alt="Current Release" />
   </a>
+  <a href="https://pkg.go.dev/github.com/sdsc-ordes/quitsh">
+    <img src="https://pkg.go.dev/badge/github.com/sdsc-ordes/quitsh" alt="Package" />
+  </a>
   <a href="https://github.com/sdsc-ordes/quitsh/actions/workflows/normal.yaml">
     <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/quitsh/normal.yaml?label=ci" alt="Pipeline Status" />
   </a>
