@@ -71,6 +71,10 @@
             (args: {
               devenv.root = lib.mkIf (root != "") root;
 
+              process.managers.process-compose = {
+                package = pkgs.process-compose;
+              };
+
               # Has no ready probe.
               services.httpbin = {
                 enable = true;

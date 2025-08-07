@@ -28,19 +28,19 @@ function quitsh::_print() {
 
 function quitsh::debug() {
     if [ -n "$QUITSH_DEVSHELL_DEBUG" ]; then
-        quitsh::_print "[0;94m" "" "DEBUG: " "$@"
+        quitsh::_print "[0;94m" "" "DEBUG: " "$@" >&2
     fi
 }
 
 function quitsh::trace() {
     if [ -n "$QUITSH_DEVSHELL_DEBUG" ] ||
         [ -n "$QUITSH_DEVSHELL_TRACE" ]; then
-        quitsh::_print "[0;94m" "TRACE: " "$@"
+        quitsh::_print "[0;94m" "TRACE: " "$@" >&2
     fi
 }
 
 function quitsh::info() {
-    quitsh::_print "[0;94m" "INFO: " "$@"
+    quitsh::_print "[0;94m" "INFO: " "$@" >&2
 }
 
 function quitsh::warn() {

@@ -59,7 +59,7 @@ func Start(
 	return StartFromInstallable(rootDir, devShellAttrPath, mustBeStarted)
 }
 
-// Start starts the process compose from a Nix
+// StartFromInstallable starts the process compose from a Nix
 // `devShellInstallable` (e.g. `./tools/nix#custodian.shells.test-dbs`
 // which must be a `devenv` shell).
 // The `rootDir` is the working directory and
@@ -96,14 +96,20 @@ func StartFromInstallable(
 		)
 	}
 	logFile := path.Join(dir, "process-compose.log")
-	b := nix.NewDevShellCtxBuilderI(rootDir, devShellInstallable).
-		Cwd(rootDir).
-		BaseArgs(procCompExe).
-		BaseArgs("--unix-socket", socketPath).
-		Build()
+
+	// We need to launch the process-compose over a
+	// devShell to start it properly.
+	build := func(b exec.CmdContextBuilder) *exec.CmdContext {
+		return b.
+			Cwd(rootDir).
+			BaseArgs("--unix-socket", socketPath).
+			Build()
+	}
+	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
+		rootDir, devShellInstallable).BaseArgs(procCompExe))
 
 	pc = ProcessComposeCtx{
-		CmdContext: b,
+		CmdContext: build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		socket:     socketPath,
 		tempDir:    dir,
 		logFile:    logFile,
@@ -132,7 +138,7 @@ func StartFromInstallable(
 		}
 		log.Info("Start process-compose.")
 
-		err = b.Check(
+		err = pcCtxDev.Check(
 			"--config", procCompConfig,
 			"--keep-project",
 			"--disable-dotenv",
@@ -216,7 +222,9 @@ func (pc *ProcessComposeCtx) WaitTill(
 			err = json.Unmarshal([]byte(js), &d)
 			if err != nil {
 				return false,
-					errors.AddContext(err, "Could not unmarshall output from process-compose.")
+					errors.AddContext(err,
+						"Could not unmarshall output from process-compose.\n'%s'",
+						js)
 			}
 
 			condsFulfilled := 0
