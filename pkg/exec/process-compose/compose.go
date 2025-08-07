@@ -98,7 +98,7 @@ func StartFromInstallable(
 	logFile := path.Join(dir, "process-compose.log")
 
 	// We need to launch the process-compose over a
-	// devShell to start the it properly.
+	// devShell to start it properly.
 	b := nix.NewDevShellCtxBuilderI(rootDir, devShellInstallable)
 	build := func(b exec.CmdContextBuilder) *exec.CmdContext {
 		return b.
