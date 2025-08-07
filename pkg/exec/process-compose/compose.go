@@ -109,6 +109,14 @@ func StartFromInstallable(
 		logFile:    logFile,
 	}
 
+	log.Info("Settings for process-compose.",
+		"rootDir", rootDir,
+		"installable", devShellInstallable,
+		"procCompExe", procCompExe,
+		"config", procCompConfig,
+		"socketPath", socketPath,
+		"logFile", logFile)
+
 	// Start the process compose.
 	// Attach if the socket path does not exist
 	// (the script already does it)
@@ -122,8 +130,8 @@ func StartFromInstallable(
 			return pc, errors.New("The process-compose instance must be started already but "+
 				"socket '%s' is not existing.", socketPath)
 		}
+		log.Info("Start process-compose.")
 
-		log.Infof("Start process-compose with '%s'.", procCompConfig)
 		err = b.Check(
 			"--config", procCompConfig,
 			"--keep-project",
