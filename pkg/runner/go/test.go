@@ -103,8 +103,8 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	//       Issue: https://gitlab.com/data-custodian/custodian/-/issues/194
 	log.Info("Run Go test.")
 	cmd = append([]string{"test"}, flags...)
-	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	cmd = append(cmd, r.settings.Args()...)
+	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)
 	cmd = append(cmd, r.settings.TestArgs()...)
 	err = goctx.Check(cmd...)
