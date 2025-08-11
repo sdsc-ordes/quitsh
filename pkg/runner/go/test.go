@@ -106,6 +106,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	cmd = append(cmd, r.settings.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)
+	cmd = append(cmd, r.settings.TestArgs()...)
 	err = goctx.Check(cmd...)
 
 	if err != nil {

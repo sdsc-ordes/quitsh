@@ -14,6 +14,9 @@ type TestSettings struct {
 
 	// Additional arguments forwarded to the test tool.
 	Args []string `yaml:"args"`
+
+	// Additional arguments forwarded to the test executable.
+	TestArgs []string `yaml:"testArgs"`
 }
 
 // NewBuildSettings constructs a new build setting.
@@ -43,6 +46,10 @@ func (c *wrapITestSettings) ShowTestLog() bool {
 }
 func (c *wrapITestSettings) Args() []string {
 	return c.ref.Args
+}
+
+func (c *wrapITestSettings) TestArgs() []string {
+	return c.ref.TestArgs
 }
 
 // WrapToITestSettings returns a interface for the quitsh runners.
