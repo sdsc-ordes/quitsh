@@ -127,6 +127,10 @@ func testBinary(
 	cmd := append([]string{"test"}, flags...)
 	cmd = append(cmd, setts.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), runnerConf.TestPkg, "..."))
+	if len(setts.TestArgs()) != 0 {
+		cmd = append(cmd, "-args")
+		cmd = append(cmd, setts.TestArgs()...)
+	}
 	err := goctx.Check(cmd...)
 
 	if err != nil {

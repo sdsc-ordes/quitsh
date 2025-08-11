@@ -11,4 +11,7 @@ type ITestSettings interface {
 
 	// Additional arguments forwarded to the test tool.
 	Args() []string
+
+	// Additional arguments forwarded to the test executable.
+	TestArgs() []string
 }
