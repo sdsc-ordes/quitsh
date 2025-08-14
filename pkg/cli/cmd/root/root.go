@@ -142,8 +142,8 @@ func New(
 	addPersistendFlags(rootCmd.PersistentFlags(), rootArgs)
 
 	rootCmd.PersistentFlags().
-		BoolVarP(&rootArgs.Parallel,
-			"parallel", "p", false, "If targets are built in parallel.")
+		BoolVar(&rootArgs.Parallel,
+			"parallel", false, "If targets are built in parallel.")
 
 	rootCmd.Flags().
 		BoolVar(&version, "version", version, "Print the version.")
@@ -171,7 +171,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 		StringArrayVarP(
 			&args.ConfigKeyValues,
 			"config-val",
-			"k",
+			"K",
 			args.ConfigKeyValues,
 			"Config key/YAML-value pairs to override nested config values, e.g. `\"a.b.c: {\\\"a\\\": 3}\"`.",
 		)
