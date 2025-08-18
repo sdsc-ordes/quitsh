@@ -143,7 +143,7 @@ func New(
 
 	rootCmd.PersistentFlags().
 		BoolVarP(&rootArgs.Parallel,
-			"parallel", "p", false, "If targets are built in parallel.")
+			"parallel", "P", false, "If targets are built in parallel.")
 
 	rootCmd.Flags().
 		BoolVar(&version, "version", version, "Print the version.")
@@ -171,7 +171,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 		StringArrayVarP(
 			&args.ConfigKeyValues,
 			"config-val",
-			"k",
+			"K",
 			args.ConfigKeyValues,
 			"Config key/YAML-value pairs to override nested config values, e.g. `\"a.b.c: {\\\"a\\\": 3}\"`.",
 		)
@@ -186,8 +186,8 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 			"root-dir", "R", args.RootDir, "Set the root directory. "+
 				"This is used to define configured relative paths, e.g. flake path etc.")
 	flags.
-		StringVarP(&args.LogLevel,
-			"log-level", "v", args.LogLevel, "The log level. [debug|info|warn|error]")
+		StringVar(&args.LogLevel,
+			"log-level", args.LogLevel, "The log level. [debug|info|warn|error]")
 	flags.
 		BoolVar(
 			&args.EnableEnvPrint,

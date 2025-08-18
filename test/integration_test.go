@@ -105,7 +105,7 @@ func TestCLISetConfigValues(t *testing.T) {
 		"exec-target",
 		"--log-level",
 		"debug",
-		"-k", "build.buildType: release",
+		"-K", "build.buildType: release",
 		"component-a::build",
 	)
 
