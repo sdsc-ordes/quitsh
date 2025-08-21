@@ -17,12 +17,14 @@ type PipelineGitSettings struct {
 	Ref string `yaml:"refName"`
 
 	// The current commit which this pipeline runs on.
-	CommitSHA string `yaml:"commitSha"`
+	CommitSHA string `yaml:"commitSHA"`
 
 	// If `Type == MergePipeline`:
-	RefSource string   `yaml:"refSource"`
-	RefTarget string   `yaml:"refTarget"`
-	Labels    []string `yaml:"labels,omitempty"`
+	SourceRef       string `yaml:"sourceRef"`
+	TargetRef       string `yaml:"targetRef"`
+	TargetCommitSHA string `yaml:"targetCommitSHA"`
+
+	Labels []string `yaml:"labels,omitempty"`
 }
 
 type PipelineSettings struct {
