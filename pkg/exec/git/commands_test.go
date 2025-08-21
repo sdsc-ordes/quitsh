@@ -368,19 +368,19 @@ func TestRemoteRefExists(t *testing.T) {
 
 	shaExpect, e := gitx.CurrentRev()
 	require.NoError(t, e)
-	sha, e := gitx.RemoteRefExists("refs/heads/main")
+	sha, e := gitx.RemoteRefExists("origin", "refs/heads/main")
 	require.NoError(t, e)
 	assert.Equal(t, shaExpect, sha)
 
-	sha, e = gitx.RemoteRefExists("refs/heads/none")
+	sha, e = gitx.RemoteRefExists("origin", "refs/heads/none")
 	require.NoError(t, e)
 	assert.Empty(t, sha)
 
-	sha, e = gitx.RemoteBranchExists("main")
+	sha, e = gitx.RemoteBranchExists("origin", "main")
 	require.NoError(t, e)
 	assert.Equal(t, shaExpect, sha)
 
-	sha, e = gitx.RemoteBranchExists("none")
+	sha, e = gitx.RemoteBranchExists("origin", "none")
 	require.NoError(t, e)
 	assert.Empty(t, sha)
 }

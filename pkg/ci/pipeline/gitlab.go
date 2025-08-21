@@ -136,5 +136,5 @@ func findRemoteHead(ref string) (string, error) {
 	log.Info("Finding remote SHA.", "ref", ref)
 	gitx := git.NewCtx("")
 
-	return gitx.RemoteBranchExists(ref)
+	return gitx.RemoteBranchExists("origin", ref)
 }

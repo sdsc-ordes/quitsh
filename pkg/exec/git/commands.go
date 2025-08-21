@@ -243,20 +243,26 @@ func (gitx *Context) LocalRefExists(ref string) (sha1 string, err error) {
 	return
 }
 
-// RemoteBranchExists checks if a remote branch `ref` exists and returns the SHA1 (otherwise empty).
-func (gitx *Context) RemoteBranchExists(ref string) (sha1 string, err error) {
-	return gitx.RemoteRefExists("refs/heads/" + ref)
+// RemoteBranchExists checks if a remote branch `ref` on `remote`
+// exists and returns the SHA1 (otherwise empty).
+func (gitx *Context) RemoteBranchExists(remote string, ref string) (sha1 string, err error) {
+	return gitx.RemoteRefExists(remote, "refs/heads/"+ref)
 }
 
-// RemoteRefExists checks if a remote branch `ref` string exists and returns the SHA1 (otherwise empty).
+// RemoteRefExists checks if a remote branch `ref` on `remote`
+// exists and returns the SHA1 (otherwise empty).
 //
 //nolint:mnd
-func (gitx *Context) RemoteRefExists(ref string) (sha1 string, err error) {
+func (gitx *Context) RemoteRefExists(remote string, ref string) (sha1 string, err error) {
 	if !strings.HasPrefix(ref, "refs/") {
 		return "", errors.New("wrong reference '%v'", ref)
 	}
 
-	s, err := gitx.GetSplit("ls-remote", ".", ref)
+	if remote == "" {
+		remote = "origin"
+	}
+
+	s, err := gitx.GetSplit("ls-remote", remote, ref)
 	if err != nil || len(s) == 0 {
 		return
 	}
