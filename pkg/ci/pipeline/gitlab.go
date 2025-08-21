@@ -6,6 +6,7 @@ import (
 	strs "github.com/sdsc-ordes/quitsh/pkg/common/strings"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/env"
+	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
@@ -31,6 +32,8 @@ func NewPipelineSettingsLoaderGitlab(attrs PipelineAttributes) PipelineSettingsL
 }
 
 // LoadFromEnv loads the settings from the environment.
+//
+//nolint:nestif // this is ok.
 func (p *gitlabSettingsLoader) LoadFromEnv(
 	e []string,
 ) (PipelineSettings, error) {
@@ -55,22 +58,28 @@ func (p *gitlabSettingsLoader) LoadFromEnv(
 		ciMergeRequestLabels,
 	)
 
-	var typ PipelineType
-	var ref, refSource, refTarget string
+	var t PipelineType
+	var ref, sourceRef, targetRef, targetCommitSHA string
 	var labels []string
 	commitSHA := envs.Get("CI_COMMIT_SHA").Value
 
 	if v := envs.Get(ciCommitBranch); v.Defined() {
-		typ = BranchPipeline
+		t = BranchPipeline
 		ref = v.Value
 	} else if v = envs.Get(ciCommitTag); v.Defined() {
-		typ = TagPipeline
+		t = TagPipeline
 		ref = v.Value
 	} else if v = envs.Get(ciMergeRequestSourceBranchName); v.Defined() {
-		typ = MergeRequestPipeline
+		t = MergeRequestPipeline
 		ref = v.Value
-		refSource = v.Value
-		refTarget = envs.Get(ciMergeRequestTargetBranchName).Value
+		sourceRef = v.Value
+		targetRef = envs.Get(ciMergeRequestTargetBranchName).Value
+
+		var err error
+		targetCommitSHA, err = findRemoteHead(targetRef)
+		if err != nil {
+			return PipelineSettings{}, err
+		}
 
 		l := envs.Get(ciMergeRequestLabels)
 		if l.Defined() && l.Value != "" {
@@ -83,7 +92,7 @@ func (p *gitlabSettingsLoader) LoadFromEnv(
 	log.Info("Parsing CI attributes.")
 
 	var pe error
-	switch typ {
+	switch t {
 	case BranchPipeline:
 		pe = ParseCIAttributes(p.attrs,
 			envs.Get("CI_COMMIT_MESSAGE").Value,
@@ -106,18 +115,26 @@ func (p *gitlabSettingsLoader) LoadFromEnv(
 		return PipelineSettings{}, errors.Combine(
 			pe,
 			errors.New("could not parse ci attributes on pipeline '%v'",
-				typ,
+				t,
 			))
 	}
 
 	return PipelineSettings{
-		Type: typ,
+		Type: t,
 		Git: PipelineGitSettings{
-			Ref:       ref,
-			CommitSHA: commitSHA,
-			RefSource: refSource,
-			RefTarget: refTarget,
-			Labels:    labels,
+			Ref:             ref,
+			CommitSHA:       commitSHA,
+			SourceRef:       sourceRef,
+			TargetRef:       targetRef,
+			TargetCommitSHA: targetCommitSHA,
+			Labels:          labels,
 		},
 	}, nil
+}
+
+func findRemoteHead(ref string) (string, error) {
+	log.Info("Finding remote SHA.", "ref", ref)
+	gitx := git.NewCtx("")
+
+	return gitx.RemoteBranchExists(ref)
 }

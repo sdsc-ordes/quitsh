@@ -125,7 +125,7 @@ func (gitx *Context) Files(dir string, noRelative bool) ([]string, error) {
 	return paths, err
 }
 
-// Check if the current commit is a merge commit.
+// CommitIsAMerge checks if the current commit is a merge commit.
 func (gitx *Context) CommitIsAMerge(ref string) (bool, error) {
 	parentsCount, err := gitx.Get("rev-list", "--no-walk", "--count", ref+"^@")
 	if err != nil {
@@ -204,13 +204,32 @@ func (gitx *Context) VersionTags(remote string) ([]VersionTag, error) {
 	return versions, nil
 }
 
-// Checks if a local branch `ref` exists and returns the SHA1.
+// LocalBranchExists checks if a local branch `ref` exists and returns the SHA1 (otherwise empty).
+func (gitx *Context) LocalBranchExists(branch string) (sha1 string, err error) {
+	return gitx.LocalRefExists("refs/heads/" + branch)
+}
+
+// LocalRefExists checks if a local reference `ref` exists and returns the SHA1 (otherwise empty).
 //
 //nolint:mnd
 func (gitx *Context) LocalRefExists(ref string) (sha1 string, err error) {
+	if !strings.HasPrefix(ref, "refs/") {
+		return "", errors.New("wrong reference '%v'", ref)
+	}
+
 	var s string
-	s, err = gitx.Get("show-ref", "refs/heads/"+ref)
-	if err != nil {
+	s, err = gitx.GetWithEC(
+		func(e *exec.CmdError) error {
+			if e == nil || e.ExitCode() == 1 {
+				// 1: for does not exist.
+				return nil
+			}
+
+			return e
+		},
+		"show-ref", ref)
+
+	if err != nil || s == "" {
 		return
 	}
 
@@ -219,6 +238,39 @@ func (gitx *Context) LocalRefExists(ref string) (sha1 string, err error) {
 		sha1 = shaAndRef[0]
 	} else {
 		err = errors.New("could not split into ref '%s'", s)
+	}
+
+	return
+}
+
+// RemoteBranchExists checks if a remote branch `ref` exists and returns the SHA1 (otherwise empty).
+func (gitx *Context) RemoteBranchExists(ref string) (sha1 string, err error) {
+	return gitx.RemoteRefExists("refs/heads/" + ref)
+}
+
+// RemoteRefExists checks if a remote branch `ref` string exists and returns the SHA1 (otherwise empty).
+//
+//nolint:mnd
+func (gitx *Context) RemoteRefExists(ref string) (sha1 string, err error) {
+	if !strings.HasPrefix(ref, "refs/") {
+		return "", errors.New("wrong reference '%v'", ref)
+	}
+
+	s, err := gitx.GetSplit("ls-remote", ".", ref)
+	if err != nil || len(s) == 0 {
+		return
+	}
+
+	if len(s) != 1 {
+		return "",
+			errors.New("'git ls-remote' returned not a single SHA for '%v'", ref)
+	}
+
+	shaAndRef := strings.SplitN(s[0], "\t", 2)
+	if len(shaAndRef) == 2 {
+		sha1 = shaAndRef[0]
+	} else {
+		err = errors.New("could not split into ref '%s'", s[0])
 	}
 
 	return

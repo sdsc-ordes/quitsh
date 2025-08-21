@@ -176,6 +176,11 @@ linters:
         rules:
           json: goCamel
           yaml: goCamel
+        extended-rules:
+          yaml:
+            extra-initialisms: true
+            initialism-overrides:
+              SHA: true
   exclusions:
     generated: lax
     presets:

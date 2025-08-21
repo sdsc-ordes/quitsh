@@ -17,12 +17,14 @@ type PipelineGitSettings struct {
 	Ref string `yaml:"refName"`
 
 	// The current commit which this pipeline runs on.
-	CommitSHA string `yaml:"commitSha"`
+	CommitSHA string `yaml:"commitSHA"`
 
 	// If `Type == MergePipeline`:
-	RefSource string   `yaml:"refSource"`
-	RefTarget string   `yaml:"refTarget"`
-	Labels    []string `yaml:"labels,omitempty"`
+	SourceRef       string `yaml:"sourceRef"`
+	TargetRef       string `yaml:"targetRef"`
+	TargetCommitSHA string `yaml:"targetCommitSHA"`
+
+	Labels []string `yaml:"labels,omitempty"`
 }
 
 type PipelineSettings struct {
@@ -37,7 +39,7 @@ func NewPipelineSettingsFromReader[T any, TP config.Initializable[T]](
 	return config.LoadFromReader[T, TP](reader)
 }
 
-// LoadFromFile loads the settings from a YAML file.
+// NewPipelineSettingsFromFile loads the settings from a YAML file.
 // Attributes `attrs` can be `nil`, in which case they are not loaded
 // from the YAML.
 func NewPipelineSettingsFromFile[T any, TP config.Initializable[T]](
@@ -48,12 +50,12 @@ func NewPipelineSettingsFromFile[T any, TP config.Initializable[T]](
 	return config.LoadFromFile[T, TP](file)
 }
 
-// Write stores the settings to YAML.
+// WritePipelineSettings stores the settings to YAML.
 func WritePipelineSettings[T any](settings *T, writer io.Writer) error {
 	return config.SaveToWriter(settings, writer)
 }
 
-// Write stores the settings to a YAML file `file`.
+// WritePipelineSettingsToFile stores the settings to a YAML file `file`.
 func WritePipelineSettingsToFile[T any](settings *T, file string) error {
 	log.Info("Write pipeline settings to file.", "path", file)
 

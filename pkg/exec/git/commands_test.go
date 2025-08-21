@@ -31,12 +31,22 @@ func adjustGitCtx(b *exec.CmdContextBuilder) {
 
 func setupGitRepo(t *testing.T) (repoCtx Context) {
 	repo := t.TempDir()
+	repoServer := t.TempDir()
+
+	repoServerCtx := NewCtx(repoServer, adjustGitCtx)
+	e := repoServerCtx.Chain().
+		Check("init", "--bare").
+		Error()
+	require.NoError(t, e)
+
 	repoCtx = NewCtx(repo, adjustGitCtx)
-	e := repoCtx.Chain().
+	e = repoCtx.Chain().
 		Check("init").
+		Check("remote", "add", "origin", "file://"+repoServer).
 		Check("commit", "--allow-empty", "-m", "init1").
 		Check("commit", "--allow-empty", "-m", "init2").
 		Check("commit", "--allow-empty", "-m", "init3").
+		Check("push", "--set-upstream", "origin", "main").
 		Error()
 	require.NoError(t, e)
 
@@ -335,9 +345,44 @@ func TestLocalRefExists(t *testing.T) {
 
 	shaExpect, e := gitx.CurrentRev()
 	require.NoError(t, e)
-	sha, e := gitx.LocalRefExists("main")
+	sha, e := gitx.LocalRefExists("refs/heads/main")
 	require.NoError(t, e)
 	assert.Equal(t, shaExpect, sha)
+
+	sha, e = gitx.LocalRefExists("refs/heads/none")
+	require.NoError(t, e)
+	assert.Empty(t, sha)
+
+	sha, e = gitx.LocalBranchExists("main")
+	require.NoError(t, e)
+	assert.Equal(t, shaExpect, sha)
+
+	sha, e = gitx.LocalBranchExists("none")
+	require.NoError(t, e)
+	assert.Empty(t, sha)
+}
+
+func TestRemoteRefExists(t *testing.T) {
+	t.Parallel()
+	gitx := setupGitRepo(t)
+
+	shaExpect, e := gitx.CurrentRev()
+	require.NoError(t, e)
+	sha, e := gitx.RemoteRefExists("refs/heads/main")
+	require.NoError(t, e)
+	assert.Equal(t, shaExpect, sha)
+
+	sha, e = gitx.RemoteRefExists("refs/heads/none")
+	require.NoError(t, e)
+	assert.Empty(t, sha)
+
+	sha, e = gitx.RemoteBranchExists("main")
+	require.NoError(t, e)
+	assert.Equal(t, shaExpect, sha)
+
+	sha, e = gitx.RemoteBranchExists("none")
+	require.NoError(t, e)
+	assert.Empty(t, sha)
 }
 
 func TestCurrentRef(t *testing.T) {
