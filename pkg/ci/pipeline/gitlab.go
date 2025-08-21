@@ -32,6 +32,8 @@ func NewPipelineSettingsLoaderGitlab(attrs PipelineAttributes) PipelineSettingsL
 }
 
 // LoadFromEnv loads the settings from the environment.
+//
+//nolint:nestif // this is ok.
 func (p *gitlabSettingsLoader) LoadFromEnv(
 	e []string,
 ) (PipelineSettings, error) {
@@ -61,7 +63,7 @@ func (p *gitlabSettingsLoader) LoadFromEnv(
 	var labels []string
 	commitSHA := envs.Get("CI_COMMIT_SHA").Value
 
-	if v := envs.Get(ciCommitBranch); v.Defined() { //nolint:nestif
+	if v := envs.Get(ciCommitBranch); v.Defined() {
 		t = BranchPipeline
 		ref = v.Value
 	} else if v = envs.Get(ciCommitTag); v.Defined() {
