@@ -37,8 +37,8 @@ type IFactory interface {
 		rawConfig step.AuxConfigRaw,
 	) (runners []RunnerInstance, err error)
 
-	// GetStages returns all registered stages.
-	GetStages() stage.Stages
+	// Stages returns all registered stages.
+	Stages() stage.Stages
 }
 
 func NewFactory(stages stage.Stages) IFactory {
@@ -69,8 +69,8 @@ type RunnerInstance struct {
 	Toolchain string
 }
 
-// GetStages implements [IFactory].
-func (fac *factory) GetStages() stage.Stages {
+// Stages implements [IFactory].
+func (fac *factory) Stages() stage.Stages {
 	return fac.stages
 }
 
