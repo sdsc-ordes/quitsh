@@ -58,7 +58,6 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 	app := &cliApp{
 		rootArgs: args,
 		config:   config,
-		factory:  factory.NewFactory(),
 	}
 
 	for i := range opts {
@@ -70,6 +69,8 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 	if len(app.stages) == 0 {
 		app.stages = stage.NewDefaults()
 	}
+
+	app.factory = factory.NewFactory(app.Stages())
 
 	app.rootCmd, app.rootCmdPreExec =
 		rootcmd.New(&app.settings, app.rootArgs, app.config)

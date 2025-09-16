@@ -3,6 +3,7 @@ package factory
 import (
 	"fmt"
 
+	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -10,33 +11,41 @@ import (
 )
 
 type IFactory interface {
+	// Register registers a runner with `id`.
 	Register(
 		id runner.RegisterID,
 		entry ...runner.RunnerData,
 	) error
 
+	// RegisterToKey registers a runner `id` to a stage and abbreviation.
 	RegisterToKey(
 		key runner.RegisterKey,
 		id runner.RegisterID,
 	) error
 
+	// CreateByKey creates a runner from a `key`.
 	CreateByKey(
 		key runner.RegisterKey,
 		toolchain string,
 		rawConfig step.AuxConfigRaw,
 	) (runners []RunnerInstance, err error)
 
+	// CreateByID creates a runner from an `id`.
 	CreateByID(
 		id runner.RegisterID,
 		toolchain string,
 		rawConfig step.AuxConfigRaw,
 	) (runners []RunnerInstance, err error)
+
+	// Stages returns all registered stages.
+	Stages() stage.Stages
 }
 
-func NewFactory() IFactory {
+func NewFactory(stages stage.Stages) IFactory {
 	return &factory{
 		byIDs:  make(runnerMapID),
 		byKeys: make(runnerMapKeys),
+		stages: stages,
 	}
 }
 
@@ -49,6 +58,9 @@ type factory struct {
 
 	// Registered runners by stage and short name.
 	byKeys runnerMapKeys
+
+	// All registered stages.
+	stages stage.Stages
 }
 
 type RunnerInstance struct {
@@ -57,8 +69,12 @@ type RunnerInstance struct {
 	Toolchain string
 }
 
-// Create returns the runner instances created for
-// `runnerName` for step `step`.
+// Stages implements [IFactory].
+func (fac *factory) Stages() stage.Stages {
+	return fac.stages
+}
+
+// CreateByKey implements [IFactory].
 func (fac *factory) CreateByKey(
 	key runner.RegisterKey,
 	toolchain string,
@@ -77,6 +93,7 @@ func (fac *factory) CreateByKey(
 	return fac.CreateByID(id, toolchain, rawConfig)
 }
 
+// CreateByID implements [IFactory].
 func (fac *factory) CreateByID(
 	id runner.RegisterID,
 	toolchain string,
@@ -142,7 +159,7 @@ func loadRunnerConfig(
 	return config, nil
 }
 
-// Register adds a bunch of runners to the runner factory.
+// Register implements [IFactory].
 func (fac *factory) Register(
 	id runner.RegisterID,
 	entry ...runner.RunnerData,
@@ -165,7 +182,7 @@ func (fac *factory) Register(
 	return nil
 }
 
-// RegisterRunnerToKey registers runner id to the key (stage name and runner name).
+// RegisterToKey implements [IFactory].
 func (fac *factory) RegisterToKey(key runner.RegisterKey, id runner.RegisterID) error {
 	_, exists := fac.byKeys[key]
 	if exists {
