@@ -57,7 +57,7 @@ func (l logger) Warnf(msg string, args ...any) {
 func (l logger) WarnE(err error, msg string, args ...any) {
 	l.l.Helper()
 	a := make([]any, 0, 2+len(args)) //nolint: mnd
-	a = append(a, "error", err)
+	a = append(a, "error", err.Error())
 	a = append(a, args...)
 	l.Warn(msg, a...)
 }
@@ -78,7 +78,7 @@ func (l logger) ErrorE(err error, msg string, args ...any) {
 	globalLogger.l.Helper()
 	a := make([]any, 0, 2+len(args)) //nolint: mnd
 	a = append(a, args...)
-	a = append(a, "error", err)
+	a = append(a, "error", err.Error())
 	l.Error(msg, a...)
 }
 func (l logger) ErrorEf(err error, msg string, args ...any) {
