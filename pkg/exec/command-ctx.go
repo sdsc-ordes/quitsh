@@ -20,46 +20,54 @@ import (
 
 var EnableEnvPrint = false //nolint:gochecknoglobals // Allowed for CLI disabling.
 
-type ExitCodeHandler func(cmdError *CmdError) error
+type (
+	ExitCodeHandler func(cmdError *CmdError) error
 
-// CmdContext defines the command context to execute commands.
-type CmdContext struct {
-	baseCmd  string
-	baseArgs []string
+	// CmdContext defines the command context to execute commands.
+	CmdContext struct {
+		baseCmd  string
+		baseArgs []string
 
-	cwd string
-	env env.EnvList
+		cwd string
+		env env.EnvList
 
-	// Captures the error and return it in the error.
-	captureError bool
+		// Captures the error and return it in the error.
+		captureError bool
 
-	// Enables printing the environment in errors.
-	enableEnvPrint bool
+		// Enables printing the environment in errors.
+		enableEnvPrint bool
 
-	// Enables piping stdout/stderr.
-	pipeOutput bool
+		// Enables piping stdout/stderr.
+		pipeOutput bool
 
-	// Std input passed to the command.
-	stdin io.Reader
+		// Std input passed to the command.
+		stdin io.Reader
 
-	// Disable printing the commands.
-	logCommand bool
-	filterArgs ArgsFilter
+		// Disable printing the commands.
+		logCommand bool
+		filterArgs ArgsFilter
 
-	// The custom exit code handler for this context.
-	// It handles all exit code (also 0):
-	// Gets passed `nil` on exit code 0,
-	// and a `CmdError` on any other error.
-	exitCodeHandler ExitCodeHandler
+		// The custom exit code handler for this context.
+		// It handles all exit code (also 0):
+		// Gets passed `nil` on exit code 0,
+		// and a `CmdError` on any other error.
+		exitCodeHandler ExitCodeHandler
 
-	// Enables the resolution of the `baseCmd` (if not empty)
-	// or the first argument before calling the command.
-	// The stdlib `exec` module looks up the path with `os.Getenv("PATH)`
-	// which is not an option, we would need to modify the `PATH` globally.
-	enableLookPath bool
-}
+		// Enables the resolution of the `baseCmd` (if not empty)
+		// or the first argument before calling the command.
+		// The stdlib `exec` module looks up the path with `os.Getenv("PATH)`
+		// which is not an option, we would need to modify the `PATH` globally.
+		enableLookPath bool
+	}
 
-// GetCwd returns the working directory.
+	Waiter struct {
+		c   *CmdContext
+		cmd *exec.Cmd
+		buf *bytes.Buffer
+	}
+)
+
+// Cwd returns the working directory.
 func (c *CmdContext) Cwd() string {
 	return c.cwd
 }
@@ -79,7 +87,7 @@ func (c *CmdContext) Env() []string {
 	return common.CopySlice(c.env)
 }
 
-// StdinOnce sets a standard input reader to be used once.
+// WithStdin sets a standard input reader to be used once.
 func (c *CmdContext) WithStdin(r io.Reader) *CmdContext {
 	c.stdin = r
 
@@ -173,7 +181,7 @@ func (c *CmdContext) Get(args ...string) (string, error) {
 	return c.GetWithEC(c.exitCodeHandler, args...)
 }
 
-// Get executes a command and gets the stdout & stderr (white-space trimmed).
+// GetStdErr executes a command and gets the stdout & stderr (white-space trimmed).
 // Returns `CmdError` on error.
 func (c *CmdContext) GetStdErr(args ...string) (string, string, error) {
 	return c.GetStdErrWithEC(c.exitCodeHandler, args...)
@@ -241,6 +249,44 @@ func (c *CmdContext) CheckWithEC(handleExit ExitCodeHandler, args ...string) err
 // Returns `CmdError` on error.
 func (c *CmdContext) Check(args ...string) error {
 	return c.CheckWithEC(c.exitCodeHandler, args...)
+}
+
+// CheckPipe returns the stdout pipe like [exec.Cmd.StdoutPipe].
+// [Waiter.Wait] must be called on `waiter` to wait for the error and must be called
+// **first** when all read from the pipe have finished.
+func (c *CmdContext) CheckPipe(args ...string) (waiter Waiter, pipe io.ReadCloser, err error) {
+	baseCmd, args, err := c.getCommand(args)
+	if err != nil {
+		return
+	}
+
+	cmd := exec.Command(baseCmd, args...)
+	cmd.Dir = c.cwd
+	cmd.Env = c.env
+
+	waiter.buf = setupCapture(c, cmd, false)
+
+	pipe, err = cmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	waiter.cmd = cmd
+	waiter.c = c
+
+	return
+}
+
+// Wait waits till the cmd has finished.
+func (w Waiter) Wait() error {
+	err := w.cmd.Wait()
+
+	return handleExitCode(w.c, w.cmd, err, w.buf, w.c.enableEnvPrint || EnableEnvPrint, nil)
 }
 
 // WithTemplate renders a template to a temporary file and runs the
