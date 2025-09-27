@@ -332,3 +332,54 @@ func TestCloneBuilder(t *testing.T) {
 	assert.NotSame(t, ctx.cmdCtx, ctx2.cmdCtx)
 	assert.NotSame(t, &ctx.cmdCtx.baseArgs, &ctx2.cmdCtx.baseArgs)
 }
+
+func TestCommandPipe(t *testing.T) {
+	ctx := NewCommandCtx("")
+	p, pipe, err := ctx.CheckPipe("echo", "gugs")
+	require.NoError(t, err)
+
+	out, err := ctx.WithStdin(pipe).Get("cat")
+	require.NoError(t, err)
+	require.Equal(t, "gugs", out)
+
+	err = p.Wait()
+	require.NoError(t, err)
+}
+
+func TestCommandPipe2(t *testing.T) {
+	ctx := NewCommandCtx("")
+	p1, pipe1, err := ctx.CheckPipe("echo", "gugs")
+	require.NoError(t, err)
+
+	p2, pipe2, err := ctx.WithStdin(pipe1).CheckPipe("tee")
+	require.NoError(t, err)
+
+	out, err := ctx.WithStdin(pipe2).Get("cat")
+	require.NoError(t, err)
+	require.Equal(t, "gugs", out)
+
+	err = p2.Wait()
+	require.NoError(t, err)
+
+	err = p1.Wait()
+	require.NoError(t, err)
+}
+
+func TestCommandPipe2Fail(t *testing.T) {
+	ctx := NewCommandCtx("")
+	p1, pipe1, err := ctx.CheckPipe("echo", "gugs")
+	require.NoError(t, err)
+
+	p2, pipe2, err := ctx.WithStdin(pipe1).CheckPipe("cat")
+	require.NoError(t, err)
+
+	out, err := ctx.WithStdin(pipe2).Get("cat")
+	require.NoError(t, err)
+	require.Equal(t, "gugs", out)
+
+	err = p2.Wait()
+	require.NoError(t, err)
+
+	err = p1.Wait()
+	require.NoError(t, err)
+}
