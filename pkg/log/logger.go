@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"strings"
 
 	chlog "github.com/charmbracelet/log"
 )
@@ -56,7 +57,7 @@ func (l logger) Warnf(msg string, args ...any) {
 }
 func (l logger) WarnE(err error, msg string, args ...any) {
 	l.l.Helper()
-	l.l.Warnf("Error summary: %v", err)
+	l.l.Warnf("Error summary: %s", strings.ReplaceAll(err.Error(), "\t", "  "))
 	l.Warn(msg, args...)
 }
 func (l logger) WarnEf(err error, msg string, args ...any) {
@@ -74,7 +75,7 @@ func (l logger) Errorf(msg string, args ...any) {
 }
 func (l logger) ErrorE(err error, msg string, args ...any) {
 	globalLogger.l.Helper()
-	l.Errorf("Error summary: %v", err)
+	l.l.Errorf("Error summary: %s", strings.ReplaceAll(err.Error(), "\t", "  "))
 	l.Error(msg, args...)
 }
 func (l logger) ErrorEf(err error, msg string, args ...any) {
@@ -89,7 +90,7 @@ func (l logger) Panic(msg string, args ...any) {
 }
 func (l logger) Panicf(msg string, args ...any) {
 	l.l.Helper()
-	Panic(fmt.Sprintf(msg, args...))
+	l.Panic(fmt.Sprintf(msg, args...))
 }
 func (l logger) PanicE(err error, msg string, args ...any) {
 	if err != nil {
