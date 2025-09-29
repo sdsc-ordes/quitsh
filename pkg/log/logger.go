@@ -89,7 +89,7 @@ func (l logger) Panic(msg string, args ...any) {
 }
 func (l logger) Panicf(msg string, args ...any) {
 	l.l.Helper()
-	Panic(fmt.Sprintf(msg, args...))
+	l.Panic(fmt.Sprintf(msg, args...))
 }
 func (l logger) PanicE(err error, msg string, args ...any) {
 	if err != nil {
