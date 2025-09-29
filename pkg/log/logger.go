@@ -56,7 +56,9 @@ func (l logger) Warnf(msg string, args ...any) {
 }
 func (l logger) WarnE(err error, msg string, args ...any) {
 	l.l.Helper()
-	l.l.Warnf("Error summary: %v", err)
+	//FIXME: I want here to print a nice string but
+	//       until resolved: https://github.com/charmbracelet/log/issues/187
+	l.Warn("Error Summary:", "error", err)
 	l.Warn(msg, args...)
 }
 func (l logger) WarnEf(err error, msg string, args ...any) {
@@ -74,7 +76,9 @@ func (l logger) Errorf(msg string, args ...any) {
 }
 func (l logger) ErrorE(err error, msg string, args ...any) {
 	globalLogger.l.Helper()
-	l.Errorf("Error summary: %v", err)
+	//FIXME: I want here to print a nice string but
+	//       until resolved: https://github.com/charmbracelet/log/issues/187
+	l.Error("Error Summary:", "error", err)
 	l.Error(msg, args...)
 }
 func (l logger) ErrorEf(err error, msg string, args ...any) {
