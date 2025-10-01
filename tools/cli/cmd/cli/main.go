@@ -13,6 +13,7 @@ import (
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
+	versionupcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/version-up"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
@@ -55,6 +56,7 @@ func main() {
 	}
 
 	// Setup quitsh provided helper commands.
+	versionupcmd.AddCmd(cli, cli.RootCmd())
 	listcmd.AddCmd(cli, cli.RootCmd())
 	configcmd.AddCmd(cli.RootCmd(), &conf)
 	exectarget.AddCmd(cli, cli.RootCmd(), &conf.Commands.ExecArgs)
