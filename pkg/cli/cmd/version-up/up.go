@@ -21,7 +21,6 @@ import (
 type versionUpArgs struct {
 	compArgs general.ComponentArgs
 
-	level      string
 	buildMeta  string
 	prerelease string
 }
@@ -69,14 +68,16 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 
 	log.Infof("Do a %s version update on all components", level)
 	for i := range comps {
+		var e error
+
 		vv := vers.Version(comps[i].Config().Version)
-		newVersion, err := version.Bump(&vv,
+		newVersion, e := version.Bump(&vv,
 			level,
 			c.prerelease,
 			c.buildMeta)
 
-		if err != nil {
-			return errors.AddContext(err,
+		if e != nil {
+			return errors.AddContext(e,
 				"could not version up component '%s'", comps[i].Name())
 		}
 
@@ -86,25 +87,25 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 			"version", newVersion)
 
 		fileName := comps[i].ConfigFile()
-		f, err := os.OpenFile(fileName, os.O_RDWR, fs.DefaultPermissionsFile)
-		if err != nil {
-			return err
+		f, e := os.OpenFile(fileName, os.O_RDWR, fs.DefaultPermissionsFile)
+		if e != nil {
+			return e
 		}
 
 		var node ast.Node
 		cm := make(yaml.CommentMap)
 		dec := yaml.NewDecoder(f, yaml.CommentToMap(cm))
-		err = dec.Decode(&node)
-		if err != nil {
-			return err
+		e = dec.Decode(&node)
+		if e != nil {
+			return e
 		}
 
-		p, err := yaml.PathString("$.version")
-		if err != nil {
-			return err
+		p, e := yaml.PathString("$.version")
+		if e != nil {
+			return e
 		}
-		versionNode, err := p.FilterNode(node)
-		if err != nil {
+		versionNode, e := p.FilterNode(node)
+		if e != nil {
 			return errors.New("`.version` is not found in '%v'", fileName)
 		}
 
@@ -117,17 +118,17 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 		buf := bytes.NewBuffer(nil)
 		enc := yaml.NewEncoder(
 			buf,
-			yaml.Indent(2),
+			yaml.Indent(2), //nolint:mnd
 			yaml.Flow(true),
 			yaml.WithComment(cm))
-		err = enc.Encode(node)
-		if err != nil {
-			errors.AddContext(err, "could not marshal to file '%v'", fileName)
+		e = enc.Encode(node)
+		if e != nil {
+			return errors.AddContext(e, "could not marshal to file '%v'", fileName)
 		}
 
-		err = os.WriteFile(fileName, buf.Bytes(), fs.DefaultPermissionsFile)
-		if err != nil {
-			return err
+		e = os.WriteFile(fileName, buf.Bytes(), fs.DefaultPermissionsFile)
+		if e != nil {
+			return e
 		}
 	}
 

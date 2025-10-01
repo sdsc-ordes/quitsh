@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:funlen
 func TestBump(t *testing.T) {
 	tests := []struct {
 		name       string
