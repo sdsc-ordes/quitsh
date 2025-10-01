@@ -21,9 +21,9 @@ import (
 type versionUpArgs struct {
 	compArgs general.ComponentArgs
 
-	level          string
-	buildMeta      string
-	prereleaseMeta string
+	level      string
+	buildMeta  string
+	prerelease string
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command) {
@@ -72,7 +72,7 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 		vv := vers.Version(comps[i].Config().Version)
 		newVersion, err := version.Bump(&vv,
 			level,
-			c.prereleaseMeta,
+			c.prerelease,
 			c.buildMeta)
 
 		if err != nil {
@@ -115,7 +115,11 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 		}
 
 		buf := bytes.NewBuffer(nil)
-		enc := yaml.NewEncoder(buf, yaml.Indent(2), yaml.Flow(true), yaml.WithComment(cm))
+		enc := yaml.NewEncoder(
+			buf,
+			yaml.Indent(2),
+			yaml.Flow(true),
+			yaml.WithComment(cm))
 		err = enc.Encode(node)
 		if err != nil {
 			errors.AddContext(err, "could not marshal to file '%v'", fileName)
