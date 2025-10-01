@@ -12,11 +12,12 @@ import (
 type Component struct {
 	config *Config
 
-	root   string
-	outDir string
+	root       string
+	configFile string
+	outDir     string
 }
 
-func NewComponent(config *Config, root string, outBaseDir string) Component {
+func NewComponent(config *Config, root string, configFile string, outBaseDir string) Component {
 	root = fs.MakeAbsolute(root)
 
 	// Set the out directory.
@@ -27,16 +28,16 @@ func NewComponent(config *Config, root string, outBaseDir string) Component {
 		outDir = path.Join(root, fs.OutputDir)
 	}
 
-	return Component{root: root, config: config, outDir: outDir}
+	return Component{root: root, configFile: configFile, config: config, outDir: outDir}
 }
 
-type ComponentCreator = func(config *Config, rootDir string) (*Component, error)
+type ComponentCreator = func(config *Config, rootDir string, configFile string) (*Component, error)
 type ConfigAdjuster = func(config *Config) error
 
 // NewComponentCreator creates a factory method which creates components.
 // It will transform the config if a `transformConfig` function is given.
 func NewComponentCreator(outBaseDir string, transformConfig ConfigAdjuster) ComponentCreator {
-	return func(c *Config, r string) (*Component, error) {
+	return func(c *Config, root string, configFile string) (*Component, error) {
 		if transformConfig != nil {
 			err := transformConfig(c)
 			if err != nil {
@@ -44,7 +45,7 @@ func NewComponentCreator(outBaseDir string, transformConfig ConfigAdjuster) Comp
 			}
 		}
 
-		comp := NewComponent(c, r, outBaseDir)
+		comp := NewComponent(c, root, configFile, outBaseDir)
 
 		return &comp, nil
 	}
@@ -60,7 +61,7 @@ func (c *Component) Language() string {
 	return c.config.Language
 }
 
-// Language returns the language of the component.
+// Version returns the language of the component.
 func (c *Component) Version() *version.Version {
 	return (*version.Version)(&c.config.Version)
 }
@@ -68,6 +69,11 @@ func (c *Component) Version() *version.Version {
 // Config returns the config of the component.
 func (c *Component) Config() *Config {
 	return c.config
+}
+
+// ConfigFile returns the config file path.
+func (c *Component) ConfigFile() string {
+	return c.configFile
 }
 
 // Root returns the root directory of the component.

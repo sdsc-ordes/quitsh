@@ -10,7 +10,7 @@ import (
 // `-ldflags -X ".../pkg/build.buildVersion=..."`.
 // but here it needs to be correct to make other CLI users of
 // quitsh have the correct version.
-var buildVersion = "0.32.1" //nolint:gochecknoglobals // Allowed for version.
+var buildVersion = "0.33.0" //nolint:gochecknoglobals // Allowed for version.
 
 func GetBuildVersion() *version.Version {
 	ver, err := version.NewVersion(buildVersion)

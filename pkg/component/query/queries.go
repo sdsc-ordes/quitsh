@@ -88,7 +88,7 @@ func Find(
 			)
 		}
 
-		comp, e := creator(&c, root)
+		comp, e := creator(&c, root, componentFile)
 		if e != nil {
 			err = errors.Combine(err, e)
 
@@ -204,7 +204,7 @@ func FindInside(
 				return nil, e
 			}
 
-			return creator(&c, d)
+			return creator(&c, d, f)
 		}
 
 		prev := d

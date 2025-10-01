@@ -43,7 +43,7 @@ func generateComps(t *testing.T) ([]*component.Component, []string) {
 	}
 	err := conf.Init()
 	require.NoError(t, err)
-	comp1 := component.NewComponent(conf, "/repo/components/1", "")
+	comp1 := component.NewComponent(conf, "/repo/components/1", "", "")
 
 	conf = &component.Config{
 		Name:     "2",
@@ -64,7 +64,7 @@ func generateComps(t *testing.T) ([]*component.Component, []string) {
 
 	err = conf.Init()
 	require.NoError(t, err)
-	comp2 := component.NewComponent(conf, "/repo/components/2", "")
+	comp2 := component.NewComponent(conf, "/repo/components/2", "", "")
 
 	conf = &component.Config{
 		Name:     "3",
@@ -83,7 +83,7 @@ func generateComps(t *testing.T) ([]*component.Component, []string) {
 	}
 	err = conf.Init()
 	require.NoError(t, err)
-	comp3 := component.NewComponent(conf, "/repo/components/3", "")
+	comp3 := component.NewComponent(conf, "/repo/components/3", "", "")
 
 	comps = append(comps, &comp1, &comp2, &comp3)
 	validate(t, comps...)
@@ -136,7 +136,7 @@ func generateOneComp(t *testing.T) ([]*component.Component, []string) {
 	}
 	err := conf.Init()
 	require.NoError(t, err)
-	comp1 := component.NewComponent(conf, "/repo/components/1", "")
+	comp1 := component.NewComponent(conf, "/repo/components/1", "", "")
 
 	comps = append(comps, &comp1)
 	validate(t, comps...)
@@ -170,7 +170,7 @@ func generateTwoCompsWithNoConnection(t *testing.T) ([]*component.Component, []s
 	}
 	err := conf1.Init()
 	require.NoError(t, err)
-	comp1 := component.NewComponent(conf1, "/repo/components/1", "")
+	comp1 := component.NewComponent(conf1, "/repo/components/1", "", "")
 
 	conf2 := &component.Config{
 		Name:     "2",
@@ -183,7 +183,7 @@ func generateTwoCompsWithNoConnection(t *testing.T) ([]*component.Component, []s
 	}
 	err = conf2.Init()
 	require.NoError(t, err)
-	comp2 := component.NewComponent(conf2, "/repo/components/2", "")
+	comp2 := component.NewComponent(conf2, "/repo/components/2", "", "")
 
 	comps = append(comps, &comp1, &comp2)
 	validate(t, comps...)
@@ -203,7 +203,7 @@ func TestGraphExecOrderSimpleFull(t *testing.T) {
 	require.NoError(t, err)
 
 	comps, paths := generateComps(t)
-	rootDir := "/repo" //nolint:goconst // test-sepcific
+	rootDir := "/repo" //nolint:goconst // test-specific
 
 	for i := range 30 {
 		var sel *TargetSelection
@@ -347,7 +347,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 	err := config.Init()
 	require.NoError(t, err)
 
-	comp1 := component.NewComponent(config, "/repo/components/1", "")
+	comp1 := component.NewComponent(config, "/repo/components/1", "", "")
 
 	config = &component.Config{
 		Name:     "2",
@@ -364,7 +364,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 	}
 	err = config.Init()
 	require.NoError(t, err)
-	comp2 := component.NewComponent(config, "/repo/components/2", "")
+	comp2 := component.NewComponent(config, "/repo/components/2", "", "")
 
 	comps = append(comps, &comp1, &comp2)
 
