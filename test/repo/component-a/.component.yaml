@@ -23,6 +23,7 @@ targets:
             - "sh"
             - "-c"
             - "echo 'hello from cmd'"
+        toolchain: "" # Run without toolchain.
 
       - runner: cmd
         config:
