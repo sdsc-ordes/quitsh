@@ -16,6 +16,20 @@ targets:
           text: excluded-step-should-not-be-run
         include:
           tagExpr: do-echo && only-when-a
+
+      - runner: cmd
+        config:
+          cmd:
+            - "sh"
+            - "-c"
+            - "echo 'hello from cmd'"
+
+      - runner: cmd
+        config:
+          script: |
+            echo 'hello from cmd-script'
+          cmd:
+            - "sh"
   lint:
     steps:
       - runner: go-custom

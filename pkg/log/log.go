@@ -30,7 +30,7 @@ var (
 //nolint:gochecknoinits // intended
 func init() {
 	// NOTE: We need to do this as multiple subprocesses are started and
-	// the logger tries to aquire the terminal state through terminal capabilities
+	// the logger tries to acquire the terminal state through terminal capabilities
 	// which is a synchronous operation.
 	// We could try to configure the logger differently, but its a bit unsafe
 	// as we need to be sure to control the underlying library correctly.

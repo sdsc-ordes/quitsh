@@ -16,16 +16,16 @@ import (
 const GoTestRunnerID = "quitsh::test-go"
 
 type GoTestRunner struct {
-	runnerConfig *RunnerConfigBuild
-	settings     config.ITestSettings
+	config   *RunnerConfigBuild
+	settings config.ITestSettings
 }
 
 func NewGoTestRunner(config any, settings config.ITestSettings) (runner.IRunner, error) {
 	debug.Assert(config != nil, "config is nil")
 
 	return &GoTestRunner{
-		runnerConfig: cm.Cast[*RunnerConfigBuild](config),
-		settings:     settings,
+		config:   cm.Cast[*RunnerConfigBuild](config),
+		settings: settings,
 	}, nil
 }
 
@@ -84,8 +84,8 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		r.settings.ShowTestLog(),
 		modInfo,
 		comp.Version(),
-		r.runnerConfig.VersionModule,
-		r.runnerConfig.BuildTags,
+		r.config.VersionModule,
+		r.config.BuildTags,
 		true,
 	)
 
