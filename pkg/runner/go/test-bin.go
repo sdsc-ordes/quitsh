@@ -18,8 +18,8 @@ import (
 const GoTestBinRunnerID = "quitsh::test-go-bin"
 
 type GoTestBinRunner struct {
-	runnerConfig *RunnerConfigTestBin
-	settings     config.ITestSettings
+	config   *RunnerConfigTestBin
+	settings config.ITestSettings
 }
 
 // NewGoTestBinRunner creates a runner which builds an instrumented Go binary
@@ -28,8 +28,8 @@ func NewGoTestBinRunner(config any, settings config.ITestSettings) (runner.IRunn
 	debug.Assert(config != nil, "config is nil")
 
 	return &GoTestBinRunner{
-		runnerConfig: cm.Cast[*RunnerConfigTestBin](config),
-		settings:     settings,
+		config:   cm.Cast[*RunnerConfigTestBin](config),
+		settings: settings,
 	}, nil
 }
 
@@ -148,7 +148,7 @@ func (r *GoTestBinRunner) Run(ctx runner.IContext) error {
 	config := comp.Config()
 	log.Info("Starting Go bin test for component.", "component", config.Name)
 
-	if len(r.runnerConfig.TestTags) == 0 {
+	if len(r.config.TestTags) == 0 {
 		return errors.New("you must provide at least one tag in `testTags`")
 	}
 
@@ -165,7 +165,7 @@ func (r *GoTestBinRunner) Run(ctx runner.IContext) error {
 		comp,
 		r.settings,
 		modInfo,
-		r.runnerConfig,
+		r.config,
 		comp.OutCoverageBinDir(),
 	)
 	if err != nil {
@@ -179,7 +179,7 @@ func (r *GoTestBinRunner) Run(ctx runner.IContext) error {
 		comp,
 		r.settings,
 		modInfo,
-		r.runnerConfig,
+		r.config,
 	)
 	if err != nil {
 		log.ErrorE(err, "Testing instrumented binary failed.")

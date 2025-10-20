@@ -14,18 +14,17 @@ import (
 const GoBuildRunnerID = "quitsh::build-go"
 
 type GoBuildRunner struct {
-	runnerConfig *RunnerConfigBuild
-	settings     config.IBuildSettings
+	config   *RunnerConfigBuild
+	settings config.IBuildSettings
 }
 
 // NewGoBuildRunner constructs a new GoBuildRunner with its own config.
-
 func NewGoBuildRunner(config any, settings config.IBuildSettings) (runner.IRunner, error) {
 	debug.Assert(config != nil, "config is nil")
 
 	return &GoBuildRunner{
-		runnerConfig: common.Cast[*RunnerConfigBuild](config),
-		settings:     settings,
+		config:   common.Cast[*RunnerConfigBuild](config),
+		settings: settings,
 	}, nil
 }
 
@@ -33,6 +32,7 @@ func (*GoBuildRunner) ID() runner.RegisterID {
 	return GoBuildRunnerID
 }
 
+// Run implements [runner.IRunner].
 // The difference between `go install` and `go build` in Go lies in their purpose
 // and the outputs they produce:
 //
@@ -101,8 +101,8 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 		false,
 		modInfo,
 		comp.Version(),
-		r.runnerConfig.VersionModule,
-		r.runnerConfig.BuildTags,
+		r.config.VersionModule,
+		r.config.BuildTags,
 		false,
 	)
 

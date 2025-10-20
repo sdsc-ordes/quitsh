@@ -38,6 +38,11 @@ func (c *Component) OutBuildDocsDir(p ...string) string {
 	return c.RelOutPath(fs.OutBuildDocsDir, p...)
 }
 
+// OutCoverageDir returns the directory of the coverage output directory.
+func (c *Component) OutCoverageDir(p ...string) string {
+	return c.RelOutPath(fs.OutCoverageDir, p...)
+}
+
 // OutCoverageDataDir returns the directory of the coverage data output directory.
 func (c *Component) OutCoverageDataDir(p ...string) string {
 	return c.RelOutPath(fs.OutCoverageDataDir, p...)
@@ -89,4 +94,20 @@ func (c *Component) RelOutPath(p string, ps ...string) string {
 	l = append(l, ps...)
 
 	return path.Join(l...)
+}
+
+// OutEnvVariables returns all env. variables corresponding to top-level output
+// directories.
+func (c *Component) OutEnvVariables() []string {
+	return []string{
+		"QUITSH_OUT_DIR=" + c.OutDir(),
+		"QUITSH_OUT_BUILD_DIR=" + c.OutBuildDir(),
+		"QUITSH_OUT_BUILD_DOCS_DIR=" + c.OutBuildDocsDir(),
+		"QUITSH_OUT_BUILD_SHARE_DIR=" + c.OutBuildShareDir(),
+		"QUITSH_OUT_COVERAGE_DIR=" + c.OutCoverageDir(),
+		"QUITSH_OUT_COVERAGE_BIN_DIR=" + c.OutCoverageBinDir(),
+		"QUITSH_OUT_COVERAGE_DATA_DIR=" + c.OutCoverageDataDir(),
+		"QUITSH_OUT_IMAGE_DIR=" + c.OutImageDir(),
+		"QUITSH_OUT_PACKAGE_DIR=" + c.OutPackageDir(),
+	}
 }
