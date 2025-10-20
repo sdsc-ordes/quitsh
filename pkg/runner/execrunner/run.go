@@ -1,4 +1,4 @@
-package cmdrunnner
+package execrunner
 
 import (
 	"strings"
@@ -11,27 +11,27 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/runner/config"
 )
 
-const CmdRunnerID = "quitsh::cmd"
+const ExecRunnerID = "quitsh::exec"
 
-type CmdRunner struct {
+type ExecRunner struct {
 	config   *RunnerConfig
 	settings config.IBuildSettings
 }
 
-func NewCmdRunner(config any, settings config.IBuildSettings) (runner.IRunner, error) {
+func NewExecRunner(config any, settings config.IBuildSettings) (runner.IRunner, error) {
 	debug.Assert(config != nil, "config is nil")
 
-	return &CmdRunner{
+	return &ExecRunner{
 		config:   common.Cast[*RunnerConfig](config),
 		settings: settings,
 	}, nil
 }
 
-func (*CmdRunner) ID() runner.RegisterID {
-	return CmdRunnerID
+func (*ExecRunner) ID() runner.RegisterID {
+	return ExecRunnerID
 }
 
-func (r *CmdRunner) Run(ctx runner.IContext) error {
+func (r *ExecRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()
 

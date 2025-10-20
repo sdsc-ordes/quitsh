@@ -17,7 +17,7 @@ targets:
         include:
           tagExpr: do-echo && only-when-a
 
-      - runner: cmd
+      - runner: exec
         config:
           cmd:
             - "sh"
@@ -25,7 +25,7 @@ targets:
             - "echo 'hello from cmd'"
         toolchain: "" # Run without toolchain.
 
-      - runner: cmd
+      - runner: exec
         config:
           script: |
             echo 'hello from cmd-script'

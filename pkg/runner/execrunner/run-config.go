@@ -1,4 +1,4 @@
-package cmdrunnner
+package execrunner
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"

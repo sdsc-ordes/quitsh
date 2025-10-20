@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
-	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
-	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
+	exrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
+	extarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
 	processcompose "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
@@ -17,7 +17,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
-	cmdrunnner "github.com/sdsc-ordes/quitsh/pkg/runner/exec"
+	execrunnner "github.com/sdsc-ordes/quitsh/pkg/runner/execrunner"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 	echorunner "github.com/sdsc-ordes/quitsh/test/runners/echo_test"
 	gorunner "github.com/sdsc-ordes/quitsh/test/runners/go_test"
@@ -47,7 +47,6 @@ type Config struct {
 	Build settings.BuildSettings `yaml:"build"`
 }
 
-// Implement `cli.IConfig` interface.
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 
@@ -87,13 +86,13 @@ func main() {
 	}
 
 	// Setup quitsh provided helper commands.
-	execrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
-	exectarget.AddCmd(cli, cli.RootCmd(), &args.Commands.ExecArgs)
+	exrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
+	extarget.AddCmd(cli, cli.RootCmd(), &args.Commands.ExecArgs)
 	listcmd.AddCmd(cli, cli.RootCmd())
 	processcompose.AddCmd(cli, cli.RootCmd(), flakeDir)
 
 	// Register the common cmd runner.
-	err = cmdrunnner.Register(
+	err = execrunnner.Register(
 		args.Build.WrapToIBuildSettings(),
 		cli.RunnerFactory(), true)
 

@@ -1,4 +1,4 @@
-package cmdrunnner
+package execrunner
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -14,22 +14,22 @@ func Register(
 	factory factory.IFactory,
 	registerKey bool,
 ) (err error) {
-	log.Trace("Register runner.", "id", CmdRunnerID)
+	log.Trace("Register runner.", "id", ExecRunnerID)
 	e := factory.Register(
-		CmdRunnerID,
+		ExecRunnerID,
 		runner.RunnerData{
 			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewCmdRunner(runnerConfig, buildSettings)
+				return NewExecRunner(runnerConfig, buildSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalRunnerConfig,
-			DefaultToolchain:      "cmd-runner",
+			DefaultToolchain:      "runner-exec",
 		})
 	err = errors.Combine(err, e)
 
 	if registerKey {
 		s := factory.Stages()
 		for i := range s {
-			e = factory.RegisterToKey(runner.NewRegisterKey(s[i].Stage, "cmd"), CmdRunnerID)
+			e = factory.RegisterToKey(runner.NewRegisterKey(s[i].Stage, "exec"), ExecRunnerID)
 			err = errors.Combine(err, e)
 		}
 	}
