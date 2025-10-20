@@ -42,6 +42,7 @@ func AddCmd(cli cli.ICLI) {
 	cleanCmd.Flags().
 		StringVar(&args.compArgs.ComponentDir,
 			"component-dir", "", "Directory pointing to a component to build, instead of giving them by patterns.")
+	cleanCmd.MarkFlagsMutuallyExclusive("components", "component-dir")
 
 	cleanCmd.Flags().
 		BoolVarP(&args.gitIgnored,

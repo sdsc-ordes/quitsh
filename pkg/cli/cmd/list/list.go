@@ -48,6 +48,11 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 			"components", "c", []string{"*"}, "Components matched by these patterns are listed.")
 
 	listCmd.Flags().
+		StringVar(&args.compArgs.ComponentDir,
+			"component-dir", "", "Directory pointing to a component, instead of giving them by patterns.")
+	listCmd.MarkFlagsMutuallyExclusive("components", "component-dir")
+
+	listCmd.Flags().
 		StringVar(&args.outputFile,
 			"output", "", "Output the found components to this file (if `-` = `stdout`, see `format`).")
 
