@@ -38,6 +38,7 @@ func (r *ExecRunner) Run(ctx runner.IContext) error {
 	fs.AssertDirs(comp.OutBuildBinDir())
 
 	cmdCtx := exec.NewCmdCtxBuilder().
+		Cwd(comp.Root()).
 		Env(r.config.Env...).
 		Env(comp.OutEnvVariables()...).
 		Env(
