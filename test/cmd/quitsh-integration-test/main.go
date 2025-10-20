@@ -17,7 +17,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
-	execrunnner "github.com/sdsc-ordes/quitsh/pkg/runner/execrunner"
+	execrunnner "github.com/sdsc-ordes/quitsh/pkg/runner/exec"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 	echorunner "github.com/sdsc-ordes/quitsh/test/runners/echo_test"
 	gorunner "github.com/sdsc-ordes/quitsh/test/runners/go_test"
