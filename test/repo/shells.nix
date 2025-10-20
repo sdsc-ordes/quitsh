@@ -16,11 +16,11 @@
     ];
   };
 
-  cmd-runner = inputs.quitsh.lib.mkShell {
+  runner-exec = inputs.quitsh.lib.mkShell {
     inherit inputs pkgs;
     modules = [
       {
-        quitsh.toolchains = [ "cmd-runner" ];
+        quitsh.toolchains = [ "runner-exec" ];
         packages = [
           pkgs.coreutils
         ];
