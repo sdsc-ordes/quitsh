@@ -111,6 +111,7 @@ func DefineExecutionOrder(
 	for i := range inputPathChanges {
 		inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, inputPathChanges[i])
 	}
+	log.Debug("Changed paths.", "paths", inputPathChanges)
 
 	err = graph.SolveInputChanges(allInputs, allComps, &regexCache, inputPathChanges)
 	if err != nil {
