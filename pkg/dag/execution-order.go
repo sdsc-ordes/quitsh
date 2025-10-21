@@ -22,6 +22,25 @@ import (
 	"deedles.dev/xiter"
 )
 
+type (
+	graph struct {
+		nodes         TargetNodeMap
+		execRootNodes []*TargetNode // at the start of the execution order.
+		execLeafNodes []*TargetNode // at the end of the execution order.
+
+		/// The selection subgraph of targets we want to solve for.
+		/// =======================================================
+		// All nodes in the selection, can be empty == no selection.
+		nodesSel *set.Unordered[target.ID]
+		// The leaf nodes of the subgraph (defaults points to `execLeafNodes`).
+		execLeafNodesSel *[]*TargetNode
+		// The root nodes of the subgraph (where we start executing,
+		// defaults points to `execRootNodes`).
+		execRootNodesSel *[]*TargetNode
+		/// =======================================================
+	}
+)
+
 // DefineExecutionOrderStage does the same as `defineExecutionOrder` but by selecting
 // from `selection` only the targets which match `stage`.
 // The argument `selection` can be `nil`.
@@ -97,12 +116,12 @@ func DefineExecutionOrder(
 		return
 	}
 
-	graph, err := newGraph(allNodes, targetSelection)
+	g, err := newGraph(allNodes, targetSelection)
 	if err != nil {
 		return
 	}
 
-	err = graph.SolveExecutionOrder()
+	err = g.SolveExecutionOrder()
 	if err != nil {
 		return
 	}
@@ -113,12 +132,12 @@ func DefineExecutionOrder(
 	}
 	log.Debug("Changed paths.", "paths", inputPathChanges)
 
-	err = graph.SolveInputChanges(allInputs, allComps, &regexCache, inputPathChanges)
+	err = g.SolveInputChanges(allInputs, allComps, &regexCache, inputPathChanges)
 	if err != nil {
 		return
 	}
 
-	targets, prios = graph.NodesToPriorityList()
+	targets, prios = g.NodesToPriorityList()
 
 	return
 }
@@ -184,51 +203,35 @@ func constructNodes(
 	return allNodes, allInputs, allComps, nil
 }
 
-type graph struct {
-	nodes         TargetNodeMap
-	execRootNodes []*TargetNode // at the start of the execution order.
-	execLeafNodes []*TargetNode // at the end of the execution order.
-
-	/// The selection subgraph of targets we want to solve for.
-	/// =======================================================
-	// All nodes in the selection, can be empty == no selection.
-	nodesSel *set.Unordered[target.ID]
-	// The leaf nodes of the subgraph (defaults points to `execLeafNodes`).
-	execLeafNodesSel *[]*TargetNode
-	// The root nodes of the subgraph (where we start executing,
-	// defaults points to `execRootNodes`).
-	execRootNodesSel *[]*TargetNode
-	/// =======================================================
-}
-
-func (g *graph) recomputeSubgraph(selection *TargetSelection) error {
+func (graph *graph) recomputeSubgraph(selection *TargetSelection) error {
 	if selection == nil {
 		return nil
 	}
 
 	log.Debug("Recompute selection subgraph.")
 
-	g.execLeafNodesSel = &[]*TargetNode{}
-	g.execRootNodesSel = &[]*TargetNode{}
+	graph.execLeafNodesSel = &[]*TargetNode{}
+	graph.execRootNodesSel = &[]*TargetNode{}
 
-	for _, n := range g.nodes {
+	for _, n := range graph.nodes {
 		if selection.Exists(n.Target.ID) {
 			selection.Remove(n.Target.ID)
-			*g.execLeafNodesSel = append(*g.execLeafNodesSel, n)
+			*graph.execLeafNodesSel = append(*graph.execLeafNodesSel, n)
 		}
 	}
 
 	if selection.Len() != 0 {
 		return errors.New(
-			"not all target ids from selection were found loaded components: remaining target ids: '%v'",
+			"not all target ids from selection were found in all "+
+				"loaded components: remaining target ids: '%v'",
 			selection,
 		)
 	}
 
-	nodesSelection := set.NewUnorderedWithCap[target.ID](len(g.nodes))
+	nodesSelection := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
 
 	execRootNodesSelection := filterNodesBFS(
-		*g.execLeafNodesSel,
+		*graph.execLeafNodesSel,
 		func(n *TargetNode) bool {
 			nodesSelection.Insert(n.Target.ID)
 
@@ -236,15 +239,15 @@ func (g *graph) recomputeSubgraph(selection *TargetSelection) error {
 		},
 		backwardDir,
 	)
-	g.execRootNodesSel = &execRootNodesSelection
-	g.nodesSel = &nodesSelection
+	graph.execRootNodesSel = &execRootNodesSelection
+	graph.nodesSel = &nodesSelection
 
 	debug.Assert(
-		len(*g.execLeafNodesSel) == 0 || len(*g.execRootNodesSel) != 0,
+		len(*graph.execLeafNodesSel) == 0 || len(*graph.execRootNodesSel) != 0,
 		"we found no root nodes from non-empty selection (this is a bug)",
 	)
 
-	log.Trace("Changed nodes.", "changed", g.nodesSel)
+	log.Trace("Changed nodes.", "changed", graph.nodesSel)
 
 	return nil
 }
@@ -397,7 +400,8 @@ func resolveInputIDs(
 			if _, exists := allComps[string(inputID)]; !exists {
 				return errors.New(
 					"input id '%v' referring to a component in target '%v' on component '%v' is "+
-						"not found on all found components (maybe search dir. wrong?)",
+						"not found on all found components\n"+
+						"  -> working directory (or '-C') might be at the wrong place (use the top-level to check)",
 					inputID,
 					node.Target.ID,
 					node.Config.Name,
@@ -407,7 +411,8 @@ func resolveInputIDs(
 			if _, exists := allInputs[inputID]; !exists {
 				return errors.New(
 					"input id '%v' in target '%v' on component '%v' is "+
-						"not found on all found components (maybe search dir. wrong?)",
+						"not found on all found components\n"+
+						"  -> working directory (or '-C') might be at the wrong place (use the top-level to check)",
 					inputID,
 					node.Target.ID,
 					node.Config.Name,
@@ -460,7 +465,9 @@ func connectNodes(nodes TargetNodeMap, sel *TargetSelection) (TargetNodeMap, err
 		if !ok {
 			return nil, errors.New(
 				"reached target '%s' started from target selection could "+
-					"not be found by the loaded components", id)
+					"not be found by the loaded components\n"+
+					"  -> working directory (or '-C') might be at the wrong place (use the top-level to check)",
+				id)
 		}
 
 		visited[id] = n // Mark node as reached.
@@ -477,7 +484,8 @@ func connectNodes(nodes TargetNodeMap, sel *TargetSelection) (TargetNodeMap, err
 			depNode, exists := nodes[depName]
 			if !exists {
 				return nil, errors.New(
-					"dependency target id '%s' defined on target '%s' does not exist",
+					"dependency target id '%s' defined on target '%s' does not exist\n"+
+						"  -> working directory (or '-C') might be at the wrong place (use the top-level to check)",
 					depName,
 					n.Target.ID,
 				)
