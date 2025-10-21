@@ -23,6 +23,16 @@ import (
 )
 
 type (
+	TargetNodeMap   = map[target.ID]*TargetNode
+	TargetSelection = set.Unordered[target.ID]
+
+	PrioritySet struct {
+		Priority int
+		Nodes    []*TargetNode
+	}
+
+	Priorities []PrioritySet
+
 	graph struct {
 		nodes         TargetNodeMap
 		execRootNodes []*TargetNode // at the start of the execution order.
@@ -881,16 +891,6 @@ func formatStack(stack *stack.Stack[*TargetNode], withPrio bool) string {
 
 	return sb.String()
 }
-
-type TargetNodeMap = map[target.ID]*TargetNode
-type TargetSelection = set.Unordered[target.ID]
-
-type PrioritySet struct {
-	Priority int
-	Nodes    []*TargetNode
-}
-
-type Priorities []PrioritySet
 
 // Format formats the priorities.
 func (prios *Priorities) Format() string {
