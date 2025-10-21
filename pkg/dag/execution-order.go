@@ -3,6 +3,7 @@ package dag
 import (
 	"fmt"
 	"maps"
+	"path"
 	"slices"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
+	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 
 	"deedles.dev/xiter"
@@ -103,6 +105,11 @@ func DefineExecutionOrder(
 	err = graph.SolveExecutionOrder()
 	if err != nil {
 		return
+	}
+
+	// Make all input path changes absolute.
+	for i := range inputPathChanges {
+		inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, inputPathChanges[i])
 	}
 
 	err = graph.SolveInputChanges(allInputs, allComps, &regexCache, inputPathChanges)
@@ -663,6 +670,7 @@ func determineChangedPathsDefault(
 ) (changed bool, changes []string) {
 	log.Trace("Check for changes in dir '%v'", rootDir)
 	for i := range paths {
+		debug.Assert(path.IsAbs(paths[i]), "input path '%s' must be absolute", paths[i])
 		if _, changed = input.BaseDir(rootDir).TrimOffFrom(paths[i]); changed {
 			changes = append(changes, paths[i])
 
