@@ -175,9 +175,9 @@ func constructNodes(
 
 	// Resolve inputs over all nodes on the graph.
 	for _, n := range allNodes {
-		err := resolveInputIDs(n, allInputs, allComps)
-		if err != nil {
-			return nil, nil, nil, err
+		e := resolveInputIDs(n, allInputs, allComps)
+		if e != nil {
+			return nil, nil, nil, e
 		}
 	}
 
