@@ -189,10 +189,60 @@ type graph struct {
 	execRootNodes []*TargetNode // at the start of the execution order.
 	execLeafNodes []*TargetNode // at the end of the execution order.
 
-	// The selection of targets we want to solve for.
-	nodesSelection         *set.Unordered[target.ID]
-	execLeafNodesSelection *[]*TargetNode
-	execRootNodesSelection *[]*TargetNode
+	/// The selection subgraph of targets we want to solve for.
+	/// =======================================================
+	// All nodes in the selection, can be empty == no selection.
+	nodesSel *set.Unordered[target.ID]
+	// The leaf nodes of the subgraph (defaults points to `execLeafNodes`).
+	execLeafNodesSel *[]*TargetNode
+	// The root nodes of the subgraph (where we start executing,
+	// defaults points to `execRootNodes`).
+	execRootNodesSel *[]*TargetNode
+	/// =======================================================
+}
+
+func (g *graph) recomputeSubgraph(selection *TargetSelection) error {
+	if selection == nil {
+		return nil
+	}
+
+	g.execLeafNodesSel = &[]*TargetNode{}
+	g.execRootNodesSel = &[]*TargetNode{}
+
+	for _, n := range g.nodes {
+		if selection.Exists(n.Target.ID) {
+			selection.Remove(n.Target.ID)
+			*g.execLeafNodesSel = append(*g.execLeafNodesSel, n)
+		}
+	}
+
+	if selection.Len() != 0 {
+		return errors.New(
+			"not all target ids from selection were found loaded components: remaining target ids: '%v'",
+			selection,
+		)
+	}
+
+	nodesSelection := set.NewUnorderedWithCap[target.ID](len(g.nodes))
+
+	execRootNodesSelection := filterNodesBFS(
+		*g.execLeafNodesSel,
+		func(n *TargetNode) bool {
+			nodesSelection.Insert(n.Target.ID)
+
+			return len(n.Backward) == 0
+		},
+		backwardDir,
+	)
+	g.execRootNodesSel = &execRootNodesSelection
+	g.nodesSel = &nodesSelection
+
+	debug.Assert(
+		len(*g.execLeafNodesSel) == 0 || len(*g.execRootNodesSel) != 0,
+		"we found no root nodes from non-empty selection (this is a bug)",
+	)
+
+	return nil
 }
 
 func newGraph(
@@ -210,14 +260,8 @@ func newGraph(
 
 	// By default take all leaf nodes as selection.
 	execLeafNodesSel := &execLeafNodes
-	if selection != nil {
-		execLeafNodesSel = &[]*TargetNode{}
-	}
-	// By default take all leaf nodes as selection.
+	// By default take all root nodes as selection.
 	execRootNodesSel := &execRootNodes
-	if selection != nil {
-		execRootNodesSel = &[]*TargetNode{}
-	}
 
 	for _, n := range nodes {
 		if len(n.Forward) == 0 {
@@ -227,26 +271,14 @@ func newGraph(
 		if len(n.Backward) == 0 {
 			execRootNodes = append(execRootNodes, n)
 		}
-
-		if selection != nil && selection.Exists(n.Target.ID) {
-			selection.Remove(n.Target.ID)
-			*execLeafNodesSel = append(*execLeafNodesSel, n)
-		}
-	}
-
-	if selection != nil && selection.Len() != 0 {
-		return graph{}, errors.New(
-			"not all target id were found in selection: remaining target ids: '%v'",
-			selection,
-		)
 	}
 
 	g := graph{
-		nodes:                  nodes,
-		execRootNodes:          execRootNodes,
-		execLeafNodes:          execLeafNodes,
-		execLeafNodesSelection: execLeafNodesSel,
-		execRootNodesSelection: execRootNodesSel,
+		nodes:            nodes,
+		execRootNodes:    execRootNodes,
+		execLeafNodes:    execLeafNodes,
+		execLeafNodesSel: execLeafNodesSel,
+		execRootNodesSel: execRootNodesSel,
 	}
 
 	err := g.CheckNoCycles()
@@ -254,27 +286,9 @@ func newGraph(
 		return g, err
 	}
 
-	if selection != nil { // Note: selection is empty now because above.
-		log.Debug("Define reachable nodes and the subgraph from selection.")
-
-		nodesSelection := set.NewUnorderedWithCap[target.ID](len(g.nodes))
-
-		execRootNodesSelection := filterNodesBFS(
-			*g.execLeafNodesSelection,
-			func(n *TargetNode) bool {
-				nodesSelection.Insert(n.Target.ID)
-
-				return len(n.Backward) == 0
-			},
-			backwardDir,
-		)
-		g.execRootNodesSelection = &execRootNodesSelection
-		g.nodesSelection = &nodesSelection
-
-		debug.Assert(
-			len(*g.execLeafNodesSelection) == 0 || len(*g.execRootNodesSelection) != 0,
-			"we found no root nodes from non-empty selection (this is a bug)",
-		)
+	err = g.recomputeSubgraph(selection)
+	if err != nil {
+		return g, err
 	}
 
 	printInfo(&g)
@@ -293,12 +307,12 @@ func printInfo(g *graph) {
 		len(g.execLeafNodes),
 	)
 
-	if g.nodesSelection != nil {
+	if g.nodesSel != nil {
 		log.Debug("Graph selection info.",
 			"roots-selection",
-			len(*g.execRootNodesSelection),
+			len(*g.execRootNodesSel),
 			"leaves-selection",
-			len(*g.execLeafNodesSelection),
+			len(*g.execLeafNodesSel),
 		)
 	}
 }
@@ -335,7 +349,7 @@ func visitNodesBFS(
 	bfsStack.Push(startNodes...)
 
 	for bfsStack.Len() != 0 {
-		log.Trace("Current BFS stack:\n%v", formatStack(&bfsStack, true))
+		log.Tracef("Current BFS stack:\n%v", formatStack(&bfsStack, true))
 
 		n := bfsStack.PopFront()
 		if !visit(n) {
@@ -540,7 +554,7 @@ func (graph *graph) SolveExecutionOrder() error {
 	log.Debug("Solve execution order.")
 
 	visitNodesBFS(
-		*graph.execLeafNodesSelection,
+		*graph.execLeafNodesSel,
 		func(n *TargetNode) bool {
 			// The nodes we depend on must have a priority strictly higher than the current node.
 			for _, d := range n.Backward {
@@ -557,6 +571,9 @@ func (graph *graph) SolveExecutionOrder() error {
 // Propagates all input changes from all execution root nodes.
 // to determine what changed. If the `paths` is nil
 // all nodes are treated as changed.
+// This function does a forward traversal up the tree to determine the changed status.
+// Afterwards, the subgraph selection in `graph` is recomputed, defined by all
+// visited nodes from a backwards traversal starting from all **changed** nodes.
 func (graph *graph) SolveInputChanges(
 	inputs map[input.ID]*input.Config,
 	comps map[string]*component.Component,
@@ -564,12 +581,13 @@ func (graph *graph) SolveInputChanges(
 	paths []string) error {
 	log.Debug("Solve input changes.")
 
+	var changed TargetSelection
 	inputChanges := make(map[input.ID]InputChanges, len(inputs))
 
 	// Run the graph upwards (in execution order) and
 	// propagate input changes and determine if
 	// target is changed or not.
-	for _, root := range *graph.execRootNodesSelection {
+	for _, root := range *graph.execRootNodesSel {
 		dfsStack := stack.NewStack[*TargetNode]()
 		dfsStack.Push(root)
 
@@ -633,6 +651,10 @@ func (graph *graph) SolveInputChanges(
 				currIn.Changed,
 			)
 
+			if currIn.Changed {
+				changed.Insert(n.Target.ID)
+			}
+
 			// Propagate to children, by merging the input changes.
 			for _, c := range n.Forward {
 				c.Inputs.Merge(&n.Inputs)
@@ -643,7 +665,7 @@ func (graph *graph) SolveInputChanges(
 		}
 	}
 
-	return nil
+	return graph.recomputeSubgraph(&changed)
 }
 
 // NodesToPriorityList converts the priorities on the nodes to an
@@ -657,7 +679,7 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 	visited := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
 
 	visitNodesBFS(
-		*graph.execRootNodesSelection,
+		*graph.execRootNodesSel,
 		func(n *TargetNode) bool {
 			if !n.Inputs.Changed {
 				return true
@@ -667,7 +689,7 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 				return true
 			}
 
-			log.Trace("Adding node '%v' with prio '%v'.", n.Target.ID, n.Priority)
+			log.Tracef("Adding node '%v' with prio '%v'.", n.Target.ID, n.Priority)
 
 			// Add the node to the result.
 			prio := prios[n.Priority]
@@ -694,8 +716,8 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 // inSelection determines in case of a selection if the current node is
 // inside the selected subgraph.
 func (graph *graph) inSelection(n *TargetNode) bool {
-	return graph.nodesSelection == nil ||
-		graph.nodesSelection.Exists(n.Target.ID)
+	return graph.nodesSel == nil ||
+		graph.nodesSel.Exists(n.Target.ID)
 }
 
 func determineChangedPathsDefault(
