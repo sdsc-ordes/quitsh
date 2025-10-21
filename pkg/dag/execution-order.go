@@ -206,6 +206,8 @@ func (g *graph) recomputeSubgraph(selection *TargetSelection) error {
 		return nil
 	}
 
+	log.Debug("Recompute selection subgraph.")
+
 	g.execLeafNodesSel = &[]*TargetNode{}
 	g.execRootNodesSel = &[]*TargetNode{}
 
@@ -241,6 +243,8 @@ func (g *graph) recomputeSubgraph(selection *TargetSelection) error {
 		len(*g.execLeafNodesSel) == 0 || len(*g.execRootNodesSel) != 0,
 		"we found no root nodes from non-empty selection (this is a bug)",
 	)
+
+	log.Trace("Changed nodes.", "changed", g.nodesSel)
 
 	return nil
 }
@@ -373,6 +377,8 @@ func resolveInputIDs(
 	allInputs map[input.ID]*input.Config,
 	allComps map[string]*component.Component,
 ) error {
+	log.Debug("Resolve input ids.")
+
 	for idx, inputID := range node.Target.Inputs {
 		// Mangle `self` (referring to whole comp.)
 		if inputID == "self" {
@@ -415,6 +421,7 @@ func resolveInputIDs(
 
 // resolveTargetIDs resolves all `self::XXX` target ids in `.Dependencies`.
 func resolveTargetIDs(node *TargetNode) {
+	log.Debug("Resolve target ids.")
 	for idx, targetID := range node.Target.Dependencies {
 		// Mangle `self::` into own components input id.
 		trimmedID := strings.TrimPrefix(string(targetID), "self::")
@@ -427,6 +434,8 @@ func resolveTargetIDs(node *TargetNode) {
 }
 
 func connectNodes(nodes TargetNodeMap, sel *TargetSelection) (TargetNodeMap, error) {
+	log.Debug("Connect nodes.")
+
 	visited := make(map[target.ID]*TargetNode, len(nodes))
 
 	dfsStack := stack.NewStackWithCap[target.ID](len(nodes))
@@ -574,6 +583,8 @@ func (graph *graph) SolveExecutionOrder() error {
 // This function does a forward traversal up the tree to determine the changed status.
 // Afterwards, the subgraph selection in `graph` is recomputed, defined by all
 // visited nodes from a backwards traversal starting from all **changed** nodes.
+//
+//nolint:gocognit // FIXME: later
 func (graph *graph) SolveInputChanges(
 	inputs map[input.ID]*input.Config,
 	comps map[string]*component.Component,
