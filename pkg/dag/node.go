@@ -33,10 +33,10 @@ type TargetNodeChanges struct {
 	// Flag if the inputs for this target have changed.
 	Changed bool
 
-	// ChangedByDependency denotes if detection of own changed paths are skipped
-	// due to dependencies already are changed.
-	// Can only be `true` if `Changed` is true and also then
-	// will`Paths` will be `nil` because we skip own detection.
+	// ChangedByDependency denotes if the target has changed due to a dependency.
+	// If so, then detection of own changed `Paths` are skipped!
+	// Asserts: Can only be `true` if `Changed` is true and also then
+	// `Paths` will be `nil` because we skip own detection.
 	ChangedByDependency bool
 
 	// Changed paths for this component.

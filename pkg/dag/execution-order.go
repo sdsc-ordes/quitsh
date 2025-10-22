@@ -544,7 +544,7 @@ func (graph *graph) CheckNoCycles() (err error) {
 			delete(idsOnPath, id)
 		}
 
-		log.Trace("Start DFS cycle check: %v", root.Target.ID)
+		log.Tracef("Start DFS cycle check: %v", root.Target.ID)
 		dfsStack.Push(root)
 
 		for dfsStack.Len() != 0 {
@@ -564,7 +564,7 @@ func (graph *graph) CheckNoCycles() (err error) {
 			}
 
 			stepDown(currID)
-			log.Trace("Current DFS path:\n%v", formatPath(&pathStack))
+			log.Tracef("Current DFS path:\n%v", formatPath(&pathStack))
 
 			if len(currNode.Backward) == 0 {
 				stepUpwards(currID)
@@ -614,19 +614,23 @@ func (graph *graph) SolveInputChanges(
 	var changedInSelection TargetSelection
 	inputChanges := make(map[input.ID]InputChanges, len(inputs))
 
+	visited := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
+
 	// Run the graph upwards (in execution order) and
 	// propagate input changes and determine if
 	// target is changed or not.
 	for _, root := range *graph.execRootNodesSel {
+		log.Tracef("Start from node: '%v'", root.Target.ID)
 		dfsStack := stack.NewStack[*TargetNode]()
 		dfsStack.Push(root)
 
 		for dfsStack.Len() != 0 {
-			log.Trace("Current DFS stack:\n%v", formatStack(&dfsStack, false))
-
+			log.Tracef("Current DFS stack:\n%v", formatStack(&dfsStack, false))
 			n := dfsStack.Pop()
 
-			if !graph.inSelection(n) {
+			if visited.Exists(n.Target.ID) {
+				continue
+			} else if !graph.inSelection(n) {
 				log.Trace("Skipped node not in selection.")
 
 				continue
@@ -636,23 +640,26 @@ func (graph *graph) SolveInputChanges(
 			if currIn.ChangedByDependency {
 				debug.Assert(
 					currIn.Paths == nil,
-					"we should not have changed paths, when we skipped detection on this target",
+					"We should not have run determineChangedPaths (optimization), "+
+						"since this target is changed by dependency.",
 					"paths",
 					currIn.Paths,
+					"target",
+					n.Target.ID,
 				)
-				debug.Assert(currIn.Changed, "we should have changes when skipped it set")
+				debug.Assert(currIn.Changed, "We should have changes when changed by dependency.")
 			}
 
 			switch {
 			case paths == nil:
-				log.Trace(
+				log.Tracef(
 					"No paths given -> setting target id '%v' to changed.",
 					n.Target.ID,
 				)
 				currIn.Changed = true
 
 			case !currIn.ChangedByDependency:
-				log.Trace("Detect change for current node '%v'.", n.Target.ID)
+				log.Tracef("Detect change for current node '%v'.", n.Target.ID)
 				changed, changes, err := determineChangedPaths(
 					n,
 					inputs,
@@ -669,7 +676,7 @@ func (graph *graph) SolveInputChanges(
 				currIn.Paths = changes
 
 			default:
-				log.Trace("Current target '%s' already changed.", n.Target.ID)
+				log.Tracef("Current target '%s' already changed.", n.Target.ID)
 				// we are skipped
 			}
 
@@ -681,7 +688,7 @@ func (graph *graph) SolveInputChanges(
 				currIn.Changed,
 			)
 
-			if currIn.Changed && graph.inSelection(n) {
+			if currIn.Changed {
 				changedInSelection.Insert(n.Target.ID)
 			}
 
@@ -689,6 +696,8 @@ func (graph *graph) SolveInputChanges(
 			for _, c := range n.Forward {
 				c.Inputs.Merge(&n.Inputs)
 			}
+
+			visited.Insert(n.Target.ID)
 
 			// Go to next nodes.
 			dfsStack.Push(n.Forward...)
@@ -753,7 +762,7 @@ func determineChangedPathsDefault(
 	rootDir string,
 	paths []string,
 ) (changed bool, changes []string) {
-	log.Trace("Check for changes in dir '%v'", rootDir)
+	log.Tracef("Check for changes in dir '%v'", rootDir)
 	for i := range paths {
 		debug.Assert(path.IsAbs(paths[i]), "input path '%s' must be absolute", paths[i])
 		if _, changed = input.BaseDir(rootDir).TrimOffFrom(paths[i]); changed {
@@ -797,7 +806,7 @@ func determineChangedPaths(
 		}
 
 		// otherwise check the input set
-		log.Trace("Check for changes for input id '%v'", inputID)
+		log.Tracef("Check for changes for input id '%v'", inputID)
 		input, exists := inputs[inputID]
 		debug.Assert(exists, "input id '%s' does not exist", inputID)
 
@@ -817,7 +826,7 @@ func determineChangedPaths(
 
 		if len(relativePaths) == 0 {
 			// no paths which match this input set.
-			log.Trace("Relative paths do not match.")
+			log.Tracef("Relative paths do not match.")
 
 			continue
 		}
@@ -846,7 +855,7 @@ func determineChangedPaths(
 			inputCh.Changed = includeRegexes.Match(p) && !excludeRegexes.Match(p)
 
 			if inputCh.Changed {
-				log.Trace("Matched path '%v'.", p)
+				log.Tracef("Matched path '%v'.", p)
 
 				inputCh.Changes = append(inputCh.Changes, p)
 				inputChanges[inputID] = inputCh // set the changes back!
