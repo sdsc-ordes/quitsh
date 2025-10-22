@@ -216,6 +216,8 @@ func constructNodes(
 func (graph *graph) recomputeSubgraph(selection *TargetSelection) error {
 	if selection == nil {
 		return nil
+	} else if selection.Len() == 0 {
+		return errors.New("graph selection must contain elements if not nil")
 	}
 
 	log.Debug("Recompute selection subgraph.")
@@ -257,7 +259,9 @@ func (graph *graph) recomputeSubgraph(selection *TargetSelection) error {
 		"we found no root nodes from non-empty selection (this is a bug)",
 	)
 
-	log.Trace("Changed nodes.", "changed", graph.nodesSel)
+	log.Debug("Subgraph nodes.",
+		"nodes", graph.nodesSel,
+		"count", graph.nodesSel.Len())
 
 	return nil
 }
@@ -265,10 +269,6 @@ func (graph *graph) recomputeSubgraph(selection *TargetSelection) error {
 func newGraph(
 	nodes TargetNodeMap,
 	selection *TargetSelection) (graph, error) {
-	if selection != nil && selection.Len() == 0 {
-		return graph{}, errors.New("graph selection must contain elements if not nil")
-	}
-
 	// Find all execution leaf nodes. (the ones with no children)
 	execLeafNodes := []*TargetNode{}
 	// Find all execution roots nodes.
@@ -600,7 +600,8 @@ func (graph *graph) SolveExecutionOrder() error {
 // all nodes are treated as changed.
 // This function does a forward traversal up the tree to determine the changed status.
 // Afterwards, the subgraph selection in `graph` is recomputed, defined by all
-// visited nodes from a backwards traversal starting from all **changed** nodes.
+// visited nodes from a backwards traversal starting from all
+// **changed** nodes in the **original selection**.
 //
 //nolint:gocognit // FIXME: later
 func (graph *graph) SolveInputChanges(
@@ -608,9 +609,9 @@ func (graph *graph) SolveInputChanges(
 	comps map[string]*component.Component,
 	regexCache *recache.Cache,
 	paths []string) error {
-	log.Debug("Solve input changes.")
+	log.Debug("Solve input changes and recompute selection subgraph.")
 
-	var changed TargetSelection
+	var changedInSelection TargetSelection
 	inputChanges := make(map[input.ID]InputChanges, len(inputs))
 
 	// Run the graph upwards (in execution order) and
@@ -680,8 +681,8 @@ func (graph *graph) SolveInputChanges(
 				currIn.Changed,
 			)
 
-			if currIn.Changed {
-				changed.Insert(n.Target.ID)
+			if currIn.Changed && graph.inSelection(n) {
+				changedInSelection.Insert(n.Target.ID)
 			}
 
 			// Propagate to children, by merging the input changes.
@@ -694,12 +695,12 @@ func (graph *graph) SolveInputChanges(
 		}
 	}
 
-	return graph.recomputeSubgraph(&changed)
+	return graph.recomputeSubgraph(&changedInSelection)
 }
 
 // NodesToPriorityList converts the priorities on the nodes to an
 // ordered list in descending order and returns all targets.
-// Only changed targets are returned.
+// It traverses the graph backwards starting from the lead nodes of the selection subgraph.
 func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Priorities) {
 	nodes = make(TargetNodeMap)
 	prios := make(map[int]PrioritySet)
@@ -707,32 +708,31 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 	log.Debug("Construct priority set.")
 	visited := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
 
-	visitNodesBFS(
-		*graph.execRootNodesSel,
-		func(n *TargetNode) bool {
-			if !n.Inputs.Changed {
-				return true
-			}
+	for id := range graph.nodesSel.Keys() {
+		n, ok := graph.nodes[id]
+		if !ok {
+			log.Panicf("Node '%v' should be in the graph!", n.Target.ID)
+		}
 
-			if !graph.inSelection(n) || visited.Exists(n.Target.ID) {
-				return true
-			}
+		if visited.Exists(n.Target.ID) {
+			continue
+		}
 
-			log.Tracef("Adding node '%v' with prio '%v'.", n.Target.ID, n.Priority)
+		debug.Assert(graph.inSelection(n),
+			"Node '%s' should be in selection at that point.", n.Target.ID)
 
-			// Add the node to the result.
-			prio := prios[n.Priority]
-			prios[n.Priority] = PrioritySet{
-				Priority: n.Priority,
-				Nodes:    append(prio.Nodes, n),
-			}
-			nodes[n.Target.ID] = n
+		log.Tracef("Adding node '%v' with prio '%v'.", n.Target.ID, n.Priority)
 
-			visited.Insert(n.Target.ID)
+		// Add the node to the result.
+		prio := prios[n.Priority]
+		prios[n.Priority] = PrioritySet{
+			Priority: n.Priority,
+			Nodes:    append(prio.Nodes, n),
+		}
+		nodes[n.Target.ID] = n
 
-			return true
-		},
-		forwardDir)
+		visited.Insert(n.Target.ID)
+	}
 
 	// Sort all priorities in descending order.
 	for x := range slices.Backward(slices.Collect(xiter.Sorted(maps.Keys(prios)))) {
