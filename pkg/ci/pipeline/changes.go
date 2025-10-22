@@ -11,7 +11,7 @@ import (
 )
 
 // GetChangesOnPipeline reports all changed paths depending on the pipeline type:
-// - on merge request and branch pipelines: the diff between the HEAD~1 and HEAD is used.
+// - on merge request and branch pipelines: the diff between the `targetRefSHA` and HEAD is used.
 // - on tag pipelines:
 //   - if the tag is a semantic Git version tag the diff between
 //     the last semantic Git version tag and the current one is used.
@@ -35,8 +35,9 @@ func GetChangesOnPipeline(
 				"you need to merge the source branch into " +
 				"the target branch.")
 		}
-		log.Info("Compute changes.", "old", "HEAD~1", "new", "HEAD")
-		files, err := gitx.ChangesBetweenRevs(".", "HEAD~1", "HEAD", noRelative)
+
+		log.Info("Compute changes.", "old", sett.Git.TargetCommitSHA, "new", "HEAD")
+		files, err := gitx.ChangesBetweenRevs(".", sett.Git.TargetCommitSHA, "HEAD", noRelative)
 
 		return fs.MakeAllAbsoluteTo(gitx.Cwd(), files...), err
 	case BranchPipeline:
