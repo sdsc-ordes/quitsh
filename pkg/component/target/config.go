@@ -19,6 +19,11 @@ type Config struct {
 
 	Inputs       []input.ID `yaml:"inputs,omitempty"`
 	Dependencies []ID       `yaml:"depends,omitempty"`
+
+	// TODO: Maybe we want here a `After` list which boils down
+	// to a weak dependency ordering.
+	// The after ids come strictly after this one, and are only used for
+	// priority computing and for when running the DAG.
 }
 
 // Init initializes this config.

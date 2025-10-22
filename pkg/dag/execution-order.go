@@ -92,7 +92,7 @@ func DefineExecutionOrder(
 	regexCache := recache.NewCache(true)
 
 	log.Debug("Setup graph.")
-	allNodes, allInputs, allComps, err := constructNodes(components, rootDir)
+	allNodes, allInputs, allComps, err := constructNodes(components, targetSelection, rootDir)
 	if err != nil {
 		return
 	}
@@ -125,13 +125,14 @@ func DefineExecutionOrder(
 
 func constructNodes(
 	components []*component.Component,
+	targetSelection *TargetSelection,
 	rootDir string,
 ) (TargetNodeMap, map[input.ID]*input.Config, map[string]*component.Component, error) {
 	allNodes := make(TargetNodeMap, len(components)*4) //nolint:mnd // intentional.
 	allInputs := make(map[input.ID]*input.Config, len(components))
 	allComps := make(map[string]*component.Component, len(components))
 
-	// Add all nodes to graph.
+	// Add all components we found as nodes to the graph.
 	for _, c := range components {
 		config := c.Config()
 		allComps[c.Name()] = c
@@ -166,18 +167,18 @@ func constructNodes(
 		}
 	}
 
-	for _, n := range allNodes {
-		// Resolve input ids.
-		err := resolveInputIDs(n, allInputs, allComps)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-	}
-
 	log.Debug("Connect all target nodes.")
-	err := connectNodes(allNodes)
+	allNodes, err := connectNodes(allNodes, targetSelection)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	// Resolve inputs over all nodes on the graph.
+	for _, n := range allNodes {
+		e := resolveInputIDs(n, allInputs, allComps)
+		if e != nil {
+			return nil, nil, nil, e
+		}
 	}
 
 	return allNodes, allInputs, allComps, nil
@@ -352,7 +353,7 @@ func visitNodesBFS(
 	}
 }
 
-// resolveInputIDs resolves all `self::XXX` in input ids in `.Inputs`.
+// resolveInputIDs resolves all `self|.*::XXX` in input ids in `.Inputs`.
 func resolveInputIDs(
 	node *TargetNode,
 	allInputs map[input.ID]*input.Config,
@@ -367,7 +368,6 @@ func resolveInputIDs(
 
 		// Mangle `self::` into own components input id.
 		trimmedID := strings.TrimPrefix(string(inputID), "self::")
-
 		if trimmedID != string(inputID) {
 			inputID = input.DefineID(node.Config.Name, trimmedID)
 			node.Target.Inputs[idx] = inputID
@@ -376,7 +376,8 @@ func resolveInputIDs(
 		if inputID.IsComponent() {
 			if _, exists := allComps[string(inputID)]; !exists {
 				return errors.New(
-					"input id '%v' referring to a component in target '%v' on component '%v' is not found, did you define it?",
+					"input id '%v' referring to a component in target '%v' on component '%v' is "+
+						"not found on all found components (maybe search dir. wrong?)",
 					inputID,
 					node.Target.ID,
 					node.Config.Name,
@@ -385,7 +386,8 @@ func resolveInputIDs(
 		} else {
 			if _, exists := allInputs[inputID]; !exists {
 				return errors.New(
-					"input id '%v' in target '%v' on component '%v' is not found, did you define it?",
+					"input id '%v' in target '%v' on component '%v' is "+
+						"not found on all found components (maybe search dir. wrong?)",
 					inputID,
 					node.Target.ID,
 					node.Config.Name,
@@ -410,20 +412,48 @@ func resolveTargetIDs(node *TargetNode) {
 	}
 }
 
-func connectNodes(nodes TargetNodeMap) error {
-	for _, n := range nodes {
-		visitedDeps := make(map[target.ID]struct{})
+func connectNodes(nodes TargetNodeMap, sel *TargetSelection) (TargetNodeMap, error) {
+	visited := make(map[target.ID]*TargetNode, len(nodes))
 
+	dfsStack := stack.NewStackWithCap[target.ID](len(nodes))
+	if sel != nil {
+		for id := range sel.Values() {
+			dfsStack.Push(id)
+		}
+	} else {
+		for id := range nodes {
+			dfsStack.Push(id)
+		}
+	}
+
+	// Depth-first traversal, visit each node only once.
+	for dfsStack.Len() != 0 {
+		id := dfsStack.Pop()
+		if _, ok := visited[id]; ok {
+			continue
+		}
+
+		n, ok := nodes[id]
+		if !ok {
+			return nil, errors.New(
+				"reached target '%s' started from target selection could "+
+					"not be found by the loaded components", id)
+		}
+
+		visited[id] = n // Mark node as reached.
+
+		// Connect the node (dependencies).
+		visitedDeps := set.NewUnordered[target.ID]()
 		for _, depName := range n.Target.Dependencies {
-			if _, exists := visitedDeps[depName]; exists {
+			if visitedDeps.Exists(depName) {
 				// ignore multiple same dependencies.
 				continue
 			}
-			visitedDeps[depName] = struct{}{}
+			visitedDeps.Insert(depName)
 
 			depNode, exists := nodes[depName]
 			if !exists {
-				return errors.New(
+				return nil, errors.New(
 					"dependency target id '%s' defined on target '%s' does not exist",
 					depName,
 					n.Target.ID,
@@ -436,9 +466,12 @@ func connectNodes(nodes TargetNodeMap) error {
 			// Add the forward node on the parent.
 			depNode.Forward = append(depNode.Forward, n)
 		}
+
+		// Visit the dependencies.
+		dfsStack.Push(n.Target.Dependencies...)
 	}
 
-	return nil
+	return visited, nil
 }
 
 // CheckNoCycles checks that the graph has no cycles by traversing it in
