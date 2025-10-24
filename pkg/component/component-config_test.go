@@ -19,6 +19,10 @@ func TestComponentsConfig(t *testing.T) {
 name: comp1
 version: "1.0.0"
 language: go
+
+.general:
+    arbitrary-stuff: 3
+
 targets:
   build:
     steps:
