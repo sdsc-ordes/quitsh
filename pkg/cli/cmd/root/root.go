@@ -20,12 +20,17 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const EnvQuitshConfig = "QUITSH_CONFIG"
+const EnvQuitshConfigUser = "QUITSH_CONFIG_USER"
+
 // Root arguments.
 // NOTE: ALl fields need proper default values (here mostly empty).
 type Args struct {
 	// The config YAML from which we read parameters for the CLI.
+	// Preset by env. var `QUITSH_CONFIG`.
 	Config string `yaml:"-"`
 	// The config YAML (user overlay).
+	// Preset by env. var `QUITSH_CONFIG_USER`.
 	ConfigUser string `yaml:"-"`
 	// Config key,value arguments to override nested config
 	// values by paths e.g. `a.b.c: {"a":3}` on the command line.
@@ -162,11 +167,13 @@ func New(
 
 func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 	flags.
-		StringVar(&args.Config, "config", args.Config,
-			"The global configuration file. If set to '-' then stdin is read.")
+		StringVar(&args.Config, "config", os.Getenv(EnvQuitshConfig),
+			"The global configuration file. If set to '-' then stdin is read."+
+				"Env. variable 'QUITSH_CONFIG' presets this.")
 	flags.
-		StringVar(&args.ConfigUser, "config-user", args.ConfigUser,
-			"The global user configuration file (overlay), can not exist.")
+		StringVar(&args.ConfigUser, "config-user", os.Getenv(EnvQuitshConfigUser),
+			"The global user configuration file (overlay), can not exist."+
+				"Env. variable 'QUITSH_CONFIG_USER' presets this.")
 	flags.
 		StringArrayVarP(
 			&args.ConfigKeyValues,
