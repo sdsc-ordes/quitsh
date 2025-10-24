@@ -8,6 +8,7 @@ import (
 	e "errors"
 
 	"github.com/sdsc-ordes/quitsh/pkg/build"
+	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
@@ -148,7 +149,11 @@ func New(setts *Settings, rootArgs *Args, config any) (
 				return e
 			}
 
-			log.Debug("Loaded config.", "config", config)
+			if ci.IsRunning() {
+				log.Info("Loaded config.", "config", config)
+			} else {
+				log.Debug("Loaded config.", "config", config)
+			}
 
 			return nil
 		},
