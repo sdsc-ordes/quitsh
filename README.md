@@ -243,6 +243,11 @@ version: 0.2.1
 # A simple annotation (not used internally) what main language this component uses.
 language: go
 
+# The `.general` object is not parsed by `quitsh` and
+# allows arbitrary values mainly used for YAML anchors.
+.general:
+  value: &val 60
+
 targets:
   # A target called `test` with two steps.
   my-test:
