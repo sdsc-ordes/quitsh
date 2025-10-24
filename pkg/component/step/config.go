@@ -25,10 +25,6 @@ type (
 
 		// The (optional) raw runner config, before unmarshalling.
 		ConfigRaw AuxConfigRaw `yaml:"config,omitempty"`
-
-		// Additional stuff not parsed by quitsh, but for general purposes
-		// such as anchors etc. Needed due to strict parsing.
-		DotGeneral any `yaml:".general,omitempty"`
 	}
 
 	Include struct {

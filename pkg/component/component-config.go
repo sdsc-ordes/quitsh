@@ -16,6 +16,10 @@ type Config struct {
 
 	Inputs  map[string]*input.Config  `yaml:"inputs"`
 	Targets map[string]*target.Config `yaml:"targets"`
+
+	// Additional stuff not parsed by quitsh, but for general purposes
+	// such as anchors etc. Needed due to strict parsing.
+	DotGeneral any `yaml:".general,omitempty"`
 }
 
 // Init implements the `Initializable` interface.
