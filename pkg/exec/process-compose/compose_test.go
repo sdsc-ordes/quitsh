@@ -1,4 +1,4 @@
-//go:build !test_small && test_large
+//go:build test_large || test_all
 
 package processcompose
 

@@ -68,7 +68,7 @@ go-test *args:
 # Run the unit-tests.
 # To execute specific tests you can use `-run regexp`.
 go-test-unit-tests *args:
-    go test -tags debug,test \
+    go test -tags debug,test,test_all \
         -cover \
         -covermode=count \
         -coverpkg ./... \
