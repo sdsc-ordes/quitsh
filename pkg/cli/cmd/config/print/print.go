@@ -1,6 +1,7 @@
 package printcmd
 
 import (
+	"github.com/goccy/go-yaml"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 
@@ -20,7 +21,12 @@ func AddCmd(parent *cobra.Command, config config.IConfig) {
 }
 
 func printConfig(config config.IConfig) error {
-	log.Info("Config", "config", config)
+	buf, err := yaml.MarshalWithOptions(config, yaml.Indent(2))
+	if err != nil {
+		return err
+	}
+
+	log.Info("Config", "config", string(buf))
 
 	return nil
 }
