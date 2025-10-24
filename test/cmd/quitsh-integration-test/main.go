@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
+	configcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config"
 	exrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	extarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
@@ -45,12 +46,22 @@ type Config struct {
 
 	// Here you can place your own additional global config stuff
 	Build settings.BuildSettings `yaml:"build"`
+
+	// A simple test settings which gets env. replaced.
+	ValWithEnv string `yaml:"valWithEnv"`
 }
 
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 
 	return v
+}
+
+func (c *Config) ExpandEnv() error {
+	c.ValWithEnv = os.ExpandEnv(c.ValWithEnv)
+	log.Info("Replaced ValWithEnv: '%v'", c.ValWithEnv)
+
+	return nil
 }
 
 func main() {
@@ -88,6 +99,7 @@ func main() {
 	// Setup quitsh provided helper commands.
 	exrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
 	extarget.AddCmd(cli, cli.RootCmd(), &args.Commands.ExecArgs)
+	configcmd.AddCmd(cli.RootCmd(), &args)
 	listcmd.AddCmd(cli, cli.RootCmd())
 	processcompose.AddCmd(cli, cli.RootCmd(), flakeDir)
 

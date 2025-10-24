@@ -70,7 +70,7 @@ func (c *cliApp) FindComponents(
 
 	outBaseDir := ""
 	if c.rootArgs.GlobalOutputDir != "" {
-		outBaseDir = c.rootArgs.GlobalOutputDir
+		outBaseDir = fs.MakeAbsoluteTo(rootDir, c.rootArgs.GlobalOutputDir)
 	} else if c.rootArgs.GlobalOutput {
 		outBaseDir = rootDir
 	}

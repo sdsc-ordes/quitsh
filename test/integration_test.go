@@ -31,8 +31,9 @@ func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
 	require.DirExists(t, covDir, "QUITSH_COVERAGE_DIR=%s must exist.", covDir)
 
 	// Remove output
-	f := path.Join("repo/component-a/.output")
-	err := os.RemoveAll(f)
+	err := os.RemoveAll(path.Join("repo/component-a/.output"))
+	require.NoError(t, err)
+	err = os.RemoveAll(path.Join("repo/.global"))
 	require.NoError(t, err)
 
 	return exec.NewCmdCtxBuilder().
@@ -121,9 +122,12 @@ func TestCLISetConfigValues(t *testing.T) {
 }
 
 func TestCLISetConfigValuesStdin(t *testing.T) {
-	cli := setup(t).Build()
+	cli := setup(t).Env("MONKEY='banana-value'").Build()
 
-	config := "build:\n  buildType: release"
+	config := `
+build:
+    buildType: release
+`
 	r := strings.NewReader(config)
 
 	_, stderr, err := cli.WithStdin(r).GetStdErr(
@@ -142,6 +146,22 @@ func TestCLISetConfigValuesStdin(t *testing.T) {
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
+func TestCLISetConfigValuesEnvRepl(t *testing.T) {
+	cli := setup(t).Env("MONKEY=banana-value").Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"-K", `valWithEnv: "$MONKEY"`,
+		"config",
+		"print",
+		"--log-level",
+		"debug",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "valWithEnv: banana-value")
+}
+
 func TestCLIExecTarget2(t *testing.T) {
 	cli := setup(t).Build()
 
@@ -158,6 +178,25 @@ func TestCLIExecTarget2(t *testing.T) {
 	assert.Contains(t, stderr, "🌻")
 	assert.NotContains(t, stderr, "Nix set argument: '")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLIExecTarget2EnvAndGlobalOutput(t *testing.T) {
+	cli := setup(t).Env("GLOBAL_OUT_DIR=.global").Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"--global-output-dir", "$GLOBAL_OUT_DIR",
+		"component-a::build-banana",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "🌻")
+	assert.NotContains(t, stderr, "Nix set argument: '")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/.global/.output/component-a/build/bin/cmd"))
 }
 
 func TestCLIExecTargetParallel(t *testing.T) {

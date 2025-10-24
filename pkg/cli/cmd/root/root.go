@@ -24,7 +24,7 @@ const EnvQuitshConfig = "QUITSH_CONFIG"
 const EnvQuitshConfigUser = "QUITSH_CONFIG_USER"
 
 // Root arguments.
-// NOTE: ALl fields need proper default values (here mostly empty).
+// NOTE: All fields need proper default values (here mostly empty).
 type Args struct {
 	// The config YAML from which we read parameters for the CLI.
 	// Preset by env. var `QUITSH_CONFIG`.
@@ -58,7 +58,7 @@ type Args struct {
 	// If we use a global output directory
 	// instead of component's specific one.
 	GlobalOutput bool `yaml:"globalOutput"`
-	// Use a specific output directory.
+	// Use a specific output directory (relative to root dir).
 	GlobalOutputDir string `yaml:"outputDir"`
 
 	// Enable running targets in parallel.
@@ -128,6 +128,9 @@ func New(setts *Settings, rootArgs *Args, config any) (
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(_cmd *cobra.Command, _args []string) error {
+			// NOTE: Cobra already parsed all arguments.
+			applyEnvReplacement(rootArgs)
+
 			e := applyGeneralOptions(rootArgs)
 			if e != nil {
 				return e
@@ -138,6 +141,11 @@ func New(setts *Settings, rootArgs *Args, config any) (
 			}
 			if parsedConfigUser {
 				log.Debug("Parsed user config.", "path", rootArgs.ConfigUser)
+			}
+
+			e = applyEnvReplacementConfig(config)
+			if e != nil {
+				return e
 			}
 
 			log.Debug("Loaded config.", "config", config)
@@ -213,9 +221,12 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 			fmt.Sprintf("If a global output directory (repository root dir + '%s').", fs.OutputDir))
 
 	flags.
-		StringVar(&args.GlobalOutputDir,
-			"global-output-dir", args.GlobalOutputDir,
-			"Use this as global output directory (more simple: use '--global-output').")
+		StringVar(
+			&args.GlobalOutputDir,
+			"global-output-dir",
+			args.GlobalOutputDir,
+			"Use this as global output directory (relative to '--root-dir', more simple: use '--global-output').",
+		)
 }
 
 func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
@@ -224,7 +235,7 @@ func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 	// cobra parses the flags and set defaults.
 	//
 	// Priorities:
-	// 2. Env. variables, not yet implemented.
+	// 2. Env. variables (see addPersistendFlags, default values from env.)
 	// 1. Config from `--config` and `--config-user` and `--config-values.`
 	// 0. Command line arguments.
 
@@ -240,6 +251,8 @@ func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 		// So we set the error to nil, and return.
 		return false, false, nil
 	}
+
+	applyEnvReplacement(&args)
 
 	parsedConfig, err = initConfig(args.Config, conf, true)
 	if err != nil {
@@ -291,7 +304,8 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 	decoder := yaml.NewDecoder(f, yaml.Strict())
 	err := decoder.Decode(conf)
 	if err != nil {
-		return false, errors.AddContext(err, "could not decode config file '%s'", configPath)
+		return false, errors.AddContext(err,
+			"could not decode config file '%s'", configPath)
 	}
 
 	return true, nil
@@ -312,12 +326,34 @@ func runRoot(rootCmd *cobra.Command, setts *Settings, version bool) error {
 	return errors.New("no command given")
 }
 
+func applyEnvReplacement(r *Args) {
+	r.RootDir = os.ExpandEnv(r.RootDir)
+
+	r.Config = os.ExpandEnv(r.Config)
+	r.ConfigUser = os.ExpandEnv(r.ConfigUser)
+	r.GlobalOutputDir = os.ExpandEnv(r.GlobalOutputDir)
+}
+
+func applyEnvReplacementConfig(c any) error {
+	envRep, _ := c.(config.EnvExpander)
+	if envRep != nil {
+		return envRep.ExpandEnv()
+	}
+
+	return nil
+}
+
 func applyGeneralOptions(r *Args) error {
 	if r.LogLevel != "" {
 		err := log.SetLevel(r.LogLevel)
 		if err != nil {
 			return errors.AddContext(err, "could not set log level to '%v'", r.LogLevel)
 		}
+	}
+
+	if r.GlobalOutput && r.GlobalOutputDir != "" {
+		return errors.New("either use '--global-output' or " +
+			"'--global-output-dir', but not both")
 	}
 
 	r.Cwd = fs.MakeAbsolute(r.Cwd)
@@ -327,12 +363,8 @@ func applyGeneralOptions(r *Args) error {
 		return errors.AddContext(err, "could not change working dir '%v'", r.Cwd)
 	}
 
-	if r.GlobalOutput && r.GlobalOutputDir != "" {
-		return errors.New("either use '--global-output' or '--output-dir', but not both")
-	}
-
 	// Global hack to enable env. printing
-	// TODO: Setting globals is not so good!
+	// FIXME: Setting globals is not so good!
 	exec.EnableEnvPrint = r.EnableEnvPrint
 
 	return nil

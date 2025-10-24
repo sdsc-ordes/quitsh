@@ -41,6 +41,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	log.Info("Hello from integration test Go runner.", "component", comp.Name())
 	fs.AssertDirs(comp.OutBuildBinDir())
 
+	log.Infof("OutputDir: %v", comp.OutDir())
 	binDir := comp.OutBuildBinDir()
 
 	goctx := gox.NewCtxBuilder().
