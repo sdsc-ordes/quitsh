@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -10,26 +9,22 @@ in
 {
   options = {
     quitsh.config = lib.mkOption {
-      type = lib.types.nullOr (
-        lib.types.pathWith {
-          inStore = false;
-          absolute = null;
-        }
-      );
-      default = null;
+      type = lib.types.pathWith {
+        inStore = false;
+        absolute = null;
+      };
+      default = "";
       description = ''
         The config file (relative to `devenv` root) used by default (same as `--config`, must exist).
       '';
     };
 
     quitsh.configUser = lib.mkOption {
-      type = lib.types.nullOr (
-        lib.types.pathWith {
-          inStore = false;
-          absolute = null;
-        }
-      );
-      default = null;
+      type = lib.types.pathWith {
+        inStore = false;
+        absolute = null;
+      };
+      default = "";
       description = ''
         The user config file (relative to `devenv` root) used by default (same as `--config-user`, may not exists).
       '';
@@ -38,10 +33,10 @@ in
 
   config = {
     env =
-      lib.optionalAttrs (cfg.config != null) {
+      lib.optionalAttrs (cfg.config != "") {
         QUITSH_CONFIG = "${config.devenv.root}/${cfg.config}";
       }
-      // lib.optionalAttrs (cfg.configUser != null) {
+      // lib.optionalAttrs (cfg.configUser != "") {
         QUITSH_CONFIG_USER = "${config.devenv.root}/${cfg.configUser}";
       };
   };
