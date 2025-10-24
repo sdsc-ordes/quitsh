@@ -48,7 +48,7 @@ func RegisterTest(
 			Creator: func(runnerConfig any) (runner.IRunner, error) {
 				return NewGoTestRunner(runnerConfig, testSettings)
 			},
-			RunnerConfigUnmarshal: UnmarshalBuildConfig,
+			RunnerConfigUnmarshal: UnmarshalTestConfig,
 			DefaultToolchain:      "build-go",
 		})
 	err = errors.Combine(err, e)

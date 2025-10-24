@@ -105,10 +105,8 @@ func (s *Settings) applyDefaults() {
 //   - The `preExecFunc`: We pass the config (hopefully defaulted),
 //     load potentially from `--config`, `--config-user` and `--config-values`.
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
-func New(
-	setts *Settings,
-	rootArgs *Args,
-	config any) (rootCmd *cobra.Command, preExecFunc func() error) {
+func New(setts *Settings, rootArgs *Args, config any) (
+	rootCmd *cobra.Command, preExecFunc func() error) {
 	if setts == nil {
 		setts = &Settings{}
 	}
@@ -220,9 +218,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 			"Use this as global output directory (more simple: use '--global-output').")
 }
 
-func parseConfigs(
-	conf any,
-) (parsedConfig, parsedUserConfig bool, err error) {
+func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 	// Parse here the --config, and --config-user and `--config-values`
 	// and init the config, because that needs to happen before
 	// cobra parses the flags and set defaults.
@@ -292,7 +288,7 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 		f = ff
 	}
 
-	decoder := yaml.NewDecoder(f)
+	decoder := yaml.NewDecoder(f, yaml.Strict())
 	err := decoder.Decode(conf)
 	if err != nil {
 		return false, errors.AddContext(err, "could not decode config file '%s'", configPath)

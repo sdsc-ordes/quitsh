@@ -115,8 +115,8 @@ targets:
 
 	// Decode some special config.
 	type C struct {
-		a int `yaml:"a"`
+		A int `yaml:"a"`
 	}
-	cc := C{a: 1}
+	cc := C{A: 1}
 	require.NoError(t, c.TargetByID("test::build").Steps[0].ConfigRaw.Unmarshal(&cc))
 }

@@ -1,3 +1,5 @@
+//go:build !test_small && test_large
+
 package processcompose
 
 import (

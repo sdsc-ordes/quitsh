@@ -20,9 +20,20 @@ inputs:
       - "^.*$"
 
 targets:
-  test:
+  test-large:
     steps:
       - runner: go
+        config:
+          buildTags:
+            - test_large
+
+  test-small:
+    steps:
+      - runner: go
+        config:
+          buildTags:
+            - test_small
+          args: ["--count", "10"]
 
   test-integration:
     steps:

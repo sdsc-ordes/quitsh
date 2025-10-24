@@ -23,7 +23,8 @@ build *args:
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to test this component.
 test *args:
-    just go-cli exec-target quitsh::test quitsh::test-integration "$@"
+    just go-cli exec-target quitsh::test-small "$@"
+    just go-cli exec-target quitsh::test-large "$@"
 
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to lint this component.
