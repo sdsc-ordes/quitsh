@@ -614,8 +614,6 @@ func (graph *graph) SolveInputChanges(
 	var changedInSelection TargetSelection
 	inputChanges := make(map[input.ID]InputChanges, len(inputs))
 
-	visited := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
-
 	// Run the graph upwards (in execution order) and
 	// propagate input changes and determine if
 	// target is changed or not.
@@ -628,9 +626,7 @@ func (graph *graph) SolveInputChanges(
 			log.Tracef("Current DFS stack:\n%v", formatStack(&dfsStack, false))
 			n := dfsStack.Pop()
 
-			if visited.Exists(n.Target.ID) {
-				continue
-			} else if !graph.inSelection(n) {
+			if !graph.inSelection(n) {
 				log.Trace("Skipped node not in selection.")
 
 				continue
@@ -696,8 +692,6 @@ func (graph *graph) SolveInputChanges(
 			for _, c := range n.Forward {
 				c.Inputs.Merge(&n.Inputs)
 			}
-
-			visited.Insert(n.Target.ID)
 
 			// Go to next nodes.
 			dfsStack.Push(n.Forward...)

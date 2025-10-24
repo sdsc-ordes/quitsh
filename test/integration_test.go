@@ -18,6 +18,9 @@ import (
 )
 
 func setup(t *testing.T) (quitsh exec.CmdContextBuilder) {
+	os.Unsetenv("QUITSH_CONFIG")
+	os.Unsetenv("QUITSH_CONFIG_USER")
+
 	binDir := os.Getenv("QUITSH_BIN_DIR")
 	require.DirExists(t, binDir, "QUITSH_BIN_DIR=%s must exist.", binDir)
 
