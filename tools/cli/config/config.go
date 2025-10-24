@@ -13,7 +13,7 @@ import (
 
 type CommandArgs struct {
 	// Arguments needed to make the root command in `quitsh` work.
-	Root rootcmd.Args `yaml:"general"`
+	Root rootcmd.Args `yaml:"root"`
 
 	// Arguments needed to make the `execute`
 	// command in `quitsh` work. This is used when `quitsh` dispatches over a toolchain

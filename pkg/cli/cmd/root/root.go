@@ -92,7 +92,7 @@ func (s *Settings) applyDefaults() {
 	}
 }
 
-// Create a new `quitsh` root command with settings `setts` and
+// New creates a new `quitsh` root command with settings `setts` and
 // root arguments `rootArgs`. The full argument structure `allArgs` is treated
 // as `any` and will be used to parse the configuration files `--config`
 // (`--config-user`) into before startup.
@@ -117,6 +117,13 @@ func New(
 	var parsedConfig, parsedConfigUser bool
 	var version bool
 
+	preExecFunc = func() error {
+		var err error
+		parsedConfig, parsedConfigUser, err = parseConfigs(config)
+
+		return err
+	}
+
 	rootCmd = &cobra.Command{
 		Use:           setts.Name,
 		Long:          setts.Description,
@@ -135,7 +142,7 @@ func New(
 				log.Debug("Parsed user config.", "path", rootArgs.ConfigUser)
 			}
 
-			log.Debug("Parsed config.", "config", config)
+			log.Debug("Loaded config.", "config", config)
 
 			return nil
 		},
@@ -154,13 +161,6 @@ func New(
 		BoolVar(&version, "version", version, "Print the version.")
 
 	rootCmd.SilenceErrors = true
-
-	preExecFunc = func() error {
-		var err error
-		parsedConfig, parsedConfigUser, err = parseConfigs(config)
-
-		return err
-	}
 
 	return rootCmd, preExecFunc
 }
@@ -267,8 +267,6 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 	if configPath == "" {
 		return false, nil
 	}
-
-	log.Debugf("Parse config from '%s'", configPath)
 
 	var f io.Reader
 	switch configPath {

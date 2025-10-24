@@ -50,6 +50,10 @@ let
         ++ [
           {
             quitsh.toolchains = [ "general" ];
+
+            quitsh.config = "tools/configs/quitsh/config.yaml";
+            quitsh.configUser = "tools/configs/quitsh/config.user.yaml";
+
             quitsh.languages.go.enable = true;
 
             packages = [
@@ -61,6 +65,7 @@ let
               pkgs.hyperfine
             ];
           }
+
         ];
 
       ci = [
