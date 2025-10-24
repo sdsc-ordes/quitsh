@@ -92,7 +92,7 @@ func (s *Settings) applyDefaults() {
 	}
 }
 
-// Create a new `quitsh` root command with settings `setts` and
+// New creates a new `quitsh` root command with settings `setts` and
 // root arguments `rootArgs`. The full argument structure `allArgs` is treated
 // as `any` and will be used to parse the configuration files `--config`
 // (`--config-user`) into before startup.
@@ -105,10 +105,8 @@ func (s *Settings) applyDefaults() {
 //   - The `preExecFunc`: We pass the config (hopefully defaulted),
 //     load potentially from `--config`, `--config-user` and `--config-values`.
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
-func New(
-	setts *Settings,
-	rootArgs *Args,
-	config any) (rootCmd *cobra.Command, preExecFunc func() error) {
+func New(setts *Settings, rootArgs *Args, config any) (
+	rootCmd *cobra.Command, preExecFunc func() error) {
 	if setts == nil {
 		setts = &Settings{}
 	}
@@ -116,6 +114,13 @@ func New(
 
 	var parsedConfig, parsedConfigUser bool
 	var version bool
+
+	preExecFunc = func() error {
+		var err error
+		parsedConfig, parsedConfigUser, err = parseConfigs(config)
+
+		return err
+	}
 
 	rootCmd = &cobra.Command{
 		Use:           setts.Name,
@@ -135,7 +140,7 @@ func New(
 				log.Debug("Parsed user config.", "path", rootArgs.ConfigUser)
 			}
 
-			log.Debug("Parsed config.", "config", config)
+			log.Debug("Loaded config.", "config", config)
 
 			return nil
 		},
@@ -154,13 +159,6 @@ func New(
 		BoolVar(&version, "version", version, "Print the version.")
 
 	rootCmd.SilenceErrors = true
-
-	preExecFunc = func() error {
-		var err error
-		parsedConfig, parsedConfigUser, err = parseConfigs(config)
-
-		return err
-	}
 
 	return rootCmd, preExecFunc
 }
@@ -220,9 +218,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 			"Use this as global output directory (more simple: use '--global-output').")
 }
 
-func parseConfigs(
-	conf any,
-) (parsedConfig, parsedUserConfig bool, err error) {
+func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 	// Parse here the --config, and --config-user and `--config-values`
 	// and init the config, because that needs to happen before
 	// cobra parses the flags and set defaults.
@@ -268,8 +264,6 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 		return false, nil
 	}
 
-	log.Debugf("Parse config from '%s'", configPath)
-
 	var f io.Reader
 	switch configPath {
 	case "-":
@@ -294,7 +288,7 @@ func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error
 		f = ff
 	}
 
-	decoder := yaml.NewDecoder(f)
+	decoder := yaml.NewDecoder(f, yaml.Strict())
 	err := decoder.Decode(conf)
 	if err != nil {
 		return false, errors.AddContext(err, "could not decode config file '%s'", configPath)

@@ -23,7 +23,10 @@ build *args:
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to test this component.
 test *args:
-    just go-cli exec-target quitsh::test quitsh::test-integration "$@"
+    just go-cli exec-target \
+        quitsh::test-small \
+        quitsh::test-large \
+        quitsh::test-integration "$@"
 
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to lint this component.
@@ -67,7 +70,7 @@ go-test *args:
 # Run the unit-tests.
 # To execute specific tests you can use `-run regexp`.
 go-test-unit-tests *args:
-    go test -tags debug,test \
+    go test -tags debug,test,test_all \
         -cover \
         -covermode=count \
         -coverpkg ./... \

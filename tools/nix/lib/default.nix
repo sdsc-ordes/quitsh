@@ -8,6 +8,7 @@ let
     (import ./devenv/go.nix)
     (import ./devenv/toolchains.nix)
     (import ./devenv/log.nix)
+    (import ./devenv/config.nix)
   ];
 in
 {

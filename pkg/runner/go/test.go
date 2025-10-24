@@ -16,7 +16,7 @@ import (
 const GoTestRunnerID = "quitsh::test-go"
 
 type GoTestRunner struct {
-	config   *RunnerConfigBuild
+	config   *RunnerTestConfig
 	settings config.ITestSettings
 }
 
@@ -24,7 +24,7 @@ func NewGoTestRunner(config any, settings config.ITestSettings) (runner.IRunner,
 	debug.Assert(config != nil, "config is nil")
 
 	return &GoTestRunner{
-		config:   cm.Cast[*RunnerConfigBuild](config),
+		config:   cm.Cast[*RunnerTestConfig](config),
 		settings: settings,
 	}, nil
 }
@@ -84,7 +84,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		r.settings.ShowTestLog(),
 		modInfo,
 		comp.Version(),
-		r.config.VersionModule,
+		"",
 		r.config.BuildTags,
 		true,
 	)
@@ -103,9 +103,11 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	//       Issue: https://gitlab.com/data-custodian/custodian/-/issues/194
 	log.Info("Run Go test.")
 	cmd = append([]string{"test"}, flags...)
+	cmd = append(cmd, r.config.Args...)
 	cmd = append(cmd, r.settings.Args()...)
 	cmd = append(cmd, path.Join(comp.Root(), "..."))
 	cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)
+	cmd = append(cmd, r.config.TestArgs...)
 	cmd = append(cmd, r.settings.TestArgs()...)
 	err = goctx.Check(cmd...)
 

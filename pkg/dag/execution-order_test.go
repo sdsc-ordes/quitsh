@@ -25,10 +25,31 @@ func TestGraphExecOrder3Comps(t *testing.T) {
 	require.NoError(t, e)
 
 	testGenerate3Comps(t, prios, paths, false)
+}
+
+func TestGraphExecOrder3CompsNoFlaky(t *testing.T) {
+	t.Parallel()
+	err := log.SetLevel("trace")
+	require.NoError(t, err)
+
+	for range 100 {
+		comps, paths := generate3Comps(t)
+		_, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
+		require.NoError(t, e)
+
+		testGenerate3Comps(t, prios, paths, false)
+	}
+}
+
+func TestGraphExecOrder3CompsSel(t *testing.T) {
+	t.Parallel()
+	err := log.SetLevel("trace")
+	require.NoError(t, err)
 
 	log.Info("Run test with a root selection -> must not change anything.")
+	comps, paths := generate3Comps(t)
 	sel := set.NewUnordered[target.ID]("3::build3")
-	_, prios, e = DefineExecutionOrder(comps, &sel, paths, rootDir)
+	_, prios, e := DefineExecutionOrder(comps, &sel, paths, rootDir)
 	require.NoError(t, e)
 
 	testGenerate3Comps(t, prios, paths, false)
@@ -108,12 +129,12 @@ func TestGraphExecOrderOneComp(t *testing.T) {
 	require.NoError(t, err)
 
 	comps, paths := generateOneComp(t)
-
 	_, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
 	require.NoError(t, e)
 	testGenerate3Comps(t, prios, paths, true)
 
 	log.Info("Run test with selection -> must be the same.")
+	comps, paths = generateOneComp(t)
 	sel := set.NewUnordered[target.ID]("1::build3")
 	_, prios, e = DefineExecutionOrder(comps, &sel, paths, rootDir)
 	require.NoError(t, e)

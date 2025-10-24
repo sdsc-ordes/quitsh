@@ -1,0 +1,3 @@
+commands:
+  root:
+    logLevel: info

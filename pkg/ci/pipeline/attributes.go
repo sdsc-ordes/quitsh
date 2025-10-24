@@ -38,7 +38,7 @@ func ParseCIAttributes(settings PipelineAttributes, ss ...string) error {
 			continue
 		}
 
-		decoder := yaml.NewDecoder(strings.NewReader(yamlBlock))
+		decoder := yaml.NewDecoder(strings.NewReader(yamlBlock), yaml.Strict())
 		setts := settings.Clone()
 
 		e := decoder.Decode(setts)

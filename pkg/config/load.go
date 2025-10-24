@@ -28,7 +28,7 @@ func LoadFromReaderInto[T any, TP Initializable[T]](
 	reader io.Reader,
 	conf *T,
 ) error {
-	dec := yaml.NewDecoder(reader)
+	dec := yaml.NewDecoder(reader, yaml.Strict())
 	err := dec.Decode(conf)
 	if err != nil {
 		return err
