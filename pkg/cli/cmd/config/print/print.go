@@ -21,7 +21,7 @@ func AddCmd(parent *cobra.Command, config config.IConfig) {
 }
 
 func printConfig(config config.IConfig) error {
-	buf, err := yaml.MarshalWithOptions(config, yaml.Indent(2))
+	buf, err := yaml.MarshalWithOptions(config, yaml.Indent(2)) //nolint:mnd
 	if err != nil {
 		return err
 	}
