@@ -60,6 +60,24 @@ func TestGraphExecOrder3CompsSel(t *testing.T) {
 	testGenerate3Comps(t, prios, paths, false)
 }
 
+func TestGraphExecOrder3CompsSel2(t *testing.T) {
+	t.Parallel()
+	err := log.SetLevel("trace")
+	require.NoError(t, err)
+
+	log.Info("Run test with a root selection -> must not change anything.")
+	comps, paths := generate3Comps(t)
+	_, prios, e := DefineExecutionOrder(
+		comps,
+		rootDir,
+		WithTargetsByStageFromComponents(comps[len(comps)-1:], "build"),
+		WithInputChanges(paths),
+	)
+	require.NoError(t, e)
+
+	testGenerate3Comps(t, prios, paths, false)
+}
+
 func testGenerate3Comps(
 	t *testing.T,
 	prios Priorities,
@@ -271,6 +289,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 		},
 		Targets: map[string]*target.Config{
 			"build1": {
+				Stage:  "build",
 				Inputs: []input.ID{"self::in1"},
 			},
 		},

@@ -919,11 +919,16 @@ func (c *opts) Apply(options ...ExecOption) error {
 	return nil
 }
 
-// WithCompSelection turns components with optional stage into a target selection.
-func WithCompSelection(comps []*component.Component, stageFilter stage.Stage) ExecOption {
+// WithTargetsByStageFromComponents turns components with optional stage into a target selection.
+func WithTargetsByStageFromComponents(
+	comps []*component.Component,
+	stageFilter stage.Stage,
+) ExecOption {
 	return func(o *opts) error {
-		if len(comps) <= o.nodeCount {
-			return errors.New("selection is longer than all nodes (?)")
+		if len(comps) > o.nodeCount {
+			return errors.New("selection is longer than all nodes ('%v' > '%v')",
+				len(comps), o.nodeCount,
+			)
 		}
 
 		for i := range o.compSelection {

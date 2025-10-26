@@ -8,7 +8,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-// Some component args for the CLI commands.
+// ComponentArgs are arguments for the CLI commands.
 type ComponentArgs struct {
 	// Exclusive arguments:
 	// Glob patterns to components.
@@ -19,7 +19,7 @@ type ComponentArgs struct {
 	ComponentDir string
 }
 
-// Find dispatches to the query function to find all components and
+// FindComponents dispatches to the query function to find all components and
 // returns them.
 func FindComponents(
 	args *ComponentArgs,
