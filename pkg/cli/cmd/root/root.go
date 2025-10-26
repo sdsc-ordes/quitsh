@@ -7,6 +7,7 @@ import (
 
 	e "errors"
 
+	"github.com/creasty/defaults"
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
@@ -26,53 +27,66 @@ const EnvQuitshConfigUser = "QUITSH_CONFIG_USER"
 
 // Root arguments.
 // NOTE: All fields need proper default values (here mostly empty).
-type Args struct {
-	// The config YAML from which we read parameters for the CLI.
-	// Preset by env. var `QUITSH_CONFIG`.
-	Config string `yaml:"-"`
-	// The config YAML (user overlay).
-	// Preset by env. var `QUITSH_CONFIG_USER`.
-	ConfigUser string `yaml:"-"`
-	// Config key,value arguments to override nested config
-	// values by paths e.g. `a.b.c: {"a":3}` on the command line.
-	ConfigKeyValues []string `yaml:"-"`
+type (
+	Args struct {
+		// The config YAML from which we read parameters for the CLI.
+		// Preset by env. var `QUITSH_CONFIG`.
+		Config string `yaml:"-"`
+		// The config YAML (user overlay).
+		// Preset by env. var `QUITSH_CONFIG_USER`.
+		ConfigUser string `yaml:"-"`
+		// Config key,value arguments to override nested config
+		// values by paths e.g. `a.b.c: {"a":3}` on the command line.
+		ConfigKeyValues []string `yaml:"-"`
 
-	// Working directory to switch to at startup.
-	// This will be used to search for components.
-	// This will be used to define the `RootDir` directory.
-	Cwd string `yaml:"cwd"`
+		// Working directory to switch to at startup.
+		// This will be used to search for components.
+		// This will be used to define the `RootDir` directory.
+		Cwd string `yaml:"cwd"`
 
-	// The root directory of quitsh.
-	// By default its the Git root directory resolved starting from
-	// `Cwd`.
-	RootDir string `yaml:"rootDir"`
+		// The root directory of quitsh.
+		// By default its the Git root directory resolved starting from
+		// `Cwd`.
+		RootDir string `yaml:"rootDir"`
 
-	// The log level `debug,info,warning,error`.
-	LogLevel string `yaml:"logLevel"`
+		// The log level `debug,info,warning,error`.
+		LogLevel string `yaml:"logLevel"`
 
-	// Enable environment print on command execution errors.
-	EnableEnvPrint bool `yaml:"enableEnvPrint"`
+		// Enable environment print on command execution errors.
+		EnableEnvPrint bool `yaml:"enableEnvPrint"`
 
-	// Disable any toolchain dispatch which might happen.
-	SkipToolchainDispatch bool `yaml:"skipToolchainDispatch"`
+		// Disable any toolchain dispatch which might happen.
+		SkipToolchainDispatch bool `yaml:"skipToolchainDispatch"`
 
-	// If we use a global output directory
-	// instead of component's specific one.
-	GlobalOutput bool `yaml:"globalOutput"`
-	// Use a specific output directory (relative to root dir).
-	GlobalOutputDir string `yaml:"outputDir"`
+		// If we use a global output directory
+		// instead of component's specific one.
+		GlobalOutput bool `yaml:"globalOutput"`
+		// Use a specific output directory (relative to root dir).
+		GlobalOutputDir string `yaml:"outputDir"`
 
-	// Enable running targets in parallel.
-	Parallel bool `yaml:"parallel"`
+		// Enable running targets in parallel.
+		Parallel bool `yaml:"parallel"`
+	}
+
+	Settings struct {
+		Name        string
+		Version     *version.Version
+		Description string
+	}
+)
+
+// SetDefaults implements [defaults.Setter].
+func (s *Args) SetDefaults() {
+	if s.Config == "" {
+		s.Config = os.Getenv(EnvQuitshConfig)
+	}
+	if s.ConfigUser == "" {
+		s.ConfigUser = os.Getenv(EnvQuitshConfigUser)
+	}
 }
 
-type Settings struct {
-	Name        string
-	Version     *version.Version
-	Description string
-}
-
-func (s *Settings) applyDefaults() {
+// SetDefaults implements [defaults.Setter].
+func (s *Settings) SetDefaults() {
 	if s.Name == "" {
 		s.Name = "quitsh"
 	}
@@ -94,10 +108,10 @@ func (s *Settings) applyDefaults() {
 }
 
 // New creates a new `quitsh` root command with settings `setts` and
-// root arguments `rootArgs`. The full argument structure `allArgs` is treated
+// root arguments `rootArgs`. The full argument structure `config` is treated
 // as `any` and will be used to parse the configuration files `--config`
 // (`--config-user`) into before startup.
-//
+// Note: The user must default `config` with `defaults.Set`.
 // WARNING: The default values here set and in any subcommand, are unimportant!
 // We load the config (the ground truth) always afterwards and before
 // any arguments are parsed.
@@ -108,19 +122,24 @@ func (s *Settings) applyDefaults() {
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
 func New(setts *Settings, rootArgs *Args, config any) (
 	rootCmd *cobra.Command, preExecFunc func() error) {
+	err := defaults.Set(rootArgs)
+	log.PanicE(err, "could not default root arguments")
+
 	if setts == nil {
 		setts = &Settings{}
 	}
-	setts.applyDefaults()
+
+	err = defaults.Set(setts)
+	log.PanicE(err, "could not default settings")
 
 	var parsedConfig, parsedConfigUser bool
 	var version bool
 
 	preExecFunc = func() error {
-		var err error
-		parsedConfig, parsedConfigUser, err = parseConfigs(config)
+		var e error
+		parsedConfig, parsedConfigUser, e = parseConfigs(config)
 
-		return err
+		return e
 	}
 
 	rootCmd = &cobra.Command{
@@ -178,11 +197,11 @@ func New(setts *Settings, rootArgs *Args, config any) (
 
 func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 	flags.
-		StringVar(&args.Config, "config", os.Getenv(EnvQuitshConfig),
+		StringVar(&args.Config, "config", args.Config,
 			"The global configuration file. If set to '-' then stdin is read."+
 				"Env. variable 'QUITSH_CONFIG' presets this.")
 	flags.
-		StringVar(&args.ConfigUser, "config-user", os.Getenv(EnvQuitshConfigUser),
+		StringVar(&args.ConfigUser, "config-user", args.ConfigUser,
 			"The global user configuration file (overlay), can not exist."+
 				"Env. variable 'QUITSH_CONFIG_USER' presets this.")
 	flags.
@@ -245,6 +264,9 @@ func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 	// 0. Command line arguments.
 
 	var args Args
+	err = defaults.Set(&args)
+	log.PanicE(err, "could not default root arguments")
+
 	s := pflag.NewFlagSet("default", pflag.ContinueOnError)
 	addPersistendFlags(s, &args)
 

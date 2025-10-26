@@ -59,7 +59,11 @@ func runExec(cli cli.ICLI, args *execTargetArgs, execArgs *dag.ExecArgs) error {
 		selection.Insert(target.ID(args.TargetIDs[i]))
 	}
 
-	targets, prios, err := dag.DefineExecutionOrder(all, &selection, nil, rootDir)
+	targets, prios, err := dag.DefineExecutionOrder(
+		all,
+		rootDir,
+		dag.WithTargetSelection(&selection),
+	)
 	if err != nil {
 		return err
 	}

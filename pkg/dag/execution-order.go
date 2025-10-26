@@ -49,36 +49,37 @@ type (
 		execRootNodesSel *[]*TargetNode
 		/// =======================================================
 	}
+
+	ExecOption func(*opts) error
+
+	opts struct {
+		compSelection   []*component.Component
+		targetSelection *TargetSelection
+
+		nodeCount int
+
+		inputPathChanges []string
+	}
 )
 
-// DefineExecutionOrderStage does the same as `defineExecutionOrder` but by selecting
-// from `selection` only the targets which match `stage`.
-// The argument `selection` can be `nil`.
-func DefineExecutionOrderStage(
-	all []*component.Component,
-	selection []*component.Component,
-	stage stage.Stage,
-	inputPathChanges []string,
+// DefineExecutionOrder defines the execution order over all components.
+// The `rootDir` is the `BaseDir` if `input.Config.RelativeToRoot` is used.
+// Options:
+//   - The target selection defines which target nodes are of interest, if `nil`
+//     all target leaf nodes are taken as selection.
+//   - The `inputPathChanges` denote the path changes which will propagate the
+//     changed flags on the target nodes. If its `nil` all targets
+//     are considered changed by default.
+func DefineExecutionOrder(
+	components []*component.Component,
 	rootDir string,
+	option ...ExecOption,
 ) (TargetNodeMap, Priorities, error) {
 	log.Info("Define execution order.")
 
-	sel := &TargetSelection{}
-
-	debug.Assert(len(selection) <= len(all), "selection is longer than all nodes (?)")
-
-	for i := range selection {
-		c := selection[i].Config()
-		for _, target := range c.Targets {
-			if target.Stage != stage {
-				continue
-			}
-			debug.Assert(!sel.Exists(target.ID), "target id '%v' should not exists", target.ID)
-			sel.Insert(target.ID)
-		}
-	}
-
-	nodes, prios, err := DefineExecutionOrder(all, sel, inputPathChanges, rootDir)
+	nodes, prios, err := defineExecutionOrder(components, rootDir,
+		option...,
+	)
 
 	if err != nil {
 		log.ErrorE(err,
@@ -97,59 +98,57 @@ func DefineExecutionOrderStage(
 	return nodes, prios, err
 }
 
-// DefineExecutionOrder defines the execution order over all components.
-// The target selection defines which target nodes are of interest, if `nil`
-// all target leaf nodes are taken as selection.
-// The `inputPathChanges` denote the path changes which will propagate the
-// changed flags on the target nodes. If its `nil` all targets
-// are considered changed by default.
-// The `rootDir` is the `BaseDir` if `input.Config.RelativeToRoot` is used.
-func DefineExecutionOrder(
+func defineExecutionOrder(
 	components []*component.Component,
-	targetSelection *TargetSelection,
-	inputPathChanges []string,
 	rootDir string,
+	options ...ExecOption,
 ) (targets TargetNodeMap, prios Priorities, err error) {
-	if targetSelection != nil && targetSelection.Len() == 0 {
+	o := opts{nodeCount: len(components)}
+	err = o.Apply(options...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if o.targetSelection != nil && o.targetSelection.Len() == 0 {
 		return nil, nil, nil
 	}
 
-	if targetSelection != nil {
-		log.Debug("Defined selection.", "selection", targetSelection)
+	if o.targetSelection != nil {
+		log.Debug("Defined selection.", "selection", o.targetSelection)
 	}
 
 	regexCache := recache.NewCache(true)
 
 	log.Debug("Setup graph.")
-	allNodes, allInputs, allComps, err := constructNodes(components, targetSelection, rootDir)
+	allNodes, allInputs, allComps, err := constructNodes(components, o.targetSelection, rootDir)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
-	g, err := newGraph(allNodes, targetSelection)
+	g, err := newGraph(allNodes, o.targetSelection)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	err = g.SolveExecutionOrder()
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	// Make all input path changes absolute.
-	for i := range inputPathChanges {
-		inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, inputPathChanges[i])
+	for i := range o.inputPathChanges {
+		o.inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, o.inputPathChanges[i])
 	}
-	log.Debug("Changed paths.", "paths", inputPathChanges)
+	log.Debug("Changed paths.", "paths", o.inputPathChanges)
 
-	err = g.SolveInputChanges(allInputs, allComps, &regexCache, inputPathChanges)
+	err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	targets, prios = g.NodesToPriorityList()
 
-	return
+	return targets, prios, nil
 }
 
 func constructNodes(
@@ -907,4 +906,60 @@ func (prios *Priorities) Format() string {
 	}
 
 	return sb.String()
+}
+
+// Apply applies all options.
+func (c *opts) Apply(options ...ExecOption) error {
+	for _, f := range options {
+		if err := f(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// WithCompSelection turns components with optional stage into a target selection.
+func WithCompSelection(comps []*component.Component, stageFilter stage.Stage) ExecOption {
+	return func(o *opts) error {
+		if len(comps) <= o.nodeCount {
+			return errors.New("selection is longer than all nodes (?)")
+		}
+
+		for i := range o.compSelection {
+			c := o.compSelection[i].Config()
+			for _, target := range c.Targets {
+				if stageFilter != "" && target.Stage != stageFilter {
+					continue
+				}
+
+				debug.Assert(
+					!o.targetSelection.Exists(target.ID),
+					"target id '%v' should not exists",
+					target.ID,
+				)
+				o.targetSelection.Insert(target.ID)
+			}
+		}
+
+		return nil
+	}
+}
+
+// WithTargetSelection sets a target selection directly.
+func WithTargetSelection(sel *TargetSelection) ExecOption {
+	return func(o *opts) error {
+		o.targetSelection = sel
+
+		return nil
+	}
+}
+
+// WithInputChanges set the input path changes to be considered.
+func WithInputChanges(inputPathChanges []string) ExecOption {
+	return func(o *opts) error {
+		o.inputPathChanges = inputPathChanges
+
+		return nil
+	}
 }
