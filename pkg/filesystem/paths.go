@@ -28,10 +28,10 @@ const (
 
 	OutImageDir = OutPackageDir
 
+	OutCIDir = "ci"
+
 	DocsDir   = "docs"
 	ImagesDir = "images"
-
-	CIDir = "ci"
 )
 
 // Exists checks if a path exists. Follows symlinks.
