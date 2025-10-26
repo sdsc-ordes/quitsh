@@ -20,6 +20,9 @@ type Config struct {
 	Inputs       []input.ID `yaml:"inputs,omitempty"`
 	Dependencies []ID       `yaml:"depends,omitempty"`
 
+	// Custom tags (currently not used for quitsh, but for user-tooling)
+	Tags []string `yaml:"tags,omitempty"`
+
 	// TODO: Maybe we want here a `After` list which boils down
 	// to a weak dependency ordering.
 	// The after ids come strictly after this one, and are only used for
