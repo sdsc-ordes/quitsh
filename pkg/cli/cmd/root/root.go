@@ -123,18 +123,14 @@ func (s *Settings) SetDefaults() {
 func New(setts *Settings, rootArgs *Args, config any) (
 	rootCmd *cobra.Command, preExecFunc func() error) {
 	err := defaults.Set(rootArgs)
-	if err != nil {
-		log.PanicE(err, "could not default root arguments")
-	}
+	log.PanicE(err, "could not default root arguments")
 
 	if setts == nil {
 		setts = &Settings{}
 	}
 
 	err = defaults.Set(setts)
-	if err != nil {
-		log.PanicE(err, "could not default settings")
-	}
+	log.PanicE(err, "could not default settings")
 
 	var parsedConfig, parsedConfigUser bool
 	var version bool
@@ -269,9 +265,7 @@ func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 
 	var args Args
 	err = defaults.Set(&args)
-	if err != nil {
-		log.PanicE(err, "could not default root arguments")
-	}
+	log.PanicE(err, "could not default root arguments")
 
 	s := pflag.NewFlagSet("default", pflag.ContinueOnError)
 	addPersistendFlags(s, &args)
