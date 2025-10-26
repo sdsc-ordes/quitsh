@@ -77,7 +77,7 @@ func DefineExecutionOrder(
 ) (TargetNodeMap, Priorities, error) {
 	log.Info("Define execution order.")
 
-	nodes, prios, err := DefineExecutionOrder(components, rootDir,
+	nodes, prios, err := defineExecutionOrder(components, rootDir,
 		option...,
 	)
 
@@ -104,7 +104,10 @@ func defineExecutionOrder(
 	options ...ExecOption,
 ) (targets TargetNodeMap, prios Priorities, err error) {
 	o := opts{nodeCount: len(components)}
-	o.Apply(options...)
+	err = o.Apply(options...)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	if o.targetSelection != nil && o.targetSelection.Len() == 0 {
 		return nil, nil, nil
@@ -119,17 +122,17 @@ func defineExecutionOrder(
 	log.Debug("Setup graph.")
 	allNodes, allInputs, allComps, err := constructNodes(components, o.targetSelection, rootDir)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	g, err := newGraph(allNodes, o.targetSelection)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	err = g.SolveExecutionOrder()
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	// Make all input path changes absolute.
@@ -140,12 +143,12 @@ func defineExecutionOrder(
 
 	err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	targets, prios = g.NodesToPriorityList()
 
-	return
+	return targets, prios, nil
 }
 
 func constructNodes(
@@ -930,7 +933,11 @@ func WithCompSelection(comps []*component.Component, stageFilter stage.Stage) Ex
 					continue
 				}
 
-				debug.Assert(!o.targetSelection.Exists(target.ID), "target id '%v' should not exists", target.ID)
+				debug.Assert(
+					!o.targetSelection.Exists(target.ID),
+					"target id '%v' should not exists",
+					target.ID,
+				)
 				o.targetSelection.Insert(target.ID)
 			}
 		}
@@ -952,14 +959,6 @@ func WithTargetSelection(sel *TargetSelection) ExecOption {
 func WithInputChanges(inputPathChanges []string) ExecOption {
 	return func(o *opts) error {
 		o.inputPathChanges = inputPathChanges
-
-		return nil
-	}
-}
-
-func withNodeCount(c int) ExecOption {
-	return func(o *opts) error {
-		o.nodeCount = c
 
 		return nil
 	}

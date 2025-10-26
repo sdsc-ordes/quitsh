@@ -21,7 +21,7 @@ func TestGraphExecOrder3Comps(t *testing.T) {
 	require.NoError(t, err)
 
 	comps, paths := generate3Comps(t)
-	_, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
+	_, prios, e := DefineExecutionOrder(comps, rootDir, WithInputChanges(paths))
 	require.NoError(t, e)
 
 	testGenerate3Comps(t, prios, paths, false)
@@ -34,7 +34,7 @@ func TestGraphExecOrder3CompsNoFlaky(t *testing.T) {
 
 	for range 100 {
 		comps, paths := generate3Comps(t)
-		_, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
+		_, prios, e := DefineExecutionOrder(comps, rootDir, WithInputChanges(paths))
 		require.NoError(t, e)
 
 		testGenerate3Comps(t, prios, paths, false)
@@ -49,7 +49,12 @@ func TestGraphExecOrder3CompsSel(t *testing.T) {
 	log.Info("Run test with a root selection -> must not change anything.")
 	comps, paths := generate3Comps(t)
 	sel := set.NewUnordered[target.ID]("3::build3")
-	_, prios, e := DefineExecutionOrder(comps, &sel, paths, rootDir)
+	_, prios, e := DefineExecutionOrder(
+		comps,
+		rootDir,
+		WithTargetSelection(&sel),
+		WithInputChanges(paths),
+	)
 	require.NoError(t, e)
 
 	testGenerate3Comps(t, prios, paths, false)
@@ -103,7 +108,12 @@ func TestGraphExecOrder3CompsSimpleSel(t *testing.T) {
 	comps, paths := generate3Comps(t)
 
 	sel := set.NewUnordered[target.ID]("2::build2")
-	_, prios, err := DefineExecutionOrder(comps, &sel, paths, rootDir)
+	_, prios, err := DefineExecutionOrder(
+		comps,
+		rootDir,
+		WithTargetSelection(&sel),
+		WithInputChanges(paths),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, prios, 2)
@@ -129,14 +139,19 @@ func TestGraphExecOrderOneComp(t *testing.T) {
 	require.NoError(t, err)
 
 	comps, paths := generateOneComp(t)
-	_, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
+	_, prios, e := DefineExecutionOrder(comps, rootDir, WithInputChanges(paths))
 	require.NoError(t, e)
 	testGenerate3Comps(t, prios, paths, true)
 
 	log.Info("Run test with selection -> must be the same.")
 	comps, paths = generateOneComp(t)
 	sel := set.NewUnordered[target.ID]("1::build3")
-	_, prios, e = DefineExecutionOrder(comps, &sel, paths, rootDir)
+	_, prios, e = DefineExecutionOrder(
+		comps,
+		rootDir,
+		WithTargetSelection(&sel),
+		WithInputChanges(paths),
+	)
 	require.NoError(t, e)
 	testGenerate3Comps(t, prios, paths, true)
 }
@@ -152,7 +167,7 @@ func TestGraphExecOrderSimpleCycle1(t *testing.T) {
 	*d = append(*d, "3::build3")
 	validate(t, comps...)
 
-	_, _, e := DefineExecutionOrder(comps, nil, paths, "/")
+	_, _, e := DefineExecutionOrder(comps, "/", WithInputChanges(paths))
 	require.ErrorContains(t, e, "contains a cycle")
 }
 
@@ -165,7 +180,7 @@ func TestGraphExecOrderSimpleCycle2(t *testing.T) {
 	d := &comps[0].Config().Targets["build1"].Dependencies
 	*d = append(*d, "2::build2")
 
-	_, _, e := DefineExecutionOrder(comps, nil, paths, "/")
+	_, _, e := DefineExecutionOrder(comps, "/", WithInputChanges(paths))
 	require.ErrorContains(t, e, "contains a cycle")
 }
 
@@ -210,7 +225,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 
 	comps = append(comps, &comp1, &comp2)
 
-	_, _, e := DefineExecutionOrder(comps, nil, nil, rootDir)
+	_, _, e := DefineExecutionOrder(comps, rootDir)
 	require.ErrorContains(t, e, "contains a cycle")
 }
 
@@ -219,7 +234,7 @@ func TestGraphExecOrderSimpleNoConnection(t *testing.T) {
 	comps, paths := generate2CompsWithNoConn(t)
 
 	rootDir := "/repo"
-	targets, prios, e := DefineExecutionOrder(comps, nil, paths, rootDir)
+	targets, prios, e := DefineExecutionOrder(comps, rootDir, WithInputChanges(paths))
 	require.NoError(t, e)
 
 	assert.Len(t, targets, 2)
