@@ -10,6 +10,7 @@ import (
 	"github.com/creasty/defaults"
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
@@ -21,9 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
-
-const EnvQuitshConfig = "QUITSH_CONFIG"
-const EnvQuitshConfigUser = "QUITSH_CONFIG_USER"
 
 // Root arguments.
 // NOTE: All fields need proper default values (here mostly empty).
@@ -78,10 +76,10 @@ type (
 // SetDefaults implements [defaults.Setter].
 func (s *Args) SetDefaults() {
 	if s.Config == "" {
-		s.Config = os.Getenv(EnvQuitshConfig)
+		s.Config = os.Getenv(common.EnvQuitshConfig)
 	}
 	if s.ConfigUser == "" {
-		s.ConfigUser = os.Getenv(EnvQuitshConfigUser)
+		s.ConfigUser = os.Getenv(common.EnvQuitshConfigUser)
 	}
 }
 
