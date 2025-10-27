@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Name    string   `yaml:"name"    validate:"required"`
-	Version *Version `yaml:"version" validate:"required"`
+	Name    string  `yaml:"name"    validate:"required"`
+	Version Version `yaml:"version"`
 
 	Language string `yaml:"language" validate:"required"`
 
