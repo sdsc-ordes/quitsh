@@ -34,7 +34,7 @@ func WithCredentialsEnv(env secret.CredentialsEnv) Option {
 
 		c.Env(
 			"IMGPKG_USERNAME="+creds.User(),
-			"IMGPKG_TOKEN="+creds.Token(),
+			"IMGPKG_PASSWORD="+creds.Token(),
 		)
 
 		return nil
