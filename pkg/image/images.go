@@ -42,6 +42,11 @@ func NewImageRef(
 	}
 
 	tag := version.String()
+	if tag == "" {
+		// Should not be the case:
+		// See: https://github.com/hashicorp/go-version/issues/170
+		return nil, errors.New("version is empty, cannot create image ref")
+	}
 
 	if !isRelease {
 		commitSHA, err := gitx.Get("rev-parse", "--short=12", "HEAD")
