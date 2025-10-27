@@ -81,6 +81,23 @@ targets:
 	assert.ErrorContains(t, e, "Malformed version:", e)
 }
 
+func TestComponentsConfigMissing(t *testing.T) {
+	t.Parallel()
+	file := `
+name: comp1
+language: go
+targets:
+  build:
+    steps:
+    - runner: go
+`
+	f := strings.NewReader(file)
+	c, e := config.LoadFromReader[Config](f)
+
+	require.NoError(t, e)
+	require.Equal(t, "0.0.0", c.Version.Version.String())
+}
+
 func TestComponentsConfigFail2(t *testing.T) {
 	t.Parallel()
 	file := `

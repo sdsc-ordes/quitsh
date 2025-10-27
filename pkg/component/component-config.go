@@ -1,6 +1,7 @@
 package component
 
 import (
+	"github.com/hashicorp/go-version"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/input"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
@@ -36,6 +37,12 @@ func (c *Config) Init() (err error) {
 	// Init input.
 	for name, in := range c.Inputs {
 		in.Init(input.DefineID(c.Name, name))
+	}
+
+	// TODO: See https://github.com/hashicorp/go-version/issues/170
+	if c.Version.Equal(&version.Version{}) {
+		v, _ := version.NewSemver("0.0.0")
+		c.Version.Version = *v
 	}
 
 	return
