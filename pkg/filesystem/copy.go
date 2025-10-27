@@ -17,9 +17,9 @@ func CopyFileOrDir(src string, dest string, existsOk bool) (err error) {
 	return copy.Copy(src, dest,
 		copy.Options{
 			OnSymlink:   func(string) copy.SymlinkAction { return copy.Shallow },
-			OnDirExists: func(string, string) copy.DirExistsAction { return copy.Replace },
-			OnError: func(_src, _dest string, e error) error {
-				return e
-			},
+			OnDirExists: func(string, string) copy.DirExistsAction { return copy.Merge },
+			// OnError: func(_src, _dest string, e error) error {
+			// 	return e
+			// },
 		})
 }

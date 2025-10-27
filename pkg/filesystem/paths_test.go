@@ -18,8 +18,13 @@ func TestPathExists(t *testing.T) {
 	e, err := ExistsE(dir)
 	require.NoError(t, err)
 	assert.True(t, e)
-
 	e, err = ExistsE(path.Join(dir, "asdf"))
+	require.Error(t, err)
+	assert.False(t, e)
+
+	assert.True(t, ExistsL(dir))
+	assert.False(t, ExistsL(path.Join(dir, "asdf")))
+	e, err = ExistsLE(path.Join(dir, "asdf"))
 	require.Error(t, err)
 	assert.False(t, e)
 }
