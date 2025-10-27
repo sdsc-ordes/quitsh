@@ -42,7 +42,7 @@ func (c *Config) Init() (err error) {
 	return
 }
 
-// TargetById finds the target by the respective name in the config.
+// TargetByID finds the target by the respective name in the config.
 func (c *Config) TargetByID(id target.ID) *target.Config {
 	for _, t := range c.Targets {
 		if t.ID == id {

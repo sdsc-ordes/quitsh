@@ -67,10 +67,26 @@ func TestGraphExecOrder3CompsSel2(t *testing.T) {
 
 	log.Info("Run test with a root selection -> must not change anything.")
 	comps, paths := generate3Comps(t)
+
+	conf := &component.Config{
+		Name:     "4",
+		Language: "go",
+		Targets: map[string]*target.Config{
+			// Other stage which should not be found.
+			"test": {
+				Dependencies: []target.ID{"2::build2", "1::build1"},
+			},
+		},
+	}
+	err = conf.Init()
+	require.NoError(t, err)
+	comp4 := component.NewComponent(conf, "/repo/components/4", "", "")
+	comps = append(comps, &comp4)
+
 	_, prios, e := DefineExecutionOrder(
 		comps,
 		rootDir,
-		WithTargetsByStageFromComponents(comps[len(comps)-1:], "build"),
+		WithTargetsByStageFromComponents(comps[len(comps)-2:], "build"),
 		WithInputChanges(paths),
 	)
 	require.NoError(t, e)
@@ -309,6 +325,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 		},
 		Targets: map[string]*target.Config{
 			"build2": {
+				Stage:        "build",
 				Inputs:       []input.ID{"self::in2"},
 				Dependencies: []target.ID{"1::build1"},
 			},
@@ -329,6 +346,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 		},
 		Targets: map[string]*target.Config{
 			"build3": {
+				Stage:        "build",
 				Inputs:       []input.ID{"self::in3"},
 				Dependencies: []target.ID{"2::build2", "1::build1"},
 			},

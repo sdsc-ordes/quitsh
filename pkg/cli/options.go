@@ -90,7 +90,7 @@ func WithTargetToStageMapper(mapper stage.TargetNameToStageMapper) Option {
 	}
 }
 
-// WithTargetToStageMapper installs a default target name to stage mapper.
+// WithTargetToStageMapperDefault installs a default target name to stage mapper.
 // This is useful to not name the `stage` keyword in every target config.
 //   - If the target name contains a suffix equal to a stage name,
 //     this stage name will be default assigned (if not set).

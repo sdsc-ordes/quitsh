@@ -53,7 +53,6 @@ type (
 	ExecOption func(*opts) error
 
 	opts struct {
-		compSelection   []*component.Component
 		targetSelection *TargetSelection
 
 		nodeCount int
@@ -77,9 +76,7 @@ func DefineExecutionOrder(
 ) (TargetNodeMap, Priorities, error) {
 	log.Info("Define execution order.")
 
-	nodes, prios, err := defineExecutionOrder(components, rootDir,
-		option...,
-	)
+	nodes, prios, err := defineExecutionOrder(components, rootDir, option...)
 
 	if err != nil {
 		log.ErrorE(err,
@@ -931,19 +928,28 @@ func WithTargetsByStageFromComponents(
 			)
 		}
 
-		for i := range o.compSelection {
-			c := o.compSelection[i].Config()
-			for _, target := range c.Targets {
-				if stageFilter != "" && target.Stage != stageFilter {
+		for _, comp := range comps {
+			c := comp.Config()
+			for _, tgt := range c.Targets {
+				if stageFilter != "" && tgt.Stage != stageFilter {
+					log.Debugf("Component '%v' does not matches stage.", tgt.ID)
+
 					continue
 				}
 
+				log.Debugf("Component '%v' matches stage.", tgt.ID)
+
+				if o.targetSelection == nil {
+					s := set.NewUnordered[target.ID]()
+					o.targetSelection = &s
+				}
+
 				debug.Assert(
-					!o.targetSelection.Exists(target.ID),
+					!o.targetSelection.Exists(tgt.ID),
 					"target id '%v' should not exists",
-					target.ID,
+					tgt.ID,
 				)
-				o.targetSelection.Insert(target.ID)
+				o.targetSelection.Insert(tgt.ID)
 			}
 		}
 
