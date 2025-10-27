@@ -52,6 +52,7 @@ targets:
 
 	require.NoError(t, e)
 	assert.Equal(t, "comp1", c.Name)
+	assert.Equal(t, "1.0.0", c.Version.Version.String())
 	assert.Equal(t, "build-go", c.Targets["build"].Steps[0].Runner)
 	assert.Equal(t, "lint-go", c.Targets["lint"].Steps[0].Runner)
 	assert.Empty(t, c.Targets["deploy"].Steps[0].Runner)
