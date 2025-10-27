@@ -392,7 +392,7 @@ func applyGeneralOptions(r *Args) error {
 
 	// Global hack to enable env. printing
 	// FIXME: Setting globals is not so good!
-	exec.EnableEnvPrint = r.EnableEnvPrint
+	exec.EnableEnvPrint = !ci.IsRunning() && r.EnableEnvPrint
 
 	return nil
 }
