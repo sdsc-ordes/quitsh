@@ -11,10 +11,10 @@ const (
 	// If you change this here -> adjust the `New*` functions.
 	ImageService         Type = 0 // A service migration image.
 	ImageDBMigration     Type = 1 // A DB migration image.
-	ImageManifests       Type = 2 // A manifest bundle from `imgpkg` or similar.
+	ImageBundle          Type = 2 // A manifest bundle from `imgpkg` or similar.
 	ImageServiceName          = "service"
 	ImageDBMigrationName      = "dbmigration"
-	ImageManifestsName        = "manifests"
+	ImageBundleName           = "bundle"
 )
 
 func NewType(s string) (Type, error) {
@@ -23,8 +23,8 @@ func NewType(s string) (Type, error) {
 		return ImageService, nil
 	case ImageDBMigrationName:
 		return ImageDBMigration, nil
-	case ImageManifestsName:
-		return ImageManifests, nil
+	case ImageBundleName:
+		return ImageBundle, nil
 	}
 
 	return 0, fmt.Errorf("wrong build type '%s'", s)
@@ -32,12 +32,12 @@ func NewType(s string) (Type, error) {
 
 // GetImageTypesHelp reports some help string for image types.
 func GetImageTypesHelp() string {
-	return fmt.Sprintf("[%s, %s, %s]", ImageServiceName, ImageDBMigrationName, ImageManifests)
+	return fmt.Sprintf("[%s, %s, %s]", ImageServiceName, ImageDBMigrationName, ImageBundle)
 }
 
 // GetAllImageTypes returns all possible image types.
 func GetAllImageTypes() []Type {
-	return []Type{ImageService, ImageDBMigration, ImageManifests}
+	return []Type{ImageService, ImageDBMigration, ImageBundle}
 }
 
 // String implements the interface [pflags.Value].
@@ -47,8 +47,8 @@ func (v Type) String() string {
 		return ImageServiceName
 	case ImageDBMigration:
 		return ImageDBMigrationName
-	case ImageManifests:
-		return ImageManifestsName
+	case ImageBundle:
+		return ImageBundleName
 	}
 
 	panic("Not implemented.")
