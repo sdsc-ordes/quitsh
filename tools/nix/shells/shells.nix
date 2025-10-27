@@ -20,6 +20,7 @@ let
 
             # For tests.
             pkgs.process-compose
+            pkgs.imgpkg
             pkgs.skopeo
           ];
 
