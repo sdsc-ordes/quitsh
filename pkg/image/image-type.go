@@ -9,10 +9,12 @@ type Type int
 
 const (
 	// If you change this here -> adjust the `New*` functions.
-	ImageService         Type = 0
-	ImageDBMigration     Type = 1
+	ImageService         Type = 0 // A service migration image.
+	ImageDBMigration     Type = 1 // A DB migration image.
+	ImageManifests       Type = 2 // A manifest bundle from `imgpkg` or similar.
 	ImageServiceName          = "service"
 	ImageDBMigrationName      = "dbmigration"
+	ImageManifestsName        = "manifests"
 )
 
 func NewType(s string) (Type, error) {
@@ -21,6 +23,8 @@ func NewType(s string) (Type, error) {
 		return ImageService, nil
 	case ImageDBMigrationName:
 		return ImageDBMigration, nil
+	case ImageManifestsName:
+		return ImageManifests, nil
 	}
 
 	return 0, fmt.Errorf("wrong build type '%s'", s)
@@ -28,34 +32,36 @@ func NewType(s string) (Type, error) {
 
 // GetImageTypesHelp reports some help string for image types.
 func GetImageTypesHelp() string {
-	return fmt.Sprintf("[%s, %s]", ImageServiceName, ImageDBMigrationName)
+	return fmt.Sprintf("[%s, %s, %s]", ImageServiceName, ImageDBMigrationName, ImageManifests)
 }
 
 // GetAllImageTypes returns all possible image types.
 func GetAllImageTypes() []Type {
-	return []Type{ImageService, ImageDBMigration}
+	return []Type{ImageService, ImageDBMigration, ImageManifests}
 }
 
-// Implement the pflags Value interface.
+// String implements the interface [pflags.Value].
 func (v Type) String() string {
 	switch v {
 	case ImageService:
 		return ImageServiceName
 	case ImageDBMigration:
 		return ImageDBMigrationName
+	case ImageManifests:
+		return ImageManifestsName
 	}
 
 	panic("Not implemented.")
 }
 
-// Implement the pflags Value interface.
+// Set implements the interface [pflags.Value].
 func (v *Type) Set(s string) (err error) {
 	*v, err = NewType(s)
 
 	return
 }
 
-// Implement the pflags Value interface.
+// Type implements the interface [pflags.Value].
 func (v *Type) Type() string {
 	return v.String()
 }
@@ -79,7 +85,7 @@ func (v Type) MarshalYAML() (any, error) {
 	return v.String(), nil
 }
 
-// Implement the [config.UnmarshalMapstruct] interface.
+// UnmarshalMapstruct implements the [config.UnmarshalMapstruct] interface.
 func (v *Type) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {
