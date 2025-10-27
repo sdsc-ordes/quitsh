@@ -26,7 +26,9 @@ func NewRef(
 
 	ref, err := reference.Parse(n.String())
 	if err != nil {
-		return nil, err
+		return nil, errors.AddContext(err,
+			"image reference parsing with name '%s' and tag '%s' and digest '%s' failed",
+			name, tag, digest)
 	}
 
 	if _, ok := ref.(ImageRefNamed); !ok {
@@ -70,7 +72,7 @@ func (i *imageRef) String() string {
 	return sb.String()
 }
 
-// Wrapper around ImageRef when working with encoding.
+// ImageRefField around ImageRef when working with marshaling/unmarshaling.
 type ImageRefField struct {
 	Ref ImageRef `yaml:",inline"`
 }
