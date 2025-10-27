@@ -63,7 +63,7 @@ func (c *Component) Language() string {
 
 // Version returns the language of the component.
 func (c *Component) Version() *version.Version {
-	return (*version.Version)(&c.config.Version)
+	return &c.config.Version.Version
 }
 
 // Config returns the config of the component.

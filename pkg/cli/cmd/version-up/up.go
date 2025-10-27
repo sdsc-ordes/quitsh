@@ -7,7 +7,6 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
-	vers "github.com/hashicorp/go-version"
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -70,8 +69,8 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 	for i := range comps {
 		var e error
 
-		vv := vers.Version(comps[i].Config().Version)
-		newVersion, e := version.Bump(&vv,
+		vv := &comps[i].Config().Version.Version
+		newVersion, e := version.Bump(vv,
 			level,
 			c.prerelease,
 			c.buildMeta)

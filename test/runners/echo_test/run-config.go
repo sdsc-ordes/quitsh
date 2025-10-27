@@ -3,10 +3,10 @@
 package echorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 
 	"github.com/creasty/defaults"
-	"github.com/go-playground/validator/v10"
 )
 
 type EchoConfig struct {
@@ -14,7 +14,7 @@ type EchoConfig struct {
 }
 
 func (c *EchoConfig) Validate() error {
-	return validator.New().Struct(c)
+	return common.Validator().Struct(c)
 }
 
 // UnmarshalEchoConfig is the unmarshaller for the [EchoConfig].

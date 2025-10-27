@@ -1,16 +1,15 @@
 package component
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/input"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type Config struct {
-	Name    string  `yaml:"name"    validate:"required"`
-	Version Version `yaml:"version" validate:"required"`
+	Name    string   `yaml:"name"    validate:"required"`
+	Version *Version `yaml:"version" validate:"required"`
 
 	Language string `yaml:"language" validate:"required"`
 
@@ -24,7 +23,7 @@ type Config struct {
 
 // Init implements the `Initializable` interface.
 func (c *Config) Init() (err error) {
-	err = validator.New().Struct(c)
+	err = common.Validator().Struct(c)
 
 	// Init target.
 	for targetName, t := range c.Targets {

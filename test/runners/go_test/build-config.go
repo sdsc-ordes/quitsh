@@ -3,10 +3,10 @@
 package gorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 
 	"github.com/creasty/defaults"
-	"github.com/go-playground/validator/v10"
 )
 
 type GoBuildConfig struct {
@@ -17,7 +17,7 @@ type GoBuildConfig struct {
 }
 
 func (c *GoBuildConfig) Validate() error {
-	return validator.New().Struct(c)
+	return common.Validator().Struct(c)
 }
 
 // UnmarshalBuildConfig is the unmarshaller for the [GoBuildConfig].

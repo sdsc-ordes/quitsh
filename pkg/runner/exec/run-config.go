@@ -1,10 +1,10 @@
 package execrunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 
 	"github.com/creasty/defaults"
-	"github.com/go-playground/validator/v10"
 )
 
 type RunnerConfig struct {
@@ -21,7 +21,7 @@ type RunnerConfig struct {
 }
 
 func (c *RunnerConfig) Validate() error {
-	return validator.New().Struct(c)
+	return common.Validator().Struct(c)
 }
 
 // UnmarshalRunnerConfig unmarshals [RunnerConfig].

@@ -71,6 +71,7 @@ func TestGraphExecOrder3CompsSel2(t *testing.T) {
 	conf := &component.Config{
 		Name:     "4",
 		Language: "go",
+		Version:  &component.Version{},
 		Targets: map[string]*target.Config{
 			// Other stage which should not be found.
 			"test": {
@@ -229,6 +230,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 
 	config := &component.Config{
 		Name:     "1",
+		Version:  &component.Version{},
 		Language: "go",
 		Targets: map[string]*target.Config{
 			"image": {
@@ -243,6 +245,7 @@ func TestGraphExecOrderSimpleCycle3(t *testing.T) {
 	config = &component.Config{
 		Name:     "2",
 		Language: "go",
+		Version:  &component.Version{},
 		Targets: map[string]*target.Config{
 			"test": {
 				Dependencies: []target.ID{"1::image"}, // that creates a cycle.
@@ -298,6 +301,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 	conf := &component.Config{
 		Name:     "1",
 		Language: "go",
+		Version:  &component.Version{},
 		Inputs: map[string]*input.Config{
 			"in1": {
 				Patterns: []string{"!^.*/b/.*/file$"}, // ignore!
@@ -317,6 +321,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 	conf = &component.Config{
 		Name:     "2",
 		Language: "go",
+		Version:  &component.Version{},
 		Inputs: map[string]*input.Config{
 			"in2": {
 				Patterns:       []string{"^components/.*/!-file-must-.*$"},
@@ -339,6 +344,7 @@ func generate3Comps(t *testing.T) ([]*component.Component, []string) {
 	conf = &component.Config{
 		Name:     "3",
 		Language: "go",
+		Version:  &component.Version{},
 		Inputs: map[string]*input.Config{
 			"in3": {
 				Patterns: []string{"!^/.*/b/c/.*$"}, // ignore!
@@ -379,6 +385,7 @@ func generateOneComp(t *testing.T) ([]*component.Component, []string) {
 	conf := &component.Config{
 		Name:     "1",
 		Language: "go",
+		Version:  &component.Version{},
 		Inputs: map[string]*input.Config{
 			"in1": {
 				Patterns: []string{"!^.*/b/.*/file$"}, // ignore!
@@ -428,6 +435,7 @@ func generate2CompsWithNoConn(t *testing.T) ([]*component.Component, []string) {
 	conf1 := &component.Config{
 		Name:     "1",
 		Language: "go",
+		Version:  &component.Version{},
 		Inputs: map[string]*input.Config{
 			"src": {
 				Patterns: []string{"^src/.*$"}, // ignore!
@@ -446,6 +454,7 @@ func generate2CompsWithNoConn(t *testing.T) ([]*component.Component, []string) {
 	conf2 := &component.Config{
 		Name:     "2",
 		Language: "go",
+		Version:  &component.Version{},
 		Targets: map[string]*target.Config{
 			"build": {
 				Inputs: []input.ID{"1::src"},

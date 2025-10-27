@@ -6,18 +6,18 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
-type Version version.Version
-
-// Implement the pflag.Value interface.
-func (cv *Version) String() string {
-	return (*version.Version)(cv).String()
+type Version struct {
+	version.Version
 }
 
-// Implement the pflag.Value interface.
-func (cv *Version) Set(s string) error {
-	p := (*version.Version)(cv)
+// String implements the [pflag.Value] interface.
+func (v *Version) String() string {
+	return v.Version.String()
+}
 
-	err := p.UnmarshalText([]byte(s))
+// Set implements the [pflag.Value] interface.
+func (v *Version) Set(s string) error {
+	err := v.Version.UnmarshalText([]byte(s))
 	if err != nil {
 		return errors.AddContext(err, "version '%v' is not a sem. version", s)
 	}
@@ -25,18 +25,16 @@ func (cv *Version) Set(s string) error {
 	return nil
 }
 
-// Implement the pflag.Value interface.
-func (cv *Version) Type() string {
+// Type implements the [pflag.Value] interface.
+func (v *Version) Type() string {
 	return "ComponentVersion"
 }
 
-func (cv *Version) UnmarshalText(bytes []byte) error {
-	p := (*version.Version)(cv)
-
-	return p.UnmarshalText(bytes)
+func (v *Version) UnmarshalText(bytes []byte) error {
+	return v.Version.UnmarshalText(bytes)
 }
 
-// Implement the [config.UnmarshalMapstruct] interface.
+// UnmarshalMapstruct implements the [config.UnmarshalMapstruct] interface.
 func (v *Version) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {

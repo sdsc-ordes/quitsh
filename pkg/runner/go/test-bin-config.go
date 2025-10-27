@@ -1,10 +1,10 @@
 package gorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 
 	"github.com/creasty/defaults"
-	"github.com/go-playground/validator/v10"
 )
 
 type RunnerConfigTestBin struct {
@@ -29,7 +29,7 @@ type RunnerConfigTestBin struct {
 }
 
 func (c *RunnerConfigTestBin) Validate() error {
-	return validator.New().Struct(c)
+	return common.Validator().Struct(c)
 }
 
 // The unmarshaller for the TestBinConfig.

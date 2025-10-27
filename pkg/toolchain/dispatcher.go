@@ -1,12 +1,11 @@
 package toolchain
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
-
-	"github.com/go-playground/validator/v10"
 )
 
 // The dispatcher interface which will
@@ -31,5 +30,5 @@ type DispatchArgs struct {
 
 // Validate validates the dispatch args.
 func (c *DispatchArgs) Validate() error {
-	return validator.New().Struct(c)
+	return common.Validator().Struct(c)
 }
