@@ -12,7 +12,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-// Find all files in `rootDir`.
+// FindFiles finds all files in `rootDir`.
 // Note: Take care when using [WithPathFilter] or [WithPathFilterPatterns] because
 // they will influence how the files are walked.
 // This function uses goroutines under to hood.
@@ -23,7 +23,7 @@ func FindFiles(
 	return FindPaths(rootDir, append(opts, WithReportOnlyDirs(false))...)
 }
 
-// Find all files in `rootDir` which match glob patterns
+// FindFilesByPatterns finds all files in `rootDir` which match glob patterns
 // `includePatterns` and not `excludePatterns` (they match the full path).
 // This function uses goroutines under to hood.
 func FindFilesByPatterns(
@@ -39,7 +39,7 @@ func FindFilesByPatterns(
 	)
 }
 
-// Find all paths in `rootDir`.
+// FindPaths finds all paths in `rootDir`.
 // Note: Take care when using [WithPathFilter] or [WithPathFilterPatterns] because
 // they will influence how the files are walked.
 // This function uses goroutines under to hood.

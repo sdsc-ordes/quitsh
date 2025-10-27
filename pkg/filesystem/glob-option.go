@@ -74,9 +74,16 @@ func WithWalkDirFilter(f PathFilter, useAnd bool) FindOptions {
 	}
 }
 
-// DefaultIgnoredDirectories returns all by default ignored directories.
+// IgnoredDirectoriesDefault returns all by default ignored directories.
+// with outputs.
 func IgnoredDirectoriesDefault() []string {
-	return []string{".git", ".direnv", ".devenv", OutputDir}
+	return append(IgnoredDirectoriesDefaultBasic(), OutputDir)
+}
+
+// IgnoredDirectoriesDefaultBasic returns all by default ignored directories (basic)
+// without output folders.
+func IgnoredDirectoriesDefaultBasic() []string {
+	return []string{".git", ".direnv", ".devenv"}
 }
 
 // WithWalkDirFilterDefault sets the default walk directory filter if non it set.
