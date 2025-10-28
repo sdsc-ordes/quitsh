@@ -22,7 +22,7 @@ type Config struct {
 	DotGeneral any `yaml:".general,omitempty"`
 }
 
-// Init implements the `Initializable` interface.
+// Init implements the [config.Initer] interface.
 func (c *Config) Init() (err error) {
 	err = common.Validator().Struct(c)
 

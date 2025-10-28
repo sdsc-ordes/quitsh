@@ -33,7 +33,7 @@ type PipelineSettings struct {
 }
 
 // NewPipelineSettingsFromReader loads the settings from a YAML reader.
-func NewPipelineSettingsFromReader[T any, TP config.Initializable[T]](
+func NewPipelineSettingsFromReader[T any, TP config.LoadIniter[T]](
 	reader io.Reader,
 ) (T, error) {
 	return config.LoadFromReader[T, TP](reader)
@@ -42,7 +42,7 @@ func NewPipelineSettingsFromReader[T any, TP config.Initializable[T]](
 // NewPipelineSettingsFromFile loads the settings from a YAML file.
 // Attributes `attrs` can be `nil`, in which case they are not loaded
 // from the YAML.
-func NewPipelineSettingsFromFile[T any, TP config.Initializable[T]](
+func NewPipelineSettingsFromFile[T any, TP config.LoadIniter[T]](
 	file string,
 ) (T, error) {
 	log.Info("Load pipeline settings from file.", "path", file)

@@ -10,8 +10,8 @@ import (
 )
 
 type (
-	Initializable[T any] interface {
-		Init() error
+	LoadIniter[T any] interface {
+		Initer
 		*T
 	}
 
@@ -24,7 +24,7 @@ type (
 )
 
 // LoadFromReader loads a config file from reader `reader`.
-func LoadFromReader[T any, TP Initializable[T]](
+func LoadFromReader[T any, TP LoadIniter[T]](
 	reader io.Reader,
 	opts ...LoadOption,
 ) (conf T, err error) {
@@ -34,7 +34,7 @@ func LoadFromReader[T any, TP Initializable[T]](
 }
 
 // LoadFromReaderInto loads a config into the type `conf`.
-func LoadFromReaderInto[T any, TP Initializable[T]](
+func LoadFromReaderInto[T any, TP LoadIniter[T]](
 	reader io.Reader,
 	conf *T,
 	opts ...LoadOption,
@@ -59,7 +59,7 @@ func LoadFromReaderInto[T any, TP Initializable[T]](
 }
 
 // LoadFromFile loads a config file from `path`.
-func LoadFromFile[T any, TP Initializable[T]](
+func LoadFromFile[T any, TP LoadIniter[T]](
 	path string,
 	opts ...LoadOption,
 ) (config T, err error) {

@@ -118,7 +118,7 @@ func (s *Settings) SetDefaults() {
 //   - The `preExecFunc`: We pass the config (hopefully defaulted),
 //     load potentially from `--config`, `--config-user` and `--config-values`.
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
-func New(setts *Settings, rootArgs *Args, config any) (
+func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 	rootCmd *cobra.Command, preExecFunc func() error) {
 	err := defaults.Set(rootArgs)
 	log.PanicE(err, "could not default root arguments")
@@ -251,7 +251,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 		)
 }
 
-func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
+func parseConfigs(conf config.IConfig) (parsedConfig, parsedUserConfig bool, err error) {
 	// Parse here the --config, and --config-user and `--config-values`
 	// and init the config, because that needs to happen before
 	// cobra parses the flags and set defaults.
@@ -297,7 +297,7 @@ func parseConfigs(conf any) (parsedConfig, parsedUserConfig bool, err error) {
 	return
 }
 
-func initConfig(configPath string, conf any, errorIfNotExists bool) (bool, error) {
+func initConfig(configPath string, conf config.IConfig, errorIfNotExists bool) (bool, error) {
 	if configPath == "" {
 		return false, nil
 	}
