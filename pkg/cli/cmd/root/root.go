@@ -167,11 +167,7 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 				return e
 			}
 
-			if ci.IsRunning() {
-				_ = printcmd.PrintConfig(config, false)
-			} else {
-				_ = printcmd.PrintConfig(config, true)
-			}
+			_ = printcmd.PrintConfig(config, true)
 
 			return nil
 		},
