@@ -10,6 +10,7 @@ import (
 	"github.com/creasty/defaults"
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
+	printcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config/print"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -167,9 +168,9 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 			}
 
 			if ci.IsRunning() {
-				log.Info("Loaded config.", "config", config)
+				_ = printcmd.PrintConfig(config, false)
 			} else {
-				log.Debug("Loaded config.", "config", config)
+				_ = printcmd.PrintConfig(config, true)
 			}
 
 			return nil

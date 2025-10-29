@@ -180,7 +180,7 @@ func setLevel(logger *chlog.Logger, level string) (err error) {
 
 // IsDebug checks if debug is enabled on the log.
 func IsDebug() bool {
-	return globalLogger.l.GetLevel() == chlog.DebugLevel
+	return globalLogger.l.GetLevel() <= chlog.DebugLevel
 }
 
 // Tracef will log a trace info with formatting.

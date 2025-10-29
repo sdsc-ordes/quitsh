@@ -13,20 +13,28 @@ func AddCmd(parent *cobra.Command, config config.IConfig) {
 		Use:   "print",
 		Short: "Print the global config.",
 		RunE: func(_cmd *cobra.Command, _args []string) error {
-			return printConfig(config)
+			return PrintConfig(config, false)
 		},
 	}
 
 	parent.AddCommand(configCmd)
 }
 
-func printConfig(config config.IConfig) error {
+func PrintConfig(config config.IConfig, asDebug bool) error {
+	if asDebug && !log.IsDebug() {
+		return nil
+	}
+
 	buf, err := yaml.MarshalWithOptions(config, yaml.Indent(2)) //nolint:mnd
 	if err != nil {
 		return err
 	}
 
-	log.Info("Config", "config", string(buf))
+	if asDebug {
+		log.Debug("Config", "config", string(buf))
+	} else {
+		log.Info("Config", "config", string(buf))
+	}
 
 	return nil
 }
