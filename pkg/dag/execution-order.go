@@ -966,6 +966,22 @@ func WithTargetSelection(sel *TargetSelection) ExecOption {
 	}
 }
 
+// WithTargetSelectionAdd adds target ids to the selection.
+func WithTargetSelectionAdd(ids ...target.ID) ExecOption {
+	return func(o *opts) error {
+		if len(ids) != 0 && o.targetSelection == nil {
+			s := set.NewUnorderedWithCap[target.ID](len(ids))
+			o.targetSelection = &s
+		}
+
+		for i := range ids {
+			o.targetSelection.Insert(ids[i])
+		}
+
+		return nil
+	}
+}
+
 // WithInputChanges set the input path changes to be considered.
 func WithInputChanges(inputPathChanges []string) ExecOption {
 	return func(o *opts) error {
