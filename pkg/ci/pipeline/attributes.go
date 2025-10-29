@@ -27,7 +27,7 @@ type PipelineAttributes interface {
 //	```
 //
 // ```
-// into `CIAttributes` and merges all of them together.
+// into `PipelineAttributes` and merges all of them together into `settings`.
 func ParseCIAttributes(settings PipelineAttributes, ss ...string) error {
 	foundHeaders := false
 	const startPrefix = "```yaml {ci}"

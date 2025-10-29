@@ -3,6 +3,7 @@ package pipeline
 import (
 	"testing"
 
+	"github.com/huandu/go-clone"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +17,8 @@ type Settings struct {
 	Values        []string `yaml:"values"`
 }
 
-func (s Settings) Clone() PipelineAttributes {
-	return &s
+func (s *Settings) Clone() PipelineAttributes {
+	return clone.Clone(s).(*Settings) //nolint:errcheck // This is correct.
 }
 
 func (s *Settings) Merge(other PipelineAttributes) {
