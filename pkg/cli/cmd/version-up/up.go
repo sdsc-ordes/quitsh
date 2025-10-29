@@ -90,6 +90,7 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 		if e != nil {
 			return e
 		}
+		defer f.Close()
 
 		var node ast.Node
 		cm := make(yaml.CommentMap)

@@ -16,7 +16,7 @@ type GoModInfo struct {
 	Toolchain string
 }
 
-// GetModulePath returns the module path and the toolchain version
+// GetModuleInfo returns the module path and the toolchain version
 // of the `go.mod` file located in `rootDir`.
 // The toolchain string might be not set.
 func GetModuleInfo(rootDir string) (info GoModInfo, err error) {
@@ -25,6 +25,7 @@ func GetModuleInfo(rootDir string) (info GoModInfo, err error) {
 	if err != nil {
 		return
 	}
+	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
