@@ -80,7 +80,7 @@ type ImageRefField struct {
 // UnmarshalYAML unmarshals the image ref.
 func (r *ImageRefField) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
-	err := unmarshal(s)
+	err := unmarshal(&s)
 	if err != nil {
 		return err
 	}

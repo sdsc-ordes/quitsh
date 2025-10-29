@@ -3,7 +3,9 @@ package image
 import (
 	"testing"
 
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestData struct {
@@ -46,4 +48,18 @@ func TestImageName(t *testing.T) {
 			assert.Error(t, err)
 		}
 	}
+}
+
+func TestImageNameMarshal(t *testing.T) {
+	r, e := NewRef("bla.com/a/b/c", "test", "")
+	require.NoError(t, e)
+	refEx := ImageRefField{Ref: r}
+
+	data, e := yaml.Marshal(&refEx)
+	require.NoError(t, e)
+
+	var ref ImageRefField
+	e = yaml.Unmarshal(data, &ref)
+	require.NoError(t, e)
+	assert.Equal(t, refEx.Ref.String(), ref.Ref.String())
 }
