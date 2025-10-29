@@ -77,6 +77,11 @@ type ImageRefField struct {
 	Ref ImageRef `yaml:",inline"`
 }
 
+// String returns the image reference.
+func (r *ImageRefField) String() string {
+	return r.Ref.String()
+}
+
 // UnmarshalYAML unmarshals the image ref.
 func (r *ImageRefField) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
