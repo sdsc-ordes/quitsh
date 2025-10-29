@@ -3,6 +3,7 @@ package gorunner
 import (
 	"quitsh-cli/pkg/runner/config"
 
+	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
@@ -18,8 +19,8 @@ func Register(
 	e := factory.Register(
 		GoLintRunnerID,
 		runner.RunnerData{
-			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoLintRunner(runnerConfig, lintSettings)
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoLintRunner(config, lintSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalLintConfig,
 			DefaultToolchain:      "lint-go",

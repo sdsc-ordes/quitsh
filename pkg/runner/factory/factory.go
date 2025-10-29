@@ -113,7 +113,7 @@ func (fac *factory) CreateByID(
 			toolchain = entry.DefaultToolchain
 		}
 
-		var config any
+		var config step.AuxConfig
 		config, err = loadRunnerConfig(id, entry.RunnerConfigUnmarshal, rawConfig)
 		if err != nil {
 			return
@@ -139,7 +139,7 @@ func loadRunnerConfig(
 	id runner.RegisterID,
 	unmarshaller step.RunnerConfigUnmarshaller,
 	rawConfig step.AuxConfigRaw,
-) (config any, err error) {
+) (config step.AuxConfig, err error) {
 	if unmarshaller == nil {
 		return nil, nil //nolint:nilnil // Intended to return a nil config on no unmarshaller.
 	}

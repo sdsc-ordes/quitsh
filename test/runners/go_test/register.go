@@ -3,6 +3,7 @@
 package gorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
@@ -20,8 +21,8 @@ func Register(
 	e := factory.Register(
 		GoBuildRunnerID,
 		runner.RunnerData{
-			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoBuildRunner(runnerConfig, buildSettings)
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoBuildRunner(config, buildSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalBuildConfig,
 			DefaultToolchain:      "go",

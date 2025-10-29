@@ -5,10 +5,10 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 )
 
-// The unique id the runner is registered on.
+// RegisterID is the unique id the runner is registered on.
 type RegisterID = string
 
-// The key the runner is registered additionally per stage.
+// RegisterKey is key the runner is registered additionally per stage.
 type RegisterKey struct {
 	stage stage.Stage
 	name  string
@@ -28,9 +28,9 @@ func (r *RegisterKey) Name() string {
 
 type RunnerData struct {
 	// The Creator function for the runner.
-	// The `runnerConfig` is the unmarshalled config from the
+	// The `config` is the unmarshalled config from the
 	// `component.Config`.
-	Creator func(runnerConfig any) (IRunner, error)
+	Creator func(config step.AuxConfig) (IRunner, error)
 
 	// The config unmarshaller for additional `config:` section
 	// (can be nil if no config should be parsed).

@@ -1,6 +1,7 @@
 package gorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
@@ -8,7 +9,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/runner/factory"
 )
 
-// Register registers the build runner in the factory.
+// RegisterBuild registers the build runner in the factory.
 func RegisterBuild(
 	buildSettings config.IBuildSettings,
 	factory factory.IFactory,
@@ -19,8 +20,8 @@ func RegisterBuild(
 	e := factory.Register(
 		GoBuildRunnerID,
 		runner.RunnerData{
-			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoBuildRunner(runnerConfig, buildSettings)
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoBuildRunner(config, buildSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalBuildConfig,
 			DefaultToolchain:      "build-go",
@@ -45,8 +46,8 @@ func RegisterTest(
 	e := factory.Register(
 		GoTestRunnerID,
 		runner.RunnerData{
-			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoTestRunner(runnerConfig, testSettings)
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoTestRunner(config, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalTestConfig,
 			DefaultToolchain:      "build-go",
@@ -62,8 +63,8 @@ func RegisterTest(
 	e = factory.Register(
 		GoTestBinRunnerID,
 		runner.RunnerData{
-			Creator: func(runnerConfig any) (runner.IRunner, error) {
-				return NewGoTestBinRunner(runnerConfig, testSettings)
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoTestBinRunner(config, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalTestBinConfig,
 			DefaultToolchain:      "build-go",
