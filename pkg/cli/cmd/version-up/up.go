@@ -105,7 +105,7 @@ func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 			return e
 		}
 		versionNode, e := p.FilterNode(node)
-		if e != nil {
+		if e != nil || versionNode == nil {
 			log.Warn("Node '.version' is not found in '%v'", fileName)
 
 			continue
