@@ -54,6 +54,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command) {
 	parent.AddCommand(versionUpCmd)
 }
 
+//nolint:gocognit
 func versionUp(cl cli.ICLI, level string, c *versionUpArgs) error {
 	comps, _, _, err := cl.FindComponents(&c.compArgs)
 	if err != nil {
