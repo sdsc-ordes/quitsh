@@ -5,13 +5,13 @@ import (
 	"os"
 	"slices"
 
-	"github.com/charmbracelet/log"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/version"
 
 	"github.com/spf13/cobra"
