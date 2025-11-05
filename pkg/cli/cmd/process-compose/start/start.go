@@ -64,7 +64,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 			"wait-for", "w", nil, "Wait for these processes to be running.")
 
 	startCmd.Flags().
-		StringArrayVarP(&stArgs.waitFor,
+		StringArrayVarP(&stArgs.waitForReady,
 			"wait-for-ready", "r", nil, "Wait for these processes to be ready.")
 
 	startCmd.Flags().
