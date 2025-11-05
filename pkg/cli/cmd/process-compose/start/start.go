@@ -109,9 +109,12 @@ func StartServices(
 	defer cancel()
 
 	var conds []pc.ProcessCond
+	log.Info("Wait for running state of processes.", "processes", waitForRunning)
 	for i := range waitForRunning {
 		conds = append(conds, pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
 	}
+
+	log.Info("Wait for readiness state processes.", "processes", waitForReady)
 	for i := range waitForReady {
 		conds = append(conds, pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
 	}
