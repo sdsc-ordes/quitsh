@@ -129,7 +129,7 @@ func StartServices(
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not get process summary")
 	}
-	log.Info("Processes status.", "summary", summary)
+	log.Info("Processes status.", "summary", strings.ReplaceAll(summary, "\t", "  "))
 
 	if socketPathFile != "" {
 		err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
