@@ -96,12 +96,12 @@ func TestImageRef(t *testing.T) {
 		)
 
 		ref, e := NewImageRef( //nolint:govet //intentional
-			gitx,
 			te.domain,
 			te.path,
 			te.pkg,
 			v,
 			te.regType,
+			commitSHA,
 			te.isRel,
 		)
 		require.NoError(t, e)

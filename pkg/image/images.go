@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
-	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	"github.com/sdsc-ordes/quitsh/pkg/registry"
 
 	"github.com/hashicorp/go-version"
@@ -16,15 +15,15 @@ import (
 // This is the top-level function to generate image references.
 // In the form:
 // - `<base-name>-<registry-type>/<packageName>:<version>` for release image names.
-// - `<base-name>-<registry-type>/<packageName>:<version>-<git-hash>` for non-release image names.
+// - `<base-name>-<registry-type>/<packageName>:<version>-<commit-ref>` for non-release image names.
 // - If the `registryType` is `RegistryTempTilt` it will be taken from `EXPECTED_REF` env. variable.
 func NewImageRef(
-	gitx git.Context,
 	domain string,
 	basePathFmt string,
 	packageName string,
 	version *version.Version,
 	registryType registry.Type,
+	commitRef string,
 	isRelease bool,
 ) (ImageRef, error) {
 	if domain == "" || basePathFmt == "" {
@@ -49,11 +48,11 @@ func NewImageRef(
 	}
 
 	if !isRelease {
-		commitSHA, err := gitx.Get("rev-parse", "--short=12", "HEAD")
-		if err != nil {
-			return nil, err
+		if len(commitRef) < 12 { //nolint: mnd
+			return nil, errors.New("commit reference must be at least 12 digits")
 		}
-		tag += "-" + commitSHA
+
+		tag += "-" + commitRef[0:12]
 	}
 
 	//NOTE: We cannot use baseName/registryType, as somehow only
