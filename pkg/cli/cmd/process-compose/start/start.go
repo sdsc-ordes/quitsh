@@ -125,9 +125,9 @@ func StartServices(
 			"failed to wait for processes '%q', '%q'", waitForRunning, waitForReady)
 	}
 
-	summary, e := pcCtx.Get("list", "-o", "json")
-	if e != nil {
-		return pcCtx, errors.AddContext(e, "could not get process summary")
+	summary, err := pcCtx.Get("list", "-o", "json")
+	if err != nil {
+		return pcCtx, errors.AddContext(err, "could not get process summary")
 	}
 	log.Info("Processes status.", "summary", summary)
 
