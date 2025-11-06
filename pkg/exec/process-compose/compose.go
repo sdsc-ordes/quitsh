@@ -191,8 +191,8 @@ func (pc *ProcessComposeCtx) Stop() error {
 func (pc *ProcessComposeCtx) WaitTill(
 	ctx context.Context,
 	checkInterval time.Duration,
-	procs ...ProcessCond) (fulfilled bool, err error) {
-	if len(procs) == 0 {
+	conds ...ProcessCond) (fulfilled bool, err error) {
+	if len(conds) == 0 {
 		return true, nil
 	}
 
@@ -230,8 +230,8 @@ func (pc *ProcessComposeCtx) WaitTill(
 			condsFulfilled := 0
 
 			for j := range d {
-				for i := range procs {
-					cond := &procs[i]
+				for i := range conds {
+					cond := &conds[i]
 					if cond.Name != d[j].Name {
 						continue
 					}
@@ -250,7 +250,7 @@ func (pc *ProcessComposeCtx) WaitTill(
 				}
 			}
 
-			if condsFulfilled == len(procs) {
+			if condsFulfilled == len(conds) {
 				return true, nil
 			}
 		}

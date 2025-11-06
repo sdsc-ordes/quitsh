@@ -19,17 +19,22 @@ specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installab
 (e.g. './tools/nix#mynamespace.shells.test-dbs')
 in a 'flake.nix' file.`
 
-const timeoutContainers = 100 * time.Second
+const timeoutWait = 100 * time.Second
+const timeoutWaitInterval = 100 * time.Millisecond
 
-type startArgs struct {
-	attrPath     string
-	flakeDir     string
-	waitFor      []string
-	waitForReady []string
+type (
+	startArgs struct {
+		attrPath       string
+		flakeDir       string
+		socketPathFile string
 
-	attach         bool
-	socketPathFile string
-}
+		waitFor             []string
+		waitForReady        []string
+		attach              bool
+		timeoutWait         time.Duration
+		timeoutWaitInterval time.Duration
+	}
+)
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
@@ -42,13 +47,15 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		RunE: func(_cmd *cobra.Command, args []string) error {
 			stArgs.attrPath = args[0]
 
-			_, err := StartServices(
+			_, err := startProcessCompose(
 				cl.RootDir(),
 				stArgs.flakeDir,
 				stArgs.attrPath,
 				stArgs.waitFor,
 				stArgs.waitForReady,
 				stArgs.socketPathFile,
+				stArgs.timeoutWait,
+				stArgs.timeoutWaitInterval,
 				stArgs.attach)
 
 			return err
@@ -75,20 +82,31 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		BoolVarP(&stArgs.attach,
 			"attach", "a", false, "If after start we attach to the process-compose instance.")
 
+	startCmd.Flags().
+		DurationVar(&stArgs.timeoutWait,
+			"timeout", timeoutWait, "The max. timeout (e.g. `100s`) for waiting on processes.")
+
+	startCmd.Flags().
+		DurationVar(&stArgs.timeoutWaitInterval,
+			"timeout-interval", timeoutWaitInterval, "The max. timeout interval (e.g. `100ms`) for polling processes.")
+
 	parent.AddCommand(startCmd)
 }
 
-// StartServices starts the process-compose services from `flake.nix` in `flakeDir`
+// startProcessCompose starts the process-compose services from `flake.nix` in `flakeDir`
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
-func StartServices(
+func startProcessCompose(
 	rootDir string,
 	flakeDir string,
 	devenvShellAttrPath string,
 	waitForRunning []string,
 	waitForReady []string,
 	socketPathFile string,
-	attach bool) (
+	timeoutWait time.Duration,
+	timeoutWaitInterval time.Duration,
+	attach bool,
+) (
 	pcCtx pc.ProcessComposeCtx,
 	err error,
 ) {
@@ -105,24 +123,31 @@ func StartServices(
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutContainers)
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutWait)
 	defer cancel()
 
 	var conds []pc.ProcessCond
-	log.Info("Wait for running state of processes.", "processes", waitForRunning)
 	for i := range waitForRunning {
 		conds = append(conds, pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
 	}
 
-	log.Info("Wait for readiness state processes.", "processes", waitForReady)
 	for i := range waitForReady {
 		conds = append(conds, pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
 	}
 
-	isRunning, err := pcCtx.WaitTill(ctx, 100*time.Millisecond, conds...) //nolint:mnd
-	if err != nil || !isRunning {
-		return pcCtx, errors.AddContext(err,
-			"failed to wait for processes '%q', '%q'", waitForRunning, waitForReady)
+	if len(conds) != 0 {
+		log.Info("Wait for processes.",
+			"ready", waitForReady,
+			"running", waitForRunning,
+			"timeout", timeoutWait,
+			"interval", timeoutWaitInterval)
+	}
+
+	fulfilled, err := pcCtx.WaitTill(ctx, timeoutWaitInterval, conds...)
+	if err != nil {
+		return pcCtx, errors.AddContext(err, "failed to wait for processes")
+	} else if !fulfilled {
+		return pcCtx, errors.New("timed out while waiting for ready conditions on processes")
 	}
 
 	summary, err := pcCtx.Get("list", "-o", "json")
