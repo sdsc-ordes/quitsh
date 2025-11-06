@@ -185,7 +185,7 @@ func (pc *ProcessComposeCtx) Stop() error {
 	return pc.Check("down")
 }
 
-// Check if processes in the process compose is running.
+// WaitTill checks if processes in the process compose is running.
 //
 //nolint:gocognit // The goroutine polling is fairily simple to understand.
 func (pc *ProcessComposeCtx) WaitTill(
