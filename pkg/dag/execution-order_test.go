@@ -369,10 +369,9 @@ func generateOneComp(t *testing.T) ([]*component.Component, []string) {
 	// where only node 2 should propagate the changed flag to target 3.
 
 	paths := []string{
-		"/repo/components/1/a/b/c/file", // is ignored.
-
+		"/repo/components/2/a/b/c/file",        // is ignored.
 		"/repo/components/2/!-file-must-match", // must match.
-		"/repo/components/3/a/b/c/file",        // is ignored.
+		"/repo/components/2/a/b/c/file",        // is ignored.
 	}
 
 	comps := []*component.Component{}
@@ -383,7 +382,11 @@ func generateOneComp(t *testing.T) ([]*component.Component, []string) {
 			"in1": {
 				Patterns: []string{"!^.*/b/.*/file$"}, // ignore!
 			},
-			"in2": {
+			"in2-no-match": {
+				Patterns:       []string{"non-match"},
+				RelativeToRoot: true,
+			},
+			"in2-match": {
 				Patterns:       []string{"^components/.*/!-file-must-.*$"},
 				RelativeToRoot: true,
 			},
@@ -396,7 +399,8 @@ func generateOneComp(t *testing.T) ([]*component.Component, []string) {
 				Inputs: []input.ID{"self::in1"},
 			},
 			"build2": {
-				Inputs:       []input.ID{"self::in2"},
+				// ------------------------* does also not match
+				Inputs:       []input.ID{"self", "self::in2-no-match", "self::in2-match"},
 				Dependencies: []target.ID{"self::build1"},
 			},
 			"build3": {

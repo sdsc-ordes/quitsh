@@ -175,7 +175,7 @@ func constructNodes(
 
 		for _, t := range config.Targets {
 			if _, exists := allNodes[t.ID]; exists {
-				debug.Assert(
+				debug.Assertf(
 					!exists,
 					"target id '%s' in component '%s' already exists (must be unique)",
 					t.ID,
@@ -386,19 +386,18 @@ func resolveInputIDs(
 	allInputs map[input.ID]*input.Config,
 	allComps map[string]*component.Component,
 ) error {
-	log.Debug("Resolve input ids.")
+	log.Tracef("Resolve input for node '%v'.", node.Target.ID)
 
 	for idx, inputID := range node.Target.Inputs {
+		log.Tracef("Resolve input id '%v'.", inputID)
+
 		// Mangle `self` (referring to whole comp.)
 		if inputID == "self" {
 			inputID = input.DefineIDComp(node.Comp.Name())
 			node.Target.Inputs[idx] = inputID
-		}
-
-		// Mangle `self::` into own components input id.
-		trimmedID := strings.TrimPrefix(string(inputID), "self::")
-		if trimmedID != string(inputID) {
-			inputID = input.DefineID(node.Config.Name, trimmedID)
+		} else if trimmedID, found := strings.CutPrefix(string(inputID), "self::"); found {
+			// Mangle `self::` into own components input id.
+			inputID = input.DefineID(node.Comp.Name(), trimmedID)
 			node.Target.Inputs[idx] = inputID
 		}
 
@@ -426,6 +425,8 @@ func resolveInputIDs(
 			}
 		}
 	}
+
+	log.Tracef("Resolved input ids '%v'.", node.Target.Inputs)
 
 	return nil
 }
@@ -652,6 +653,7 @@ func (graph *graph) SolveInputChanges(
 
 			case !currIn.ChangedByDependency:
 				log.Tracef("Detect change for current node '%v'.", n.Target.ID)
+				log.Tracef("Target inputs: '%v'", n.Target.Inputs)
 				changed, changes, err := determineChangedPaths(
 					n,
 					inputs,
@@ -717,7 +719,7 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 			continue
 		}
 
-		debug.Assert(graph.inSelection(n),
+		debug.Assertf(graph.inSelection(n),
 			"Node '%s' should be in selection at that point.", n.Target.ID)
 
 		log.Tracef("Adding node '%v' with prio '%v'.", n.Target.ID, n.Priority)
@@ -754,7 +756,7 @@ func determineChangedPathsDefault(
 ) (changed bool, changes []string) {
 	log.Tracef("Check for changes in dir '%v'", rootDir)
 	for i := range paths {
-		debug.Assert(path.IsAbs(paths[i]), "input path '%s' must be absolute", paths[i])
+		debug.Assertf(path.IsAbs(paths[i]), "input path '%s' must be absolute", paths[i])
 		if _, changed = input.BaseDir(rootDir).TrimOffFrom(paths[i]); changed {
 			changes = append(changes, paths[i])
 
@@ -777,35 +779,43 @@ func determineChangedPaths(
 	paths []string,
 ) (bool, []string, error) {
 	if node.Target.Inputs == nil {
-		// If there are no inputs, check if just any relative path match,
-		// thats the default rule.
-		changed, changes := determineChangedPathsDefault(node.Comp.Root(), paths)
-
-		return changed, changes, nil
+		// If no input ids, just add its own component, which is the default.
+		inputID := input.DefineIDComp(node.Comp.Name())
+		node.Target.Inputs = append(node.Target.Inputs, inputID)
 	}
 
-	// Else check all input rules.
+	// Check all input rules.
 	for _, inputID := range node.Target.Inputs {
+		log.Tracef("Check against input set '%v'.", inputID)
+
+		inputCh := inputChanges[inputID]
+		if inputCh.Changed {
+			// Input changeset already determined.
+			log.Tracef("Input changeset already changed.")
+
+			return inputCh.Changed, inputCh.Changes, nil
+		}
+
+		// Not determined yet, lets check.
 		// If the input id refers to a components, check against the root directory.
 		if inputID.IsComponent() {
 			comp := comps[string(inputID)]
 			debug.Assert(comp != nil, "component referred is not existing")
 			changed, changes := determineChangedPathsDefault(comp.Root(), paths)
+			if changed {
+				inputChanges[inputID] = InputChanges{Changed: changed, Changes: changes}
 
-			return changed, changes, nil
+				// Lazy, do not check other input sets.
+				return changed, changes, nil
+			}
+
+			continue
 		}
 
 		// otherwise check the input set
 		log.Tracef("Check for changes for input id '%v'", inputID)
 		input, exists := inputs[inputID]
-		debug.Assert(exists, "input id '%s' does not exist", inputID)
-
-		inputCh := inputChanges[inputID]
-
-		if inputCh.Changed {
-			// Input changeset already determined.
-			return inputCh.Changed, inputCh.Changes, nil
-		}
+		debug.Assertf(exists, "input id '%s' does not exist", inputID)
 
 		var relativePaths []string
 		for i := range paths {
@@ -842,12 +852,10 @@ func determineChangedPaths(
 		}
 
 		for _, p := range relativePaths {
-			inputCh.Changed = includeRegexes.Match(p) && !excludeRegexes.Match(p)
-
-			if inputCh.Changed {
+			changed := includeRegexes.Match(p) && !excludeRegexes.Match(p)
+			if changed {
 				log.Tracef("Matched path '%v'.", p)
-
-				inputCh.Changes = append(inputCh.Changes, p)
+				inputCh = InputChanges{changed, []string{p}}
 				inputChanges[inputID] = inputCh // set the changes back!
 
 				return inputCh.Changed, inputCh.Changes, nil
