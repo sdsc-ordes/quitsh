@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"github.com/r3labs/diff"
+	"github.com/sdsc-ordes/quitsh/pkg/build"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -56,8 +58,12 @@ func (c *cliApp) Run() error {
 		}
 	}()
 
-	if err := c.rootCmdPreExec(); err != nil {
-		return err
+	if build.DebugEnabled {
+		if ch, _ := diff.Diff(c.configBeforeCobra, c.config); len(ch) != 0 {
+			log.Panic("The config state (a: after unmarshal from config) has been "+
+				"altered by Cobra commands (b)!", "diff-a-b",
+				ch)
+		}
 	}
 
 	return c.rootCmd.Execute()

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/build"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -54,6 +55,7 @@ type ICLI interface {
 // The CLI instance needs the full `config`
 // because it will marshall/unmarshall it
 // from disk by the `rootCmd`.
+
 func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error) {
 	app := &cliApp{
 		rootArgs: args,
@@ -71,22 +73,25 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 	}
 
 	app.factory = factory.NewFactory(app.Stages())
+	app.rootCmd = rootcmd.New(&app.settings, app.rootArgs, app.config)
 
-	app.rootCmd, app.rootCmdPreExec =
-		rootcmd.New(&app.settings, app.rootArgs, app.config)
+	if build.DebugEnabled {
+		// Copy config after unmarshal. // For assert later.
+		app.configBeforeCobra = app.config.Clone()
+	}
 
 	return app, nil
 }
 
 type cliApp struct {
-	rootCmd        *cobra.Command
-	rootCmdPreExec func() error
+	rootCmd *cobra.Command
 
 	rootDirResolved bool
 	rootArgs        *rootcmd.Args
 
-	configFilename string
-	config         config.IConfig
+	configFilename    string
+	config            config.IConfig
+	configBeforeCobra config.IConfig
 
 	settings rootcmd.Settings
 

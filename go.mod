@@ -22,10 +22,11 @@ require (
 	github.com/muesli/termenv v0.16.0
 	github.com/noneback/go-taskflow v1.1.0
 	github.com/otiai10/copy v1.14.1
+	github.com/r3labs/diff v1.1.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.25.0
 	golang.org/x/sync v0.15.0
 	golang.org/x/sys v0.33.0

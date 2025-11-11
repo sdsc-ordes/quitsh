@@ -1,12 +1,13 @@
 package config
 
 import (
+	"github.com/creasty/defaults"
+	gclone "github.com/huandu/go-clone/generic"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/dag"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
-
-	"github.com/huandu/go-clone"
 
 	cconfig "quitsh-cli/pkg/runner/config"
 )
@@ -41,6 +42,9 @@ type Config struct {
 
 // New returns custodians arguments with default values.
 func New() (args Config) {
+	err := defaults.Set(&args)
+	log.PanicE(err, "could not default initialize config")
+
 	// Fields which are also flags will be initialized
 	// by the flags default values.
 	return
@@ -48,7 +52,5 @@ func New() (args Config) {
 
 // Clone implements `cli.IConfig` interface.
 func (c *Config) Clone() config.IConfig {
-	v, _ := clone.Clone(c).(*Config)
-
-	return v
+	return gclone.Clone(c)
 }
