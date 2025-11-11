@@ -182,7 +182,7 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 
 	rootCmd.PersistentFlags().
 		BoolVarP(&rootArgs.Parallel,
-			"parallel", "P", false, "If targets are built in parallel.")
+			"parallel", "P", rootArgs.Parallel, "If targets are built in parallel.")
 
 	rootCmd.Flags().
 		BoolVar(&version, "version", version, "Print the version.")

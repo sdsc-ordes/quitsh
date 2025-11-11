@@ -19,10 +19,10 @@ type IDispatcher interface {
 }
 
 type DispatchArgs struct {
-	ComponentDir string     `yaml:"componentDir" validate:"required"`
-	TargetID     target.ID  `yaml:"targetID"     validate:"required"`
-	StepIndex    step.Index `yaml:"stepIndex"    validate:"gte=0"`
-	RunnerIndex  int        `yaml:"runnerIndex"  validate:"gte=0"`
+	ComponentDir string     `yaml:"componentDir" default:"." validate:"required"`
+	TargetID     target.ID  `yaml:"targetID"     default:"" validate:"required"`
+	StepIndex    step.Index `yaml:"stepIndex"    default:"-1" validate:"gte=0"`
+	RunnerIndex  int        `yaml:"runnerIndex"  default:"-1" validate:"gte=0"`
 
 	RunnerID  runner.RegisterID `yaml:"runnerID"  validate:""`
 	Toolchain string            `yaml:"toolchain" validate:""`

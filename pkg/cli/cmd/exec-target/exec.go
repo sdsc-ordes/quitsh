@@ -33,7 +33,7 @@ func AddCmd(
 		},
 	}
 
-	execCmd.Flags().StringArrayVar(&execArgs.Tags, "tag", nil,
+	execCmd.Flags().StringArrayVar(&execArgs.Tags, "tag", execArgs.Tags,
 		"The executable tags which will get matched against the "+
 			"`include.tagExpr` on a step to include/exclude steps.")
 

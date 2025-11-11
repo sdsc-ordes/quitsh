@@ -46,7 +46,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	parent.AddCommand(startCmd)
 }
 
-// StartServices starts the process-compose services from `flake.nix` in `flakeDir`
+// RunExec starts the process-compose services from `flake.nix` in `flakeDir`
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
 func RunExec(

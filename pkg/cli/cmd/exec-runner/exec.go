@@ -30,27 +30,27 @@ func AddCmd(
 	execCmd.Flags().
 		StringVarP(&args.ComponentDir,
 			"component-dir", "c",
-			".",
+			args.ComponentDir,
 			"The component directory.",
 		)
 
 	execCmd.Flags().
 		StringVarP((*string)(&args.TargetID),
 			"target-id", "t",
-			"",
+			args.TargetID.String(),
 			"The target id on this component.",
 		)
 
 	execCmd.Flags().
 		IntVarP((*int)(&args.StepIndex),
 			"step-index", "s",
-			-1,
+			(int)(args.StepIndex),
 			"The step index to execute on the target.",
 		)
 	execCmd.Flags().
 		IntVarP(&args.RunnerIndex,
 			"runner-index", "r",
-			-1,
+			args.RunnerIndex,
 			"The runner index in the array of returned runners on the step. "+
 				"Normally you return one runner, then its '0'.",
 		)
