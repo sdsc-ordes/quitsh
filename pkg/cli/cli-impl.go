@@ -60,8 +60,12 @@ func (c *cliApp) Run() error {
 
 	if build.DebugEnabled {
 		if ch, _ := diff.Diff(c.configBeforeCobra, c.config); len(ch) != 0 {
-			log.Panic("The config state (a: after unmarshal from config) has been "+
-				"altered by Cobra commands (b)!", "diff-a-b",
+			log.Error(
+				"WARNING: =========================\n"+
+					"The config state (a: after unmarshal from config) has been "+
+					"altered by Cobra commands (b)!\n"+
+					"==================================",
+				"diff-a-b",
 				ch)
 		}
 	}
