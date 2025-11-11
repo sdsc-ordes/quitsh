@@ -49,7 +49,7 @@ type (
 		RootDir string `yaml:"rootDir"`
 
 		// The log level `debug,info,warning,error`.
-		LogLevel string `yaml:"logLevel"`
+		LogLevel string `yaml:"logLevel" default:""`
 
 		// Enable environment print on command execution errors.
 		EnableEnvPrint bool `yaml:"enableEnvPrint"`
@@ -145,7 +145,6 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(_cmd *cobra.Command, _args []string) error {
-			// NOTE: Cobra already parsed all arguments.
 			applyEnvReplacement(rootArgs)
 
 			e := applyGeneralOptions(rootArgs)
