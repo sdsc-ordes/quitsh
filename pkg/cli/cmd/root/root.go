@@ -115,9 +115,11 @@ func (s *Settings) SetDefaults() {
 // We load the config (the ground truth) always afterwards and before
 // any arguments are parsed.
 // The sequence is as follows:
-//   - Cobra sets defaults valutes in command definitions (unimportant).
-//   - The `preExecFunc`: We pass the config (hopefully defaulted),
-//     load potentially from `--config`, `--config-user` and `--config-values`.
+//   - Incoming `config` is defaulted from `defaults.Setter`.
+//   - Cobra sets defaults values in command definitions (unimportant, cause the default
+//     values are pointers to the config).
+//   - Then `preExecFunc`: we pass the config (hopefully defaulted),
+//     load and override from `--config`, `--config-user` and `--config-values`.
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
 func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 	rootCmd *cobra.Command, preExecFunc func() error) {
