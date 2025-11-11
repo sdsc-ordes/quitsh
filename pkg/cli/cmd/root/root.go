@@ -116,32 +116,28 @@ func (s *Settings) SetDefaults() {
 // any arguments are parsed.
 // The sequence is as follows:
 //   - Incoming `config` is defaulted from `defaults.Setter`.
-//   - Cobra sets defaults values in command definitions (unimportant, cause the default
-//     values are pointers to the config).
-//   - Then `preExecFunc`: we pass the config (hopefully defaulted),
-//     load and override from `--config`, `--config-user` and `--config-values`.
+//   - Unmarshal from from `--config`, `--config-user` and `--config-values`.
+//   - Cobra sets defaults values in command definitions:
+//     -> IMPORTANT: default values must be to the same pointers when
+//     config pointer are used, cause otherwise it will overwrite with another
+//     default value!
 //   - Cobra executes and sets CLI arguments to override stuff as a final step.
 func New(setts *Settings, rootArgs *Args, config config.IConfig) (
-	rootCmd *cobra.Command, preExecFunc func() error) {
+	rootCmd *cobra.Command) {
 	err := defaults.Set(rootArgs)
-	log.PanicE(err, "could not default root arguments")
+	log.PanicE(err, "Could not default root arguments.")
 
 	if setts == nil {
 		setts = &Settings{}
 	}
 
 	err = defaults.Set(setts)
-	log.PanicE(err, "could not default settings")
+	log.PanicE(err, "Could not default settings.")
 
-	var parsedConfig, parsedConfigUser bool
+	parsedConfig, parsedConfigUser, err := parseConfigs(config)
+	log.PanicE(err, "Could not parse config files.")
+
 	var version bool
-
-	preExecFunc = func() error {
-		var e error
-		parsedConfig, parsedConfigUser, e = parseConfigs(config)
-
-		return e
-	}
 
 	rootCmd = &cobra.Command{
 		Use:           setts.Name,
@@ -189,7 +185,7 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 
 	rootCmd.SilenceErrors = true
 
-	return rootCmd, preExecFunc
+	return rootCmd
 }
 
 func addPersistendFlags(flags *pflag.FlagSet, args *Args) {

@@ -72,15 +72,14 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 
 	app.factory = factory.NewFactory(app.Stages())
 
-	app.rootCmd, app.rootCmdPreExec =
+	app.rootCmd =
 		rootcmd.New(&app.settings, app.rootArgs, app.config)
 
 	return app, nil
 }
 
 type cliApp struct {
-	rootCmd        *cobra.Command
-	rootCmdPreExec func() error
+	rootCmd *cobra.Command
 
 	rootDirResolved bool
 	rootArgs        *rootcmd.Args

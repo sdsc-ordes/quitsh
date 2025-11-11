@@ -56,10 +56,6 @@ func (c *cliApp) Run() error {
 		}
 	}()
 
-	if err := c.rootCmdPreExec(); err != nil {
-		return err
-	}
-
 	return c.rootCmd.Execute()
 }
 
