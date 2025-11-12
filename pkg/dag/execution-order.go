@@ -117,7 +117,17 @@ func defineExecutionOrder(
 	regexCache := recache.NewCache(true)
 
 	log.Debug("Setup graph.")
-	allNodes, allInputs, allComps, err := constructNodes(components, o.targetSelection, rootDir)
+
+	// When we have resolved input ids, we can solve input changes.
+	// Note: We do not want this to happen but really only if some `inputPathChanges`
+	//       are given (can be []).
+	resolveInputs := o.inputPathChanges == nil
+	allNodes, allInputs, allComps, err := constructNodes(
+		components,
+		o.targetSelection,
+		rootDir,
+		resolveInputs,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -132,15 +142,17 @@ func defineExecutionOrder(
 		return nil, nil, err
 	}
 
-	// Make all input path changes absolute.
-	for i := range o.inputPathChanges {
-		o.inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, o.inputPathChanges[i])
-	}
-	log.Debug("Changed paths.", "paths", o.inputPathChanges)
+	if resolveInputs {
+		// Make all input path changes absolute.
+		for i := range o.inputPathChanges {
+			o.inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, o.inputPathChanges[i])
+		}
+		log.Debug("Changed paths.", "paths", o.inputPathChanges)
 
-	err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
-	if err != nil {
-		return nil, nil, err
+		err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	targets, prios = g.NodesToPriorityList()
@@ -152,6 +164,7 @@ func constructNodes(
 	components []*component.Component,
 	targetSelection *TargetSelection,
 	rootDir string,
+	resolveInputs bool,
 ) (TargetNodeMap, map[input.ID]*input.Config, map[string]*component.Component, error) {
 	allNodes := make(TargetNodeMap, len(components)*4) //nolint:mnd // intentional.
 	allInputs := make(map[input.ID]*input.Config, len(components))
@@ -198,11 +211,13 @@ func constructNodes(
 		return nil, nil, nil, err
 	}
 
-	// Resolve inputs over all nodes on the graph.
-	for _, n := range allNodes {
-		e := resolveInputIDs(n, allInputs, allComps)
-		if e != nil {
-			return nil, nil, nil, e
+	if resolveInputs {
+		// Resolve inputs over all nodes on the graph.
+		for _, n := range allNodes {
+			e := resolveInputIDs(n, allInputs, allComps)
+			if e != nil {
+				return nil, nil, nil, e
+			}
 		}
 	}
 
@@ -380,7 +395,7 @@ func visitNodesBFS(
 	}
 }
 
-// resolveInputIDs resolves all `self|.*::XXX` in input ids in `.Inputs`.
+// resolveInputIDs resolves all `self|.*::XXX` in input ids in `.Inputs` and updates `allInputs`.
 func resolveInputIDs(
 	node *TargetNode,
 	allInputs map[input.ID]*input.Config,
@@ -645,13 +660,15 @@ func (graph *graph) SolveInputChanges(
 
 			switch {
 			case paths == nil:
-				log.Tracef(
-					"No paths given -> setting target id '%v' to changed.",
-					n.Target.ID,
-				)
+				log.Tracef("No paths given -> setting target id '%v' to changed.", n.Target.ID)
 				currIn.Changed = true
 
 			case !currIn.ChangedByDependency:
+				debug.Assert(
+					!currIn.Changed,
+					"Current node '%v' should not have changes yet!",
+					n.Target.ID,
+				)
 				log.Tracef("Detect change for current node '%v'.", n.Target.ID)
 				log.Tracef("Target inputs: '%v'", n.Target.Inputs)
 				changed, changes, err := determineChangedPaths(
@@ -815,7 +832,10 @@ func determineChangedPaths(
 		// otherwise check the input set
 		log.Tracef("Check for changes for input id '%v'", inputID)
 		input, exists := inputs[inputID]
-		debug.Assertf(exists, "input id '%s' does not exist", inputID)
+		if !exists {
+			return false, nil,
+				errors.New("input id '%s' does not exist (programming error?)", inputID)
+		}
 
 		var relativePaths []string
 		for i := range paths {
