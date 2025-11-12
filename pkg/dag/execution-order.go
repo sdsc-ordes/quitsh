@@ -2,6 +2,7 @@ package dag
 
 import (
 	"fmt"
+	"iter"
 	"maps"
 	"path"
 	"slices"
@@ -726,7 +727,15 @@ func (graph *graph) NodesToPriorityList() (nodes TargetNodeMap, result Prioritie
 	log.Debug("Construct priority set.")
 	visited := set.NewUnorderedWithCap[target.ID](len(graph.nodes))
 
-	for id := range graph.nodesSel.Keys() {
+	sel := func() iter.Seq[target.ID] {
+		if graph.nodesSel != nil {
+			return graph.nodesSel.Keys()
+		}
+
+		return maps.Keys(graph.nodes)
+	}
+
+	for id := range sel() {
 		n, ok := graph.nodes[id]
 		if !ok {
 			log.Panicf("Node '%v' should be in the graph!", n.Target.ID)
