@@ -3,6 +3,7 @@ package cli
 import (
 	"github.com/r3labs/diff"
 	"github.com/sdsc-ordes/quitsh/pkg/build"
+	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -58,12 +59,12 @@ func (c *cliApp) Run() error {
 		}
 	}()
 
-	if build.DebugEnabled {
+	if build.DebugEnabled || ci.IsRunning() {
 		if ch, _ := diff.Diff(c.configBeforeCobra, c.config); len(ch) != 0 {
 			log.Error(
 				"WARNING: =========================\n"+
 					"The config state (a: after unmarshal from config) has been "+
-					"altered by Cobra commands (b)!\n"+
+					"altered by Cobra flag's default values (b)!\n"+
 					"==================================",
 				"diff-a-b",
 				ch)

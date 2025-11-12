@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/build"
+	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/cli/general"
 	"github.com/sdsc-ordes/quitsh/pkg/component"
@@ -75,7 +76,7 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 	app.factory = factory.NewFactory(app.Stages())
 	app.rootCmd = rootcmd.New(&app.settings, app.rootArgs, app.config)
 
-	if build.DebugEnabled {
+	if build.DebugEnabled || ci.IsRunning() {
 		// Copy config after unmarshal. // For assert later.
 		app.configBeforeCobra = app.config.Clone()
 	}
