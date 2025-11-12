@@ -20,6 +20,34 @@ func TestGraphExecOrder3Comps(t *testing.T) {
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
 
+	comps, _ := generate3Comps(t)
+	_, prios, e := DefineExecutionOrder(comps, rootDir)
+	require.NoError(t, e)
+
+	testGenerate3Comps(t, prios, nil, false)
+}
+
+func TestGraphExecOrder3CompsDoNotResolveIds(t *testing.T) {
+	// When no input changes given, ids should not be resolved cause not needed.
+	t.Parallel()
+	err := log.SetLevel("trace")
+	require.NoError(t, err)
+
+	comps, _ := generate3Comps(t)
+	tgt := comps[0].Config().Targets["build1"]
+	tgt.Inputs = append(tgt.Inputs, "non-existing-id")
+
+	_, prios, e := DefineExecutionOrder(comps, rootDir)
+	require.NoError(t, e)
+
+	testGenerate3Comps(t, prios, nil, false)
+}
+
+func TestGraphExecOrder3CompsWithChanges(t *testing.T) {
+	t.Parallel()
+	err := log.SetLevel("trace")
+	require.NoError(t, err)
+
 	comps, paths := generate3Comps(t)
 	_, prios, e := DefineExecutionOrder(comps, rootDir, WithInputChanges(paths))
 	require.NoError(t, e)
@@ -27,7 +55,7 @@ func TestGraphExecOrder3Comps(t *testing.T) {
 	testGenerate3Comps(t, prios, paths, false)
 }
 
-func TestGraphExecOrder3CompsNoFlaky(t *testing.T) {
+func TestGraphExecOrder3CompsNoFlakey(t *testing.T) {
 	t.Parallel()
 	err := log.SetLevel("trace")
 	require.NoError(t, err)
@@ -107,31 +135,48 @@ func testGenerate3Comps(
 	assert.Equal(t, 2, prios[pI].Priority)
 	require.Len(t, prios[pI].Nodes, 1)
 	assert.EqualValues(t, compName+"::build1", prios[pI].Nodes[0].Target.ID)
-	assert.False(t, prios[pI].Nodes[0].Inputs.Changed)
-	assert.False(t, prios[pI].Nodes[0].Inputs.ChangedByDependency)
+	n := prios[pI].Nodes[0]
+	if paths != nil {
+		assert.False(t, n.Inputs.Changed)
+		assert.False(t, n.Inputs.ChangedByDependency)
+	} else {
+		assert.True(t, n.Inputs.Changed)
+		assert.False(t, n.Inputs.ChangedByDependency)
+	}
 
 	if !onlyOneComp {
 		compName = "2"
 	}
 	pI = 1
+	n = prios[pI].Nodes[0]
 	assert.Equal(t, 1, prios[pI].Priority)
 	require.Len(t, prios[pI].Nodes, 1)
-	assert.EqualValues(t, compName+"::build2", prios[pI].Nodes[0].Target.ID)
-	assert.True(t, prios[pI].Nodes[0].Inputs.Changed)
-	assert.False(t, prios[pI].Nodes[0].Inputs.ChangedByDependency)
-
-	p, _ := input.BaseDir(rootDir).TrimOffFrom(paths[1])
-	assert.Equal(t, p, prios[pI].Nodes[0].Inputs.Paths[0])
+	assert.EqualValues(t, compName+"::build2", n.Target.ID)
+	if paths != nil {
+		assert.True(t, n.Inputs.Changed)
+		assert.False(t, n.Inputs.ChangedByDependency)
+		p, _ := input.BaseDir(rootDir).TrimOffFrom(paths[1])
+		assert.Equal(t, p, prios[pI].Nodes[0].Inputs.Paths[0])
+	} else {
+		assert.True(t, n.Inputs.Changed)
+		assert.True(t, n.Inputs.ChangedByDependency)
+	}
 
 	if !onlyOneComp {
 		compName = "3"
 	}
 	pI = 2
+	n = prios[pI].Nodes[0]
 	assert.Equal(t, 0, prios[pI].Priority)
 	require.Len(t, prios[pI].Nodes, 1)
-	assert.EqualValues(t, compName+"::build3", prios[pI].Nodes[0].Target.ID)
-	assert.True(t, prios[pI].Nodes[0].Inputs.Changed)
-	assert.True(t, prios[pI].Nodes[0].Inputs.ChangedByDependency)
+	assert.EqualValues(t, compName+"::build3", n.Target.ID)
+	if paths != nil {
+		assert.False(t, n.Inputs.Changed)
+		assert.True(t, n.Inputs.ChangedByDependency)
+	} else {
+		assert.True(t, n.Inputs.Changed)
+		assert.True(t, n.Inputs.ChangedByDependency)
+	}
 }
 
 func TestGraphExecOrder3CompsSimpleSel(t *testing.T) {

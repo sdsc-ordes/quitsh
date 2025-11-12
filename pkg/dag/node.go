@@ -46,10 +46,14 @@ type TargetNodeChanges struct {
 	AccumulatedPaths []string
 }
 
-// Merge merges two input changes together.
-func (i *TargetNodeChanges) Merge(other *TargetNodeChanges) {
-	i.ChangedByDependency = other.Changed
-	i.Changed = i.Changed || other.Changed
+// IsChanged returns the overall status if this node is changed.
+func (i *TargetNodeChanges) IsChanged() bool {
+	return i.Changed || i.ChangedByDependency
+}
+
+// Propagate propagate change state from `other` to `i`.
+func (i *TargetNodeChanges) Propagate(other *TargetNodeChanges) {
+	i.ChangedByDependency = i.ChangedByDependency || other.Changed
 	i.AccumulatedPaths = append(i.AccumulatedPaths, other.AccumulatedPaths...)
 }
 
