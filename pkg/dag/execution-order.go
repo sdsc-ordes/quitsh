@@ -122,7 +122,7 @@ func defineExecutionOrder(
 	// When we have resolved input ids, we can solve input changes.
 	// Note: We do not want this to happen but really only if some `inputPathChanges`
 	//       are given (can be []).
-	resolveInputs := o.inputPathChanges == nil
+	resolveInputs := o.inputPathChanges != nil
 	allNodes, allInputs, allComps, err := constructNodes(
 		components,
 		o.targetSelection,
@@ -143,17 +143,14 @@ func defineExecutionOrder(
 		return nil, nil, err
 	}
 
-	if resolveInputs {
-		// Make all input path changes absolute.
-		for i := range o.inputPathChanges {
-			o.inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, o.inputPathChanges[i])
-		}
-		log.Debug("Changed paths.", "paths", o.inputPathChanges)
-
-		err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
-		if err != nil {
-			return nil, nil, err
-		}
+	// Make all input path changes absolute.
+	for i := range o.inputPathChanges {
+		o.inputPathChanges[i] = fs.MakeAbsoluteTo(rootDir, o.inputPathChanges[i])
+	}
+	log.Debug("Changed paths.", "paths", o.inputPathChanges)
+	err = g.SolveInputChanges(allInputs, allComps, &regexCache, o.inputPathChanges)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	targets, prios = g.NodesToPriorityList()
@@ -382,7 +379,7 @@ func visitNodesBFS(
 
 		n := bfsStack.PopFront()
 		if !visit(n) {
-			return
+			continue
 		}
 
 		switch dir {
@@ -621,7 +618,8 @@ func (graph *graph) SolveInputChanges(
 	inputs map[input.ID]*input.Config,
 	comps map[string]*component.Component,
 	regexCache *recache.Cache,
-	paths []string) error {
+	paths []string,
+) error {
 	log.Debug("Solve input changes and recompute selection subgraph.")
 
 	var changedInSelection TargetSelection
@@ -656,7 +654,6 @@ func (graph *graph) SolveInputChanges(
 					"target",
 					n.Target.ID,
 				)
-				debug.Assert(currIn.Changed, "We should have changes when changed by dependency.")
 			}
 
 			switch {
@@ -664,14 +661,13 @@ func (graph *graph) SolveInputChanges(
 				log.Tracef("No paths given -> setting target id '%v' to changed.", n.Target.ID)
 				currIn.Changed = true
 
-			case !currIn.ChangedByDependency:
-				debug.Assert(
-					!currIn.Changed,
-					"Current node '%v' should not have changes yet!",
-					n.Target.ID,
-				)
+			case !currIn.IsChanged():
 				log.Tracef("Detect change for current node '%v'.", n.Target.ID)
 				log.Tracef("Target inputs: '%v'", n.Target.Inputs)
+				debug.Assert(paths != nil,
+					"when we compute own changes, "+
+						"we need a paths set and resolved inputs")
+
 				changed, changes, err := determineChangedPaths(
 					n,
 					inputs,
@@ -698,15 +694,17 @@ func (graph *graph) SolveInputChanges(
 				n.Target.ID.String(),
 				"changed",
 				currIn.Changed,
+				"changedByDeps",
+				currIn.ChangedByDependency,
 			)
 
-			if currIn.Changed {
+			if currIn.IsChanged() {
 				changedInSelection.Insert(n.Target.ID)
 			}
 
 			// Propagate to children, by merging the input changes.
 			for _, c := range n.Forward {
-				c.Inputs.Merge(&n.Inputs)
+				c.Inputs.Propagate(&n.Inputs)
 			}
 
 			// Go to next nodes.
