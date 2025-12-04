@@ -50,7 +50,7 @@ func (r *ExecRunner) Run(ctx runner.IContext) error {
 		cmdCtx.WithStdin(strings.NewReader(r.config.Script))
 	}
 
-	log.Infof(
+	log.Info(
 		"Executing exec runner.",
 		"component", comp.Name(),
 		"name", r.config.Name)
