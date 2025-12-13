@@ -37,6 +37,7 @@ func ParseCIAttributes(settings PipelineAttributes, ss ...string) error {
 		if yamlBlock == "" {
 			continue
 		}
+		log.Debug("Found YAML block.", "block", yamlBlock)
 
 		decoder := yaml.NewDecoder(strings.NewReader(yamlBlock), yaml.Strict())
 		setts := settings.Clone()
