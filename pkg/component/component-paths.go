@@ -53,6 +53,11 @@ func (c *Component) OutCoverageBinDir(p ...string) string {
 	return c.RelOutPath(fs.OutCoverageBinDir, p...)
 }
 
+// OutRunDir returns the directory of the run output directory (testing, runtime stuff).
+func (c *Component) OutRunDir(p ...string) string {
+	return c.RelOutPath(fs.OutRunDir, p...)
+}
+
 // OutPackageDir returns the directory of the package output directory.
 func (c *Component) OutPackageDir(p ...string) string {
 	return c.RelOutPath(fs.OutPackageDir, p...)

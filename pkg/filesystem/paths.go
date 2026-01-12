@@ -26,6 +26,8 @@ const (
 	OutCoverageDataDir = "coverage/data"
 	OutCoverageBinDir  = "coverage/bin"
 
+	OutRunDir = "run"
+
 	OutImageDir = OutPackageDir
 
 	OutCIDir = "ci"
