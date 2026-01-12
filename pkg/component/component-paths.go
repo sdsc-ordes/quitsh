@@ -68,6 +68,11 @@ func (c *Component) OutImageDir(p ...string) string {
 	return c.RelOutPath(fs.OutImageDir, p...)
 }
 
+// OutCIDir returns the directory of the CI output directory.
+func (c *Component) OutCIDir(p ...string) string {
+	return c.RelOutPath(fs.OutCIDir, p...)
+}
+
 // DocsDir returns the directory of the components docs folder.
 func (c *Component) DocsDir(p ...string) string {
 	return c.RelPath(fs.DocsDir, p...)
