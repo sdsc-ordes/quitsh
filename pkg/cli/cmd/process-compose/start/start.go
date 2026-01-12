@@ -157,7 +157,7 @@ func startProcessCompose(
 	log.Info("Processes status.", "summary", strings.ReplaceAll(summary, "\t", "  "))
 
 	if socketPathFile != "" {
-		log.Info("Write socket path file '%s'.", socketPathFile)
+		log.Infof("Write socket path file '%s'.", socketPathFile)
 		err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
 		if err != nil {
 			log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
