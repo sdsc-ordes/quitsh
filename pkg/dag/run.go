@@ -93,8 +93,8 @@ func ExecuteNormal(
 		var e error
 
 		if !step.Include.TagExpr.Matches(opt.Tags) {
-			log.Debugf(
-				"Target: '%v' -> step '%v' excluded: expr '%v' "+
+			log.Warnf(
+				"Target: '%v' -> Step: '%v' excluded: expr '%v' "+
 					"does not match for tags '%q'",
 				node.Target.ID, stepIdx,
 				step.Include.TagExpr.String(), opt.Tags)
