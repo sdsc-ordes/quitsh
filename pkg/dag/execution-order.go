@@ -612,8 +612,6 @@ func (graph *graph) SolveExecutionOrder() error {
 // Afterwards, the subgraph selection in `graph` is recomputed, defined by all
 // visited nodes from a backwards traversal starting from all
 // **changed** nodes in the **original selection**.
-//
-//nolint:gocognit // FIXME: later
 func (graph *graph) SolveInputChanges(
 	inputs map[input.ID]*input.Config,
 	comps map[string]*component.Component,
@@ -644,17 +642,6 @@ func (graph *graph) SolveInputChanges(
 			}
 
 			currIn := &n.Inputs
-			if currIn.ChangedByDependency {
-				debug.Assert(
-					currIn.Paths == nil,
-					"We should not have run determineChangedPaths (optimization), "+
-						"since this target is changed by dependency.",
-					"paths",
-					currIn.Paths,
-					"target",
-					n.Target.ID,
-				)
-			}
 
 			switch {
 			case paths == nil:
