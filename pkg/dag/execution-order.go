@@ -612,8 +612,6 @@ func (graph *graph) SolveExecutionOrder() error {
 // Afterwards, the subgraph selection in `graph` is recomputed, defined by all
 // visited nodes from a backwards traversal starting from all
 // **changed** nodes in the **original selection**.
-//
-//nolint:gocognit // FIXME: later
 func (graph *graph) SolveInputChanges(
 	inputs map[input.ID]*input.Config,
 	comps map[string]*component.Component,
