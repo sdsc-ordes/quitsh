@@ -644,17 +644,6 @@ func (graph *graph) SolveInputChanges(
 			}
 
 			currIn := &n.Inputs
-			if currIn.ChangedByDependency {
-				debug.Assert(
-					currIn.Paths == nil,
-					"We should not have run determineChangedPaths (optimization), "+
-						"since this target is changed by dependency.",
-					"paths",
-					currIn.Paths,
-					"target",
-					n.Target.ID,
-				)
-			}
 
 			switch {
 			case paths == nil:
