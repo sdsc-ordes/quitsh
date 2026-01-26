@@ -39,7 +39,7 @@ func NewBuildTypeFromEnv(e EnvironmentType) BuildType {
 		return BuildRelease
 	}
 
-	panic("Not implemented!")
+	panic(fmt.Sprintf("BuildType not implemented. '%s'", e))
 }
 
 func GetAllBuildTypes() []BuildType {
@@ -55,7 +55,7 @@ func (v BuildType) String() string {
 		return BuildReleaseName
 	}
 
-	panic("Not implemented.")
+	panic(fmt.Sprintf("BuildType not implemented. '%v'", int(v)))
 }
 
 // Set implement the pflags Value interface.

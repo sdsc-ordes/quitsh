@@ -34,7 +34,7 @@ func NewEnvironmentType(s string) (EnvironmentType, error) {
 		return EnvironmentProd, nil
 	}
 
-	panic(fmt.Sprintf("Not implemented. '%s'", s))
+	panic(fmt.Sprintf("EnvironmentType not implemented. '%s'", s))
 }
 
 // GetEnvTypesHelp reports some help string for env. types.
@@ -48,7 +48,7 @@ func GetEnvTypesHelp() string {
 	)
 }
 
-// Implement the pflags Value interface.
+// String implement the pflags Value interface.
 func (v EnvironmentType) String() string {
 	switch v {
 	case EnvironmentDev:
@@ -61,7 +61,7 @@ func (v EnvironmentType) String() string {
 		return "production"
 	}
 
-	panic(fmt.Sprintf("Not implemented. %v", int(v)))
+	panic(fmt.Sprintf("EnvironmentType not implemented. %v", int(v)))
 }
 
 func (v EnvironmentType) ShortString() string {
@@ -76,17 +76,17 @@ func (v EnvironmentType) ShortString() string {
 		return "prod"
 	}
 
-	panic(fmt.Sprintf("Not implemented. %v", int(v)))
+	panic(fmt.Sprintf("EnvironmentType not implemented. %v", int(v)))
 }
 
-// Implement the pflags Value interface.
+// Set implement the pflags Value interface.
 func (v *EnvironmentType) Set(s string) (err error) {
 	*v, err = NewEnvironmentType(s)
 
 	return
 }
 
-// Implement the pflags Value interface.
+// Type implement the pflags Value interface.
 func (v *EnvironmentType) Type() string {
 	return "string"
 }
