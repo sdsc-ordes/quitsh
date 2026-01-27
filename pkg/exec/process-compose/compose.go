@@ -30,6 +30,8 @@ type (
 
 		tempDir string
 		logFile string
+
+		log log.ILog
 	}
 
 	ProcessState int
@@ -190,6 +192,7 @@ func (pc *ProcessComposeCtx) Stop() error {
 //nolint:gocognit // The goroutine polling is fairily simple to understand.
 func (pc *ProcessComposeCtx) WaitTill(
 	ctx context.Context,
+	log log.ILog,
 	checkInterval time.Duration,
 	conds ...ProcessCond) (fulfilled bool, err error) {
 	if len(conds) == 0 {
@@ -396,4 +399,9 @@ func buildProcComposeConfigFile(installable string, rootDir string) (string, err
 	}
 
 	return d[0].Outputs.Out, nil
+}
+
+// SetLog sets the logger on the context.
+func (ctx *ProcessComposeCtx) SetLog(log log.ILog) {
+	ctx.log = log
 }

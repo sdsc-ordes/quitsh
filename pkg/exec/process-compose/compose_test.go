@@ -10,6 +10,7 @@ import (
 	"time"
 
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,7 @@ import (
 func TestProcessComposeDevenv(t *testing.T) {
 	t.Parallel()
 	d := t.TempDir()
+	logger := log.NewLogger("test")
 	err := fs.CopyFileOrDir("./test/flake.nix", path.Join(d, "flake.nix"), true)
 	require.NoError(t, err)
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
@@ -36,7 +38,9 @@ func TestProcessComposeDevenv(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fulfilled, err := pcCtx.WaitTill(ctx,
+	fulfilled, err := pcCtx.WaitTill(
+		ctx,
+		logger,
 		10*time.Millisecond,
 		ProcessCond{Name: "httpbin", State: ProcessRunning},
 		ProcessCond{Name: "keycloak", State: ProcessReady},
@@ -49,6 +53,7 @@ func TestProcessComposeDevenv(t *testing.T) {
 func TestProcessComposeDevenvTimeout(t *testing.T) {
 	t.Parallel()
 	d := t.TempDir()
+	logger := log.NewLogger("test")
 	err := fs.CopyFileOrDir("./test/flake.nix", path.Join(d, "flake.nix"), true)
 	require.NoError(t, err)
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
@@ -68,7 +73,9 @@ func TestProcessComposeDevenvTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	fulfilled, err := pcCtx.WaitTill(ctx,
+	fulfilled, err := pcCtx.WaitTill(
+		ctx,
+		logger,
 		10*time.Millisecond,
 		ProcessCond{Name: "not-existing", State: ProcessRunning},
 	)

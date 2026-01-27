@@ -143,7 +143,7 @@ func startProcessCompose(
 			"interval", timeoutWaitInterval)
 	}
 
-	fulfilled, err := pcCtx.WaitTill(ctx, timeoutWaitInterval, conds...)
+	fulfilled, err := pcCtx.WaitTill(ctx, log.Global(), timeoutWaitInterval, conds...)
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "failed to wait for processes")
 	} else if !fulfilled {
