@@ -201,6 +201,15 @@ func (pc *ProcessComposeCtx) WaitTill(
 		return false, err
 	}
 
+	type ProcInfo struct {
+		Status  string `json:"status"`
+		IsReady string `json:"is_ready"` //nolint:tagliatelle // external input
+		Name    string `json:"name"`
+	}
+
+	// Map to keep track of logged statues of procs.
+	reported := make(map[string]ProcInfo)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -212,14 +221,9 @@ func (pc *ProcessComposeCtx) WaitTill(
 				return false, err
 			}
 
-			type Data struct {
-				Status  string `json:"status"`
-				IsReady string `json:"is_ready"` //nolint:tagliatelle // external input
-				Name    string `json:"name"`
-			}
-			var d []Data
+			var procs []ProcInfo
 
-			err = json.Unmarshal([]byte(js), &d)
+			err = json.Unmarshal([]byte(js), &procs)
 			if err != nil {
 				return false,
 					errors.AddContext(err,
@@ -229,22 +233,47 @@ func (pc *ProcessComposeCtx) WaitTill(
 
 			condsFulfilled := 0
 
-			for j := range d {
+			for j := range procs {
+				p := &procs[j]
+				// All lowercase, to be safe.
+				p.Status = strings.ToLower(p.Status)
+				p.IsReady = strings.ToLower(p.IsReady)
+
+				if reported[p.Name].Status != p.Status {
+					log.Infof(
+						"Process status change: '%s': '%s' -> '%s'.",
+						p.Name,
+						reported[p.Name].Status,
+						p.Status,
+					)
+				}
+				if reported[p.Name].IsReady != p.IsReady {
+					log.Infof(
+						"Process readiness change: '%s': '%s' -> '%s'.",
+						p.Name,
+						reported[p.Name].IsReady,
+						p.IsReady,
+					)
+				}
+				reported[p.Name] = *p
+
 				for i := range conds {
 					cond := &conds[i]
-					if cond.Name != d[j].Name {
+					if cond.Name != p.Name {
 						continue
 					}
 
-					status := strings.ToLower(d[j].Status)
-					ready := strings.ToLower(d[j].IsReady)
-
 					switch {
-					case cond.State == ProcessRunning && status == "running":
+					case cond.State == ProcessRunning && p.Status == "running":
+						log.Infof("Process condition: '%s': 'running' ✅", p.Name)
+
 						fallthrough
-					case cond.State == ProcessReady && ready == "ready":
+					case cond.State == ProcessReady && p.IsReady == "ready":
+						log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
+
 						fallthrough
-					case cond.State == ProcessCompleted && status == "completed":
+					case cond.State == ProcessCompleted && p.Status == "completed":
+						log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
 						condsFulfilled += 1
 					}
 				}
