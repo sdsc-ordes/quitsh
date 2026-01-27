@@ -22,8 +22,17 @@ const ProcessRunning ProcessState = 0
 const ProcessReady ProcessState = 1
 const ProcessCompleted ProcessState = 2
 
-// ProcessComposeCtx represents a `process-compose` context.
 type (
+	Option func(*opts) error
+
+	opts struct {
+		log              log.ILog
+		logFile          string
+		tempDir          string
+		onlyCheckStarted bool
+	}
+
+	// ProcessComposeCtx represents a `process-compose` context.
 	ProcessComposeCtx struct {
 		*exec.CmdContext
 		socket string
@@ -54,11 +63,11 @@ func Start(
 	rootDir string,
 	flakeDir string,
 	devShellAttrPath string,
-	mustBeStarted bool,
+	options ...Option,
 ) (pc ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
-	return StartFromInstallable(rootDir, devShellAttrPath, mustBeStarted)
+	return StartFromInstallable(rootDir, devShellAttrPath, options...)
 }
 
 // StartFromInstallable starts the process compose from a Nix
@@ -66,11 +75,19 @@ func Start(
 // which must be a `devenv` shell).
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
+//
+//nolint:funlen
 func StartFromInstallable(
 	rootDir string,
 	devShellInstallable string,
-	mustBeStarted bool,
+	options ...Option,
 ) (pc ProcessComposeCtx, err error) {
+	var o opts
+	err = o.Apply(options...)
+	if err != nil {
+		return pc, err
+	}
+
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
@@ -87,17 +104,24 @@ func StartFromInstallable(
 	}
 
 	// Compute deterministic temp directory base on `procCompExe`.
-	dir := path.Join(os.TempDir(),
+	if o.tempDir == "" {
+		o.tempDir = os.TempDir()
+	}
+	tempDir := path.Join(o.tempDir,
 		fmt.Sprintf("process-compose-%x",
 			sha256.Sum256([]byte(procCompConfig))))
-	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
+	err = os.MkdirAll(tempDir, fs.DefaultPermissionsDir)
 	if err != nil {
 		return pc, errors.AddContext(
 			err,
 			"could not create process-compose temp dir (logfile etc.).",
 		)
 	}
-	logFile := path.Join(dir, "process-compose.log")
+
+	var logFile string
+	if o.logFile == "" {
+		o.logFile = path.Join(tempDir, "process-compose.log")
+	}
 
 	// We need to launch the process-compose over a
 	// devShell to start it properly.
@@ -113,8 +137,9 @@ func StartFromInstallable(
 	pc = ProcessComposeCtx{
 		CmdContext: build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		socket:     socketPath,
-		tempDir:    dir,
+		tempDir:    tempDir,
 		logFile:    logFile,
+		log:        o.log,
 	}
 
 	log.Info("Settings for process-compose.",
@@ -134,10 +159,11 @@ func StartFromInstallable(
 
 		return pc, nil
 	} else {
-		if mustBeStarted {
+		if o.onlyCheckStarted {
 			return pc, errors.New("The process-compose instance must be started already but "+
 				"socket '%s' is not existing.", socketPath)
 		}
+
 		log.Info("Start process-compose.")
 
 		err = pcCtxDev.Check(
@@ -401,7 +427,48 @@ func buildProcComposeConfigFile(installable string, rootDir string) (string, err
 	return d[0].Outputs.Out, nil
 }
 
-// SetLog sets the logger on the context.
-func (ctx *ProcessComposeCtx) SetLog(log log.ILog) {
-	ctx.log = log
+func (c *opts) Apply(options ...Option) error {
+	for _, f := range options {
+		if err := f(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// WithLogger sets the logger.
+func WithLogger(logger log.ILog) Option {
+	return func(o *opts) error {
+		o.log = logger
+
+		return nil
+	}
+}
+
+// WithTempDir sets the temp. directory.
+func WithTempDir(tempDir string) Option {
+	return func(o *opts) error {
+		o.tempDir = tempDir
+
+		return nil
+	}
+}
+
+// WithLogFile sets the log file.
+func WithLogFile(logFile string) Option {
+	return func(o *opts) error {
+		o.logFile = logFile
+
+		return nil
+	}
+}
+
+// WithOnlyCheckStarted ensures that the `process-compose` is started already.
+func WithOnlyCheckStarted() Option {
+	return func(o *opts) error {
+		o.onlyCheckStarted = true
+
+		return nil
+	}
 }

@@ -59,9 +59,11 @@ func RunExec(
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
-		pcCtx, err = processcompose.StartFromInstallable(rootDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.StartFromInstallable(
+			rootDir, devenvShellAttrPath, processcompose.WithOnlyCheckStarted())
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(
+			rootDir, flakeDir, devenvShellAttrPath, processcompose.WithOnlyCheckStarted())
 	}
 
 	if err != nil {
