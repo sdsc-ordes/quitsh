@@ -60,10 +60,12 @@ func StopService(
 		pcCtx, err = processcompose.StartFromInstallable(
 			rootDir,
 			devenvShellAttrPath,
-			true,
+			processcompose.WithOnlyCheckStarted(),
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(
+			rootDir, flakeDir, devenvShellAttrPath,
+			processcompose.WithOnlyCheckStarted())
 	}
 
 	if err != nil {
