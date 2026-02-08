@@ -81,27 +81,37 @@ func NewDevShellCtxBuilder(
 }
 
 func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBuilder {
-	devenvRoot := rootDir + "/.devenv/state/pwd"
-
-	err := os.MkdirAll(path.Dir(devenvRoot), fs.DefaultPermissionsDir)
-	err = errors.Combine(err, os.WriteFile(devenvRoot, []byte(rootDir), fs.DefaultPermissionsFile))
-	log.PanicE(err, "Devenv root file could not be written.", "path", devenvRoot)
-
-	// We inject `--override-input` to set the `devenv-root` flake input (HACK).
-	// This is currently needed for devenv to properly run in pure hermetic
-	// mode while still being able to run processes & services and modify
-	// (some parts) of the active shell.mkdir -p .devenv/state
-	// See: https://github.com/cachix/devenv/issues/1461
-	// NOTE: This will also work if no input matches the override which is important
-	//       for users not using this.
 	b = b.
 		Cwd(rootDir).
 		BaseArgs(
 			"--show-trace",
-			"--override-input",
-			"devenv-root",
-			"path:"+rootDir+"/.devenv/state/pwd",
 			"--accept-flake-config")
+
+	if os.Getenv(EnvVarQuitshNixNoDevenvRootInputOverride) != "true" {
+		devenvRoot := rootDir + "/.devenv/state/pwd"
+
+		err := os.MkdirAll(path.Dir(devenvRoot), fs.DefaultPermissionsDir)
+		err = errors.Combine(
+			err,
+			os.WriteFile(devenvRoot, []byte(rootDir), fs.DefaultPermissionsFile),
+		)
+		log.PanicE(err, "Devenv root file could not be written.", "path", devenvRoot)
+
+		// We inject `--override-input` to set the `devenv-root` flake input (HACK).
+		// This is currently needed for devenv to properly run in pure hermetic
+		// mode while still being able to run processes & services and modify
+		// (some parts) of the active shell.mkdir -p .devenv/state
+		// See: https://github.com/cachix/devenv/issues/1461
+		// NOTE: This will also work if no input matches the override which is important
+		//       for users not using this.
+		b = b.
+			Cwd(rootDir).
+			BaseArgs(
+				"--override-input",
+				"devenv-root",
+				"path:"+rootDir+"/.devenv/state/pwd",
+			)
+	}
 
 	if os.Getenv(EnvVarQuitshNixNoPureEval) == "true" {
 		b.BaseArgs("--no-pure-eval")
@@ -110,7 +120,7 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 	return b
 }
 
-// NewDevShellCtxBuilderI, see `NewDevShellCtxBuilder`.
+// NewDevShellCtxBuilderI see `NewDevShellCtxBuilder`.
 func NewDevShellCtxBuilderI(rootDir string, installable string) exec.CmdContextBuilder {
 	debug.Assert(path.IsAbs(rootDir), "Devenv root must be an absolute path.")
 
@@ -132,7 +142,7 @@ func WrapOverDevShell(
 	return WrapOverDevShellI(ctxBuilder, rootDir, FlakeInstallable(flakePath, attrPath))
 }
 
-// WrapOverDevShellI, see `WrapOverDevShellI`.
+// WrapOverDevShellI see `WrapOverDevShell`.
 func WrapOverDevShellI(
 	ctxBuilder exec.CmdContextBuilder,
 	rootDir string,

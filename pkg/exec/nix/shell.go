@@ -14,6 +14,9 @@ const EnvVarQuitshToolchain = "QUITSH_TOOLCHAINS"
 // env. values which are evaluated in Nix.
 const EnvVarQuitshNixNoPureEval = "QUITSH_NIX_NO_PURE_EVAL"
 
+// Disable the `--override-input devenv-root` on any nix command.
+const EnvVarQuitshNixNoDevenvRootInputOverride = "QUITSH_NIX_NO_DEVENV_ROOT_INPUT_OVERRIDE"
+
 // InBuild returns `true` if we are inside a Nix build.
 func InBuild() bool {
 	_, inBuild := os.LookupEnv("NIX_BUILD_TOP")
