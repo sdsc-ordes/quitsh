@@ -17,9 +17,6 @@ import (
 const MaxCoroutineConcurrency = 10000
 
 // ExecuteConcurrent executes the DAG concurrent.
-// TODO: Refactor to better length and less nested.
-//
-//nolint:gocognit,funlen
 func ExecuteConcurrent(
 	targetNodes TargetNodeMap,
 	runnerFactory factory.IFactory,

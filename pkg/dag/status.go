@@ -61,7 +61,6 @@ func (s RunnerStatuses) Log() {
 	})
 
 	for _, stat := range s {
-
 		switch stat.Status {
 		case ExecStatusSuccess:
 			statusS = successS

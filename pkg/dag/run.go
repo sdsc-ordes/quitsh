@@ -171,7 +171,7 @@ func executeRunners(
 	var summary Summary
 
 	for _, rD := range allRunners {
-		var stat ExecStatus = ExecStatusNotRun
+		var stat ExecStatus
 
 		log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
 
