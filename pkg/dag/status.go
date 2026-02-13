@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
@@ -14,9 +13,9 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
 )
 
-const ExecStatusSuccess = 0
+const ExecStatusNotRun = 0
 const ExecStatusFailed = 1
-const ExecStatusNotRun = 2
+const ExecStatusSuccess = 2
 
 type (
 	ExecStatus int
@@ -31,25 +30,23 @@ type (
 		RunnerID runner.RegisterID
 	}
 
-	RunnerStatuses []RunnerStatus
+	RunnerStatuses []*RunnerStatus
 
 	Summary struct {
-		lock     sync.Mutex
-		statuses RunnerStatuses
-
+		statuses  RunnerStatuses
 		allErrors error
 	}
 )
 
-func (s *Summary) AddStatus(r RunnerStatus) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	s.statuses = append(s.statuses, r)
-	if r.Error != nil {
-		s.allErrors = errors.Combine(s.allErrors, r.Error)
+// AddStatus adds all runner statuses to the summary.
+func (s *Summary) AddStatus(r ...*RunnerStatus) {
+	for _, stat := range r {
+		s.statuses = append(s.statuses, stat)
+		s.allErrors = errors.Combine(s.allErrors, stat.Error)
 	}
 }
 
+// Log prints the log of the summary.
 func (s RunnerStatuses) Log() {
 	var sb strings.Builder
 	sb.WriteString("Summary:\n")
@@ -59,14 +56,13 @@ func (s RunnerStatuses) Log() {
 	const notRun = "🚫"
 	var statusS string
 
-	slices.SortFunc(s, func(a, b RunnerStatus) int {
+	slices.SortFunc(s, func(a, b *RunnerStatus) int {
 		return cmp.Compare(a.TargetID, b.TargetID)
 	})
 
-	for i := range s {
-		var s = &s[i]
+	for _, stat := range s {
 
-		switch s.Status {
+		switch stat.Status {
 		case ExecStatusSuccess:
 			statusS = successS
 		case ExecStatusNotRun:
@@ -79,10 +75,10 @@ func (s RunnerStatuses) Log() {
 			&sb,
 			"- %v: Component '%v', target id: '%v', step idx: '%v', runner id: '%v'\n",
 			statusS,
-			s.CompName,
-			s.TargetID,
-			s.StepIdx,
-			s.RunnerID,
+			stat.CompName,
+			stat.TargetID,
+			stat.StepIdx,
+			stat.RunnerID,
 		)
 	}
 

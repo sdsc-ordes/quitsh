@@ -37,7 +37,6 @@ func ExecuteConcurrent(
 	tf := taskflow.NewTaskFlow("DAG")
 
 	var buildError error
-	var summary Summary
 
 	tasks := make(map[target.ID]*taskflow.Task, 0)
 	for _, node := range targetNodes {
@@ -51,8 +50,10 @@ func ExecuteConcurrent(
 
 						func(sf *taskflow.Subflow) {
 							e := addRunnerTasks(
-								config, toolchainDispatcher, runnerFactory, rootDir,
-								&summary,
+								config,
+								toolchainDispatcher,
+								runnerFactory,
+								rootDir,
 								sf, node,
 								&node.Target.Steps[stepIdx],
 								stepIdx,
@@ -96,6 +97,10 @@ func ExecuteConcurrent(
 
 	executor.Run(tf).Wait()
 
+	var summary Summary
+	for _, n := range targetNodes {
+		summary.AddStatus(n.Exec.RunnerStatuses...)
+	}
 	summary.statuses.Log()
 
 	return summary.allErrors
@@ -106,7 +111,6 @@ func addRunnerTasks(
 	toolchainDispatcher toolchain.IDispatcher,
 	runnerFactory factory.IFactory,
 	rootDir string,
-	summary *Summary,
 	sf *taskflow.Subflow,
 	node *TargetNode,
 	step *step.Config,
@@ -147,9 +151,9 @@ func addRunnerTasks(
 		n := fmt.Sprintf("%v::step-%v::%v", node.Target.ID, step.Index, runnerIdx)
 
 		logger := log.NewLogger(node.Target.ID.String())
+		status := node.Exec.AddRunnerStatus()
 
-		runnerTask := sf.NewTask(
-			n,
+		runnerTask := sf.NewTask(n,
 			func() {
 				var stat ExecStatus = ExecStatusNotRun
 				var err error
@@ -158,22 +162,24 @@ func addRunnerTasks(
 						err = errors.Combine(err, errors.New("panic in runner task '%v': %v", n, r))
 					}
 
-					if err == nil {
-						stat = ExecStatusSuccess
-					} else {
+					if err != nil {
+						e = errors.AddContext(e,
+							"Runner '%v' for target '%v' failed.",
+							runnerIdx,
+							node.Target.ID)
 						stat = ExecStatusFailed
+					} else {
+						stat = ExecStatusSuccess
 					}
 
-					summary.AddStatus(
-						RunnerStatus{
-							stat,
-							err,
-							node.Comp.Name(),
-							node.Target.ID,
-							step.Index,
-							r.RunnerID,
-						},
-					)
+					*status = RunnerStatus{
+						stat,
+						err,
+						node.Comp.Name(),
+						node.Target.ID,
+						step.Index,
+						r.RunnerID,
+					}
 				}()
 
 				err = ExecuteRunner(
@@ -198,5 +204,5 @@ func addRunnerTasks(
 		runnerTasks[i].Succeed(runnerTasks[i-1])
 	}
 
-	return summary.allErrors
+	return nil
 }
