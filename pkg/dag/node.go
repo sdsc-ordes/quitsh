@@ -5,46 +5,59 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 )
 
-type TargetNode struct {
-	// The target to which this Node belongs.
-	Target *target.Config
+type (
+	TargetNode struct {
+		// The target to which this Node belongs.
+		Target *target.Config
 
-	// Where this target belongs to.
-	Config *component.Config
-	Comp   *component.Component
+		// Where this target belongs to.
+		Config *component.Config
+		Comp   *component.Component
 
-	// The execution priority.
-	// The higher the earlier it should be executed.
-	Priority int
+		// The execution priority.
+		// The higher the earlier it should be executed.
+		Priority int
 
-	// All child nodes which depend on this node.
-	// Forward in execution direction.
-	Forward []*TargetNode
+		// All child nodes which depend on this node.
+		// Forward in execution direction.
+		Forward []*TargetNode
 
-	// All nodes on which this node depends.
-	// Backward in execution direction.
-	Backward []*TargetNode
+		// All nodes on which this node depends.
+		// Backward in execution direction.
+		Backward []*TargetNode
 
-	// Tracking inputs on this node.
-	Inputs TargetNodeChanges
-}
+		// Tracking inputs on this node.
+		Inputs TargetNodeChanges
 
-type TargetNodeChanges struct {
-	// Flag if the inputs for this target have changed.
-	Changed bool
+		// Tracking execution.
+		Exec TargetExec
+	}
 
-	// ChangedByDependency denotes if the target has changed due to a dependency.
-	// If so, then detection of own changed `Paths` are skipped!
-	// Asserts: Can only be `true` if `Changed` is true and also then
-	// `Paths` will be `nil` because we skip own detection.
-	ChangedByDependency bool
+	TargetExec struct {
+		// The target execution status.
+		Status ExecStatus
 
-	// Changed paths for this component.
-	Paths []string
+		// All runner statuses for the steps.
+		RunnerStatuses RunnerStatuses
+	}
 
-	// Changed paths by all parents.
-	AccumulatedPaths []string
-}
+	TargetNodeChanges struct {
+		// Flag if the inputs for this target have changed.
+		Changed bool
+
+		// ChangedByDependency denotes if the target has changed due to a dependency.
+		// If so, then detection of own changed `Paths` are skipped!
+		// Asserts: Can only be `true` if `Changed` is true and also then
+		// `Paths` will be `nil` because we skip own detection.
+		ChangedByDependency bool
+
+		// Changed paths for this component.
+		Paths []string
+
+		// Changed paths by all parents.
+		AccumulatedPaths []string
+	}
+)
 
 // IsChanged returns the overall status if this node is changed.
 func (i *TargetNodeChanges) IsChanged() bool {
@@ -65,4 +78,12 @@ func (i *TargetNodeChanges) All() []string {
 	res = append(res, i.AccumulatedPaths...)
 
 	return res
+}
+
+// AddRunnerStatus adds a runner status.
+func (e *TargetExec) AddRunnerStatus() *RunnerStatus {
+	s := &RunnerStatus{}
+	e.RunnerStatuses = append(e.RunnerStatuses, s)
+
+	return s
 }

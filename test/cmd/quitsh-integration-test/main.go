@@ -59,7 +59,7 @@ func (c *Config) Clone() config.IConfig {
 
 func (c *Config) ExpandEnv() error {
 	c.ValWithEnv = os.ExpandEnv(c.ValWithEnv)
-	log.Info("Replaced ValWithEnv: '%v'", c.ValWithEnv)
+	log.Infof("Replaced ValWithEnv: '%v'", c.ValWithEnv)
 
 	return nil
 }
