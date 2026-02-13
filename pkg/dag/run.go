@@ -19,6 +19,7 @@ import (
 
 type (
 	RunnerData struct {
+		node      *TargetNode
 		comp      *component.Component
 		targetID  target.ID
 		step      *step.Config
@@ -125,6 +126,7 @@ func ExecuteNormal(
 		for runnerIdx, r := range runners {
 			allRunners = append(allRunners,
 				RunnerData{
+					node:      node,
 					comp:      node.Comp,
 					targetID:  node.Target.ID,
 					step:      step,
@@ -162,11 +164,10 @@ func executeRunners(
 ) error {
 	log.Info("Collected runners.", "count", len(allRunners))
 
-	var summary RunnerStatuses
-	var err error
+	var summary Summary
 
 	for _, rD := range allRunners {
-		failed := false
+		var stat ExecStatus = ExecStatusNotRun
 
 		log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
 
@@ -188,25 +189,22 @@ func executeRunners(
 				"Runner '%v' for target '%v' failed.",
 				rD.inst.RunnerID,
 				rD.targetID)
-			failed = true
-			err = errors.Combine(err, e)
 		}
 
-		summary = append(
-			summary,
-			RunnerStatus{
-				failed,
-				rD.comp.Root(),
-				rD.targetID,
-				rD.step.Index,
-				rD.inst.RunnerID,
-			},
+		summary.AddStatus(RunnerStatus{
+			stat,
+			e,
+			rD.comp.Root(),
+			rD.targetID,
+			rD.step.Index,
+			rD.inst.RunnerID,
+		},
 		)
 	}
 
-	summary.Log()
+	summary.statuses.Log()
 
-	return err
+	return summary.allErrors
 }
 
 func ExecuteRunner(
