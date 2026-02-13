@@ -26,12 +26,12 @@ func NewTag(tag string) Tag {
 // Since we parse it as a Go build line `//go:build <expr>` only `_` and `.` are
 // allowed in tags, we allow also "-", which we internally replace with `.`.
 func NewExpr(expr string) (ex Expr, err error) {
-	expr = strings.ReplaceAll(strings.TrimSpace(expr), "-", ".")
-	if expr == "" {
+	ex.expr = strings.ReplaceAll(strings.TrimSpace(expr), "-", ".")
+	if ex.expr == "" {
 		return
 	}
 
-	ex.ex, err = constraint.Parse("//go:build " + expr)
+	ex.ex, err = constraint.Parse("//go:build " + ex.expr)
 
 	return
 }

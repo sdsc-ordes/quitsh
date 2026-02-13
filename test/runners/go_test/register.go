@@ -28,7 +28,20 @@ func Register(
 			DefaultToolchain:      "go",
 		})
 	err = errors.Combine(err, e)
+
 	e = factory.RegisterToKey(runner.NewRegisterKey("build", "go-custom"), GoBuildRunnerID)
+	err = errors.Combine(err, e)
+
+	e = factory.Register(
+		GoLintRunnerID,
+		runner.RunnerData{
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoLintRunner(config)
+			},
+			DefaultToolchain: "go",
+		})
+	err = errors.Combine(err, e)
+	e = factory.RegisterToKey(runner.NewRegisterKey("lint", "go-custom"), GoLintRunnerID)
 	err = errors.Combine(err, e)
 
 	return err
