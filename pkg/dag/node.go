@@ -30,15 +30,18 @@ type (
 		Inputs TargetNodeChanges
 
 		// Tracking execution.
-		Exec TargetExec
+		Execution TargetExecStatus
 	}
 
-	TargetExec struct {
+	TargetExecStatus struct {
 		// The target execution status.
 		Status ExecStatus
 
+		// Marking the target to not run and skip.
+		Cancel bool
+
 		// All runner statuses for the steps.
-		RunnerStatuses RunnerStatuses
+		Runners RunnerStatuses
 	}
 
 	TargetNodeChanges struct {
@@ -64,7 +67,7 @@ func (i *TargetNodeChanges) IsChanged() bool {
 	return i.Changed || i.ChangedByDependency
 }
 
-// Propagate propagate change state from `other` to `i`.
+// Propagate propagates change state from `other` to `i`.
 func (i *TargetNodeChanges) Propagate(other *TargetNodeChanges) {
 	i.ChangedByDependency = i.ChangedByDependency || other.Changed
 	i.AccumulatedPaths = append(i.AccumulatedPaths, other.AccumulatedPaths...)
@@ -81,9 +84,18 @@ func (i *TargetNodeChanges) All() []string {
 }
 
 // AddRunnerStatus adds a runner status.
-func (e *TargetExec) AddRunnerStatus() *RunnerStatus {
+func (e *TargetExecStatus) AddRunnerStatus() *RunnerStatus {
 	s := &RunnerStatus{}
-	e.RunnerStatuses = append(e.RunnerStatuses, s)
+	e.Runners = append(e.Runners, s)
 
 	return s
+}
+
+// PropagateExecStatus propagates the execution status forward.
+func (n *TargetNode) PropagateExecStatus() {
+	for _, f := range n.Forward {
+		if n.Execution.Status != ExecStatusSuccess {
+			f.Execution.Cancel = true
+		}
+	}
 }

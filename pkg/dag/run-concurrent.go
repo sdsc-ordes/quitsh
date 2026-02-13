@@ -96,13 +96,14 @@ func ExecuteConcurrent(
 
 	var summary Summary
 	for _, n := range targetNodes {
-		summary.AddStatus(n.Exec.RunnerStatuses...)
+		summary.AddStatus(n.Execution.Runners...)
 	}
 	summary.statuses.Log()
 
 	return summary.allErrors
 }
 
+//nolint:funlen
 func addRunnerTasks(
 	config config.IConfig,
 	toolchainDispatcher toolchain.IDispatcher,
@@ -115,83 +116,108 @@ func addRunnerTasks(
 	opt *execOption,
 ) error {
 	var runners []factory.RunnerInstance
-	var e error
+	{
+		var e error
+		if !step.Include.TagExpr.Matches(opt.Tags) {
+			log.Debugf(
+				"Target: '%v' -> step idx: '%v' excluded: expr '%v' "+
+					"does not match for tags '%q'",
+				node.Target.ID, stepIdx,
+				step.Include.TagExpr.String(), opt.Tags)
 
-	if !step.Include.TagExpr.Matches(opt.Tags) {
-		log.Debugf(
-			"Target: '%v' -> step idx: '%v' excluded: expr '%v' "+
-				"does not match for tags '%q'",
-			node.Target.ID, stepIdx,
-			step.Include.TagExpr.String(), opt.Tags)
+			return nil
+		}
 
-		return nil
+		if step.RunnerID != "" {
+			runners, e = runnerFactory.CreateByID(
+				step.RunnerID, step.Toolchain, step.ConfigRaw)
+		} else if step.Runner != "" {
+			runners, e = runnerFactory.CreateByKey(
+				runner.NewRegisterKey(node.Target.Stage, step.Runner),
+				step.Toolchain,
+				step.ConfigRaw,
+			)
+		}
+
+		if e != nil {
+			return errors.AddContext(e,
+				"could not instantiate runner for target '%v'", node.Target.ID)
+		}
 	}
 
-	if step.RunnerID != "" {
-		runners, e = runnerFactory.CreateByID(
-			step.RunnerID, step.Toolchain, step.ConfigRaw)
-	} else if step.Runner != "" {
-		runners, e = runnerFactory.CreateByKey(
-			runner.NewRegisterKey(node.Target.Stage, step.Runner),
-			step.Toolchain,
-			step.ConfigRaw,
-		)
-	}
+	newTask := func(
+		name string,
+		logger log.ILog,
+		runner factory.RunnerInstance,
+		status *RunnerStatus,
+		runnerIdx int) func() {
+		return func() {
+			*status = RunnerStatus{
+				ExecStatusNotRun,
+				nil,
+				node.Comp.Name(),
+				node.Target.ID,
+				step.Index,
+				runner.RunnerID,
+			}
 
-	if e != nil {
-		return errors.AddContext(e,
-			"could not instantiate runner for target '%v'", node.Target.ID)
+			if node.Execution.Cancel {
+				log.Debugf(
+					"Runner '%v' for target '%v' is cancelled by dependency.",
+					runnerIdx,
+					node.Target.ID,
+				)
+
+				node.PropagateExecStatus()
+
+				return
+			}
+
+			var err error
+			defer func() {
+				if r := recover(); r != nil {
+					err = errors.Combine(
+						err, errors.New("panic in runner task '%v': %v",
+							name, r))
+				}
+
+				if err != nil {
+					err = errors.AddContext(err,
+						"Runner '%v' for target '%v' failed.",
+						runnerIdx,
+						node.Target.ID)
+					status.Error = err
+					status.Status = ExecStatusFailed
+				} else {
+					status.Status = ExecStatusSuccess
+				}
+
+				node.PropagateExecStatus()
+			}()
+
+			err = ExecuteRunner(
+				logger,
+				node.Comp,
+				node.Target.ID,
+				step.Index,
+				runnerIdx,
+				runner.Runner,
+				runner.Toolchain,
+				toolchainDispatcher,
+				config,
+				rootDir,
+			)
+		}
 	}
 
 	runnerTasks := []*taskflow.Task{}
-	for runnerIdx, r := range runners {
+	for runnerIdx, runner := range runners {
 		n := fmt.Sprintf("%v::step-%v::%v", node.Target.ID, step.Index, runnerIdx)
 
 		logger := log.NewLogger(node.Target.ID.String())
-		status := node.Exec.AddRunnerStatus()
+		status := node.Execution.AddRunnerStatus()
 
-		runnerTask := sf.NewTask(n,
-			func() {
-				var stat ExecStatus = ExecStatusNotRun
-				var err error
-				defer func() {
-					if r := recover(); r != nil {
-						err = errors.Combine(err, errors.New("panic in runner task '%v': %v", n, r))
-					}
-
-					if err != nil {
-						e = errors.AddContext(e,
-							"Runner '%v' for target '%v' failed.",
-							runnerIdx,
-							node.Target.ID)
-						stat = ExecStatusFailed
-					} else {
-						stat = ExecStatusSuccess
-					}
-
-					*status = RunnerStatus{
-						stat,
-						err,
-						node.Comp.Name(),
-						node.Target.ID,
-						step.Index,
-						r.RunnerID,
-					}
-				}()
-
-				err = ExecuteRunner(
-					logger,
-					node.Comp,
-					node.Target.ID,
-					step.Index,
-					runnerIdx,
-					r.Runner,
-					r.Toolchain,
-					toolchainDispatcher,
-					config,
-					rootDir,
-				)
-			})
+		runnerTask := sf.NewTask(n, newTask(n, logger, runner, status, runnerIdx))
 
 		runnerTasks = append(runnerTasks, runnerTask)
 	}

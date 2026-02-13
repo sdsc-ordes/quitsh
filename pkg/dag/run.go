@@ -125,7 +125,7 @@ func ExecuteNormal(
 		}
 
 		for runnerIdx, r := range runners {
-			status := node.Exec.AddRunnerStatus()
+			status := node.Execution.AddRunnerStatus()
 
 			allRunners = append(allRunners,
 				RunnerData{
@@ -171,44 +171,51 @@ func executeRunners(
 	var summary Summary
 
 	for _, rD := range allRunners {
-		var stat ExecStatus
-
-		log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
-
-		e := ExecuteRunner(
-			log.NewLogger(rD.targetID.String()),
-			rD.comp,
+		*rD.status = RunnerStatus{
+			ExecStatusNotRun,
+			nil,
+			rD.comp.Name(),
 			rD.targetID,
 			rD.step.Index,
-			rD.runnerIdx,
-			rD.inst.Runner,
-			rD.inst.Toolchain,
-			toolchainDispatcher,
-			config,
-			rootDir,
-		)
-
-		if e != nil {
-			e = errors.AddContext(e,
-				"Runner '%v' for target '%v' failed.",
-				rD.inst.RunnerID,
-				rD.targetID)
-			stat = ExecStatusFailed
-		} else {
-			stat = ExecStatusSuccess
+			rD.inst.RunnerID,
 		}
 
-		*rD.status =
-			RunnerStatus{
-				stat,
-				e,
-				rD.comp.Root(),
+		if rD.node.Execution.Cancel {
+			log.Debugf(
+				"Runner '%v' for target '%v' is cancelled by dependency.",
+				rD.runnerIdx,
+				rD.node.Target.ID,
+			)
+		} else {
+			log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
+
+			e := ExecuteRunner(
+				log.NewLogger(rD.targetID.String()),
+				rD.comp,
 				rD.targetID,
 				rD.step.Index,
-				rD.inst.RunnerID,
+				rD.runnerIdx,
+				rD.inst.Runner,
+				rD.inst.Toolchain,
+				toolchainDispatcher,
+				config,
+				rootDir,
+			)
+
+			if e != nil {
+				e = errors.AddContext(e,
+					"Runner '%v' for target '%v' failed.",
+					rD.inst.RunnerID,
+					rD.targetID)
+				rD.status.Error = e
+				rD.status.Status = ExecStatusFailed
+			} else {
+				rD.status.Status = ExecStatusSuccess
 			}
+		}
 
 		summary.AddStatus(rD.status)
+		rD.node.PropagateExecStatus()
 	}
 
 	summary.statuses.Log()
