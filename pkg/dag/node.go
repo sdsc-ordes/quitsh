@@ -104,7 +104,7 @@ func (n *TargetNode) Status() ExecStatus {
 func (n *TargetNode) PropagateExecStatus() {
 	for _, f := range n.Forward {
 		if n.Status() != ExecStatusSuccess {
-			log.Debugf("Node '%v' propagates 'cancel' to '%v'.",
+			log.Tracef("Node '%v' propagates 'cancel' to '%v'.",
 				n.Target.ID, f.Target.ID)
 			f.Execution.Cancel = true
 		}
