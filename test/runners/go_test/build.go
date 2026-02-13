@@ -3,6 +3,8 @@
 package gorunner
 
 import (
+	"errors"
+	"os"
 	"path"
 
 	"github.com/sdsc-ordes/quitsh/pkg/common"
@@ -38,7 +40,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()
 
-	log.Info("Hello from integration test Go runner.", "component", comp.Name())
+	log.Info("Hello from integration test Go build runner.", "component", comp.Name())
 	fs.AssertDirs(comp.OutBuildBinDir())
 
 	log.Infof("OutputDir: %v", comp.OutDir())
@@ -54,6 +56,10 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 
 	if r.settings.BuildType == common.BuildRelease {
 		log.Info("Hurrey building release version")
+	}
+
+	if os.Getenv("MAKE_RUNNER_FAIL") == "true" {
+		return errors.New("runner set to deliberately fail for tests")
 	}
 
 	log.Info("Run Go install.")

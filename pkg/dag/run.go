@@ -125,13 +125,11 @@ func ExecuteNormal(
 		}
 
 		for runnerIdx, r := range runners {
-			status := node.Exec.AddRunnerStatus()
-
 			allRunners = append(allRunners,
 				RunnerData{
 					node:      node,
 					comp:      node.Comp,
-					status:    status,
+					status:    node.Execution.AddRunnerStatus(),
 					targetID:  node.Target.ID,
 					step:      step,
 					runnerIdx: runnerIdx,
@@ -171,44 +169,51 @@ func executeRunners(
 	var summary Summary
 
 	for _, rD := range allRunners {
-		var stat ExecStatus
-
-		log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
-
-		e := ExecuteRunner(
-			log.NewLogger(rD.targetID.String()),
-			rD.comp,
+		*rD.status = RunnerStatus{
+			ExecStatusNotRun,
+			nil,
+			rD.comp.Name(),
 			rD.targetID,
 			rD.step.Index,
-			rD.runnerIdx,
-			rD.inst.Runner,
-			rD.inst.Toolchain,
-			toolchainDispatcher,
-			config,
-			rootDir,
-		)
-
-		if e != nil {
-			e = errors.AddContext(e,
-				"Runner '%v' for target '%v' failed.",
-				rD.inst.RunnerID,
-				rD.targetID)
-			stat = ExecStatusFailed
-		} else {
-			stat = ExecStatusSuccess
+			rD.inst.RunnerID,
 		}
 
-		*rD.status =
-			RunnerStatus{
-				stat,
-				e,
-				rD.comp.Root(),
+		if rD.node.Execution.Cancel {
+			log.Debugf(
+				"Target '%v' is cancelled by prev. target. Skip runner '%v'",
+				rD.inst.RunnerID,
+				rD.node.Target.ID,
+			)
+		} else {
+			log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
+
+			e := ExecuteRunner(
+				log.NewLogger(rD.targetID.String()),
+				rD.comp,
 				rD.targetID,
 				rD.step.Index,
-				rD.inst.RunnerID,
+				rD.runnerIdx,
+				rD.inst.Runner,
+				rD.inst.Toolchain,
+				toolchainDispatcher,
+				config,
+				rootDir,
+			)
+
+			if e != nil {
+				e = errors.AddContext(e,
+					"Runner '%v' for target '%v' failed.",
+					rD.inst.RunnerID,
+					rD.targetID)
+				rD.status.Error = e
+				rD.status.Status = ExecStatusFailed
+			} else {
+				rD.status.Status = ExecStatusSuccess
 			}
+		}
 
 		summary.AddStatus(rD.status)
+		rD.node.PropagateExecStatus()
 	}
 
 	summary.statuses.Log()
@@ -292,7 +297,7 @@ func ExecuteRunner(
 		err := toolchainDispatcher.Run(rootDir, &dArgs, config)
 
 		if err != nil {
-			log.Info("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
+			log.Warn("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
 
 			return err
 		}

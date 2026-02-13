@@ -74,10 +74,10 @@ func TestCLIExecTarget(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
 	assert.NotContains(t, stderr, "Hurrey building release version")
 	assert.NotContains(t, stderr, "excluded-step-should-not-be-run")
-	assert.Contains(t, stderr, "🌻")
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
@@ -95,10 +95,10 @@ func TestCLIExecTargetWithExcludedStep(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
 	assert.NotContains(t, stderr, "Hurrey building release version")
 	assert.Contains(t, stderr, "excluded-step-should-not-be-run")
-	assert.Contains(t, stderr, "🌻")
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
@@ -115,9 +115,9 @@ func TestCLISetConfigValues(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
 	assert.Contains(t, stderr, "Hurrey building release version")
-	assert.Contains(t, stderr, "🌻")
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
@@ -140,9 +140,9 @@ build:
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
 	assert.Contains(t, stderr, "Hurrey building release version")
-	assert.Contains(t, stderr, "🌻")
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
@@ -174,8 +174,29 @@ func TestCLIExecTarget2(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
-	assert.Contains(t, stderr, "🌻")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
+	assert.Regexp(t, "🌻.*component-a::build-banana", stderr)
+	assert.NotContains(t, stderr, "Nix set argument: '")
+	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLIExecTargetMulti(t *testing.T) {
+	cli := setup(t).Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"component-a::build",
+		"component-a::lint",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
+	assert.Regexp(t, "🌻.*component-a::build-banana", stderr)
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
+	assert.Regexp(t, "🌻.*component-a::lint", stderr)
 	assert.NotContains(t, stderr, "Nix set argument: '")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
@@ -193,8 +214,8 @@ func TestCLIExecTarget2EnvAndGlobalOutput(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
-	assert.Contains(t, stderr, "🌻")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
+	assert.Regexp(t, "🌻.*component-a::build-banana", stderr)
 	assert.NotContains(t, stderr, "Nix set argument: '")
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/.global/.output/component-a/build/bin/cmd"))
 }
@@ -207,15 +228,38 @@ func TestCLIExecTargetParallel(t *testing.T) {
 		"--log-level",
 		"debug",
 		"--parallel",
-		"component-a::build-banana",
+		"component-a::build",
 		"component-a::lint",
 	)
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
-	assert.Contains(t, stderr, "🌻")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
+	assert.Regexp(t, "🌻.*component-a::build-banana", stderr)
+	assert.Regexp(t, "🌻.*component-a::build", stderr)
+	assert.Regexp(t, "🌻.*component-a::lint", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
+}
+
+func TestCLIExecTargetParallelCancel(t *testing.T) {
+	cli := setup(t).
+		Env("MAKE_RUNNER_FAIL=true").
+		Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"exec-target",
+		"--log-level",
+		"debug",
+		"--parallel",
+		"component-a::build",
+		"component-a::lint",
+	)
+
+	require.Error(t, err, "Stderr:\n"+stderr)
+
+	assert.Regexp(t, "❌.*component-a::build-banana", stderr)
+	assert.Regexp(t, "🚫.*component-a::build", stderr)
+	assert.Regexp(t, "🌻.*component-a::lint", stderr)
 }
 
 func TestCLIExecTarget2Arg(t *testing.T) {
@@ -232,8 +276,8 @@ func TestCLIExecTarget2Arg(t *testing.T) {
 
 	require.NoError(t, err, "Stderr:\n"+stderr)
 
-	assert.Contains(t, stderr, "Hello from integration test Go runner")
-	assert.Contains(t, stderr, "🌻")
+	assert.Contains(t, stderr, "Hello from integration test Go build runner")
+	assert.Regexp(t, "🌻.*component-a::build-banana", stderr)
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 	assert.Contains(t, stderr, "Nix set argument: 'banana'")
 }
