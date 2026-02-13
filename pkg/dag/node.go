@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/component"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
 type (
@@ -34,9 +35,6 @@ type (
 	}
 
 	TargetExecStatus struct {
-		// The target execution status.
-		Status ExecStatus
-
 		// Marking the target to not run and skip.
 		Cancel bool
 
@@ -91,10 +89,23 @@ func (e *TargetExecStatus) AddRunnerStatus() *RunnerStatus {
 	return s
 }
 
+// Status determines the overall status of the target.
+func (n *TargetNode) Status() ExecStatus {
+	for _, r := range n.Execution.Runners {
+		if r.Status != ExecStatusSuccess {
+			return ExecStatusFailed
+		}
+	}
+
+	return ExecStatusSuccess
+}
+
 // PropagateExecStatus propagates the execution status forward.
 func (n *TargetNode) PropagateExecStatus() {
 	for _, f := range n.Forward {
-		if n.Execution.Status != ExecStatusSuccess {
+		if n.Status() != ExecStatusSuccess {
+			log.Debugf("Node '%v' propagates 'cancel' to '%v'.",
+				n.Target.ID, f.Target.ID)
 			f.Execution.Cancel = true
 		}
 	}

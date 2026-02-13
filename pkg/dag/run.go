@@ -125,13 +125,11 @@ func ExecuteNormal(
 		}
 
 		for runnerIdx, r := range runners {
-			status := node.Execution.AddRunnerStatus()
-
 			allRunners = append(allRunners,
 				RunnerData{
 					node:      node,
 					comp:      node.Comp,
-					status:    status,
+					status:    node.Execution.AddRunnerStatus(),
 					targetID:  node.Target.ID,
 					step:      step,
 					runnerIdx: runnerIdx,
@@ -182,8 +180,8 @@ func executeRunners(
 
 		if rD.node.Execution.Cancel {
 			log.Debugf(
-				"Runner '%v' for target '%v' is cancelled by dependency.",
-				rD.runnerIdx,
+				"Target '%v' is cancelled by prev. target. Skip runner '%v'",
+				rD.inst.RunnerID,
 				rD.node.Target.ID,
 			)
 		} else {
@@ -299,7 +297,7 @@ func ExecuteRunner(
 		err := toolchainDispatcher.Run(rootDir, &dArgs, config)
 
 		if err != nil {
-			log.Info("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
+			log.Warn("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
 
 			return err
 		}
