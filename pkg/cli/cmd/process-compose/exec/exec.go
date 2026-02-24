@@ -6,6 +6,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	processcompose "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
+	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/spf13/cobra"
 )
 
@@ -30,6 +31,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 			}
 
 			_, err := RunExec(
+				log.Global(),
 				cl.RootDir(),
 				stArgs.flakeDir,
 				stArgs.attrPath,
@@ -50,6 +52,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
 func RunExec(
+	log log.ILog,
 	rootDir string,
 	flakeDir string,
 	devenvShellAttrPath string,
@@ -59,9 +62,9 @@ func RunExec(
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
-		pcCtx, err = processcompose.StartFromInstallable(rootDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.StartFromInstallable(log, rootDir, devenvShellAttrPath, true)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(log, rootDir, flakeDir, devenvShellAttrPath, true)
 	}
 
 	if err != nil {

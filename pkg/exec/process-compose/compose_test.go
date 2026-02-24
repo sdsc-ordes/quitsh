@@ -24,7 +24,7 @@ func TestProcessComposeDevenv(t *testing.T) {
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
 	require.NoError(t, err)
 
-	pcCtx, err := Start(d, d, "mynamespace.shells.test", false)
+	pcCtx, err := Start(logger, d, d, "mynamespace.shells.test", false)
 	require.NoError(t, err)
 	defer func() {
 		log, e := os.ReadFile(pcCtx.LogFile())
@@ -59,7 +59,7 @@ func TestProcessComposeDevenvTimeout(t *testing.T) {
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
 	require.NoError(t, err)
 
-	pcCtx, err := Start(d, d, "mynamespace.shells.test", false)
+	pcCtx, err := Start(logger, d, d, "mynamespace.shells.test", false)
 	require.NoError(t, err)
 	defer func() {
 		log, e := os.ReadFile(pcCtx.LogFile())

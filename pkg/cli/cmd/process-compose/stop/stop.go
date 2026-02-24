@@ -58,12 +58,13 @@ func StopService(
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
 		pcCtx, err = processcompose.StartFromInstallable(
+			log.Global(),
 			rootDir,
 			devenvShellAttrPath,
 			true,
 		)
 	} else {
-		pcCtx, err = processcompose.Start(rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(log.Global(), rootDir, flakeDir, devenvShellAttrPath, true)
 	}
 
 	if err != nil {

@@ -51,6 +51,7 @@ type (
 // installable, e.g. a flake output attribute path like
 // `./a/b/c#mynamespace.shells.test-dbs`.
 func Start(
+	log log.ILog,
 	rootDir string,
 	flakeDir string,
 	devShellAttrPath string,
@@ -58,7 +59,7 @@ func Start(
 ) (pc ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
-	return StartFromInstallable(rootDir, devShellAttrPath, mustBeStarted)
+	return StartFromInstallable(log, rootDir, devShellAttrPath, mustBeStarted)
 }
 
 // StartFromInstallable starts the process compose from a Nix
@@ -67,6 +68,7 @@ func Start(
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
 func StartFromInstallable(
+	log log.ILog,
 	rootDir string,
 	devShellInstallable string,
 	mustBeStarted bool,
@@ -111,6 +113,7 @@ func StartFromInstallable(
 		rootDir, devShellInstallable).BaseArgs(procCompExe))
 
 	pc = ProcessComposeCtx{
+		log:        log,
 		CmdContext: build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		socket:     socketPath,
 		tempDir:    dir,
@@ -402,6 +405,6 @@ func buildProcComposeConfigFile(installable string, rootDir string) (string, err
 }
 
 // SetLog sets the logger on the context.
-func (ctx *ProcessComposeCtx) SetLog(log log.ILog) {
-	ctx.log = log
+func (pc *ProcessComposeCtx) SetLog(log log.ILog) {
+	pc.log = log
 }

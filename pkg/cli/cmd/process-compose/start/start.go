@@ -112,12 +112,13 @@ func startProcessCompose(
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
 		pcCtx, err = pc.StartFromInstallable(
+			log.Global(),
 			rootDir,
 			devenvShellAttrPath,
 			false,
 		)
 	} else {
-		pcCtx, err = pc.Start(rootDir, flakeDir, devenvShellAttrPath, false)
+		pcCtx, err = pc.Start(log.Global(), rootDir, flakeDir, devenvShellAttrPath, false)
 	}
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
