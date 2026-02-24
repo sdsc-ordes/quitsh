@@ -72,7 +72,7 @@ func (s RunnerStatuses) Log() {
 
 		fmt.Fprintf(
 			&sb,
-			"- %v: Component '%v', target id: '%v', step idx: '%v', runner id: '%v'\n",
+			"  • %v: Component '%v', target id: '%v', step idx: '%v', runner id: '%v'\n",
 			statusS,
 			stat.CompName,
 			stat.TargetID,
