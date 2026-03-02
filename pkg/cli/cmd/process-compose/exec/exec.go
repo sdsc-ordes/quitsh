@@ -48,9 +48,8 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	parent.AddCommand(startCmd)
 }
 
-// RunExec starts the process-compose services from `flake.nix` in `flakeDir`
-// defined in the installable `devenvShellInstallable`.
-// You can wait for the processes names to be running with `waitFor`.
+// RunExec runs process-compose commands on the instance
+// defined in `devenvShellAttrPath`.
 func RunExec(
 	log log.ILog,
 	rootDir string,
@@ -62,9 +61,18 @@ func RunExec(
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
-		pcCtx, err = processcompose.StartFromInstallable(log, rootDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.StartFromInstallable(
+			log,
+			rootDir,
+			devenvShellAttrPath,
+			processcompose.WithMustBeStarted(true))
 	} else {
-		pcCtx, err = processcompose.Start(log, rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(
+			log,
+			rootDir,
+			flakeDir,
+			devenvShellAttrPath,
+			processcompose.WithMustBeStarted(true))
 	}
 
 	if err != nil {

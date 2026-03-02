@@ -61,10 +61,15 @@ func StopService(
 			log.Global(),
 			rootDir,
 			devenvShellAttrPath,
-			true,
+			processcompose.WithMustBeStarted(true),
 		)
 	} else {
-		pcCtx, err = processcompose.Start(log.Global(), rootDir, flakeDir, devenvShellAttrPath, true)
+		pcCtx, err = processcompose.Start(
+			log.Global(),
+			rootDir,
+			flakeDir,
+			devenvShellAttrPath,
+			processcompose.WithMustBeStarted(true))
 	}
 
 	if err != nil {

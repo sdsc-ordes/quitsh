@@ -40,6 +40,13 @@ type (
 		Name  string
 		State ProcessState
 	}
+
+	StartOption func(*startOpts) error
+
+	startOpts struct {
+		socketPathFile string
+		mustBeStarted  bool
+	}
 )
 
 // Start starts the process compose from a
@@ -55,11 +62,11 @@ func Start(
 	rootDir string,
 	flakeDir string,
 	devShellAttrPath string,
-	mustBeStarted bool,
+	opts ...StartOption,
 ) (pc ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
-	return StartFromInstallable(log, rootDir, devShellAttrPath, mustBeStarted)
+	return StartFromInstallable(log, rootDir, devShellAttrPath, opts...)
 }
 
 // StartFromInstallable starts the process compose from a Nix
@@ -67,12 +74,20 @@ func Start(
 // which must be a `devenv` shell).
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
+//
+//nolint:funlen
 func StartFromInstallable(
 	log log.ILog,
 	rootDir string,
 	devShellInstallable string,
-	mustBeStarted bool,
+	opts ...StartOption,
 ) (pc ProcessComposeCtx, err error) {
+	var o startOpts
+	err = o.Apply(opts...)
+	if err != nil {
+		return pc, err
+	}
+
 	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
 	if err != nil {
 		return pc, err
@@ -128,6 +143,19 @@ func StartFromInstallable(
 		"socketPath", socketPath,
 		"logFile", logFile)
 
+	// Write the socket path to the file
+	if o.socketPathFile != "" {
+		log.Infof("Write socket path file '%s'.", o.socketPathFile)
+		err = os.WriteFile(o.socketPathFile, []byte(pc.Socket()), fs.DefaultPermissionsFile)
+		if err != nil {
+			return pc, errors.AddContext(
+				err,
+				"Could not write socket path to file '%s'.",
+				o.socketPathFile,
+			)
+		}
+	}
+
 	// Start the process compose.
 	// Attach if the socket path does not exist
 	// (the script already does it)
@@ -137,7 +165,7 @@ func StartFromInstallable(
 
 		return pc, nil
 	} else {
-		if mustBeStarted {
+		if o.mustBeStarted {
 			return pc, errors.New("The process-compose instance must be started already but "+
 				"socket '%s' is not existing.", socketPath)
 		}
@@ -407,4 +435,34 @@ func buildProcComposeConfigFile(installable string, rootDir string) (string, err
 // SetLog sets the logger on the context.
 func (pc *ProcessComposeCtx) SetLog(log log.ILog) {
 	pc.log = log
+}
+
+// Apply applies all start options.
+func (c *startOpts) Apply(options ...StartOption) error {
+	for _, f := range options {
+		if err := f(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// WithMustBeStarted only checks that the process-compose
+// is started on the socket and does not start it.
+func WithMustBeStarted(value bool) StartOption {
+	return func(o *startOpts) error {
+		o.mustBeStarted = value
+
+		return nil
+	}
+}
+
+// WithSocketPathFile writes the socket path to the file `file`.
+func WithSocketPathFile(file string) StartOption {
+	return func(o *startOpts) error {
+		o.socketPathFile = file
+
+		return nil
+	}
 }

@@ -115,10 +115,16 @@ func startProcessCompose(
 			log.Global(),
 			rootDir,
 			devenvShellAttrPath,
-			false,
+			pc.WithMustBeStarted(false),
 		)
 	} else {
-		pcCtx, err = pc.Start(log.Global(), rootDir, flakeDir, devenvShellAttrPath, false)
+		pcCtx, err = pc.Start(
+			log.Global(),
+			rootDir,
+			flakeDir,
+			devenvShellAttrPath,
+			pc.WithMustBeStarted(false),
+		)
 	}
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
@@ -129,11 +135,13 @@ func startProcessCompose(
 
 	var conds []pc.ProcessCond
 	for i := range waitForRunning {
-		conds = append(conds, pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
+		conds = append(conds,
+			pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
 	}
 
 	for i := range waitForReady {
-		conds = append(conds, pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
+		conds = append(conds,
+			pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
 	}
 
 	if len(conds) != 0 {
