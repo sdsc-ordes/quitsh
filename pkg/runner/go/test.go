@@ -75,7 +75,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		return err
 	}
 
-	flags, tagArgs := GetBuildFlags(
+	flags, tagArgs, _ := GetBuildFlags(
 		log,
 		comp.Root(),
 		r.settings.BuildType(),

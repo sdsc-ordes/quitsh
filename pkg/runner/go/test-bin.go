@@ -54,7 +54,7 @@ func buildBinary(
 			"GOWORK=off").
 		Build()
 
-	flags, tagArgs := GetBuildFlags(
+	flags, _, tagArgsGen := GetBuildFlags(
 		log,
 		comp.Root(),
 		setts.BuildType(),
@@ -69,7 +69,7 @@ func buildBinary(
 	)
 
 	log.Info("Run Go generate.")
-	cmd := append([]string{"generate"}, tagArgs...)
+	cmd := append([]string{"generate"}, tagArgsGen...)
 	cmd = append(cmd, "./...")
 	err := goctx.Check(cmd...)
 	if err != nil {
@@ -109,7 +109,7 @@ func testBinary(
 		Env(envs...).
 		Build()
 
-	flags, _ := GetBuildFlags(
+	flags, _, _ := GetBuildFlags(
 		log,
 		comp.Root(),
 		setts.BuildType(),

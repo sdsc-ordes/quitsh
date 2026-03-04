@@ -25,9 +25,10 @@ func GetBuildFlags(
 	versionModule string,
 	buildTags []string,
 	isTest bool,
-) (flags []string, tagArgs []string) {
+) (flags []string, tagArgs []string, tagArgsGen []string) {
 	flags = []string{"-C", compDir}
 
+	// Tags for building.
 	bTags := append([]string{}, buildTags...)
 	var ldFlags []string
 
@@ -90,8 +91,14 @@ func GetBuildFlags(
 
 	// Append the environment tag.
 	bTags = append(bTags, envType.String())
+
+	// Tags for generating.
+	gTags := append([]string{"generate"}, bTags...)
+
 	if len(bTags) != 0 {
 		tagArgs = append(tagArgs, "--tags", strings.Join(bTags, ","))
+		tagArgsGen = append(tagArgsGen, "--tags", strings.Join(gTags, ","))
+
 		flags = append(flags, tagArgs...)
 	}
 	if len(ldFlags) != 0 {
@@ -105,5 +112,5 @@ func GetBuildFlags(
 
 	log.Info("Build flags.", "flags", flags)
 
-	return flags, tagArgs
+	return flags, tagArgs, tagArgsGen
 }

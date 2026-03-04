@@ -92,7 +92,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	}
 
 	// Build everything into `outputDir`.
-	flags, tagArgs := GetBuildFlags(
+	flags, _, tagArgsGen := GetBuildFlags(
 		log,
 		comp.Root(),
 		r.settings.BuildType(),
@@ -107,7 +107,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	)
 
 	log.Info("Run Go generate.")
-	cmd := append([]string{"generate"}, tagArgs...)
+	cmd := append([]string{"generate"}, tagArgsGen...)
 	cmd = append(cmd, "./...")
 	err = goctx.Check(cmd...)
 	if err != nil {
