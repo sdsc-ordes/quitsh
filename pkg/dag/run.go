@@ -276,6 +276,8 @@ func ExecuteRunner(
 		err = runner.Run(&ctx)
 
 		if err != nil {
+			log.ErrorE(err, "Runner not successful.", "runner", runner.ID(), "target", targetID)
+
 			return err
 		}
 
