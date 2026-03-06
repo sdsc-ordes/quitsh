@@ -220,7 +220,7 @@ func (pc *ProcessComposeCtx) Stop() error {
 
 // WaitTill checks if processes in the process compose is running.
 //
-//nolint:gocognit // The goroutine polling is fairily simple to understand.
+//nolint:gocognit,funlen // The goroutine polling is fairily simple to understand.
 func (pc *ProcessComposeCtx) WaitTill(
 	ctx context.Context,
 	log log.ILog,
@@ -249,6 +249,13 @@ func (pc *ProcessComposeCtx) WaitTill(
 		case <-ctx.Done():
 			return false, nil
 		default:
+			if !fs.Exists(pc.Socket()) {
+				log.Warnf("Socket file '%s' does not yet exist, waiting for it.",
+					pc.Socket())
+
+				break
+			}
+
 			var js string
 			js, err = pc.Get("list", "-o", "json")
 			if err != nil {

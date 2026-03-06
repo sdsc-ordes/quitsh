@@ -23,7 +23,7 @@ func trace(msg string, args ...any) {
 type (
 	PathFilter func(path string, info os.DirEntry) bool
 
-	// Options to pass to various query function.
+	// FindOptions are options to pass to various query function.
 	FindOptions func(opts *queryOptions) error
 
 	queryOptions struct {
@@ -144,7 +144,7 @@ func (o *queryOptions) Apply(opts []FindOptions) error {
 	return nil
 }
 
-// Match a string `name` by some include and exclude glob patterns (doublestar allowed).
+// MatchByPatterns matches a string `name` by some include and exclude glob patterns (doublestar allowed).
 // All errors of `doublestar.ErrBadPattern` will be ignored for performance reason.
 // If `includeGlobs` is empty, it acts as `*` include all.
 func MatchByPatterns(s string, includeGlobs, excludeGlobs []string) bool {
