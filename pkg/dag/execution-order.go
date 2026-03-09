@@ -950,21 +950,22 @@ func WithTargetsByStageFromComponents(
 			)
 		}
 
+		// We always need a selection.
+		if o.targetSelection == nil {
+			s := set.NewUnordered[target.ID]()
+			o.targetSelection = &s
+		}
+
 		for _, comp := range comps {
 			c := comp.Config()
 			for _, tgt := range c.Targets {
 				if stageFilter != "" && tgt.Stage != stageFilter {
-					log.Debugf("Component '%v' does not matches stage.", tgt.ID)
+					log.Debugf("Target '%v' does not matches stage '%v'.", tgt.ID, stageFilter)
 
 					continue
 				}
 
-				log.Debugf("Component '%v' matches stage.", tgt.ID)
-
-				if o.targetSelection == nil {
-					s := set.NewUnordered[target.ID]()
-					o.targetSelection = &s
-				}
+				log.Debugf("Target '%v' matches stage.", tgt.ID)
 
 				debug.Assert(
 					!o.targetSelection.Exists(tgt.ID),
@@ -991,7 +992,7 @@ func WithTargetSelection(sel *TargetSelection) ExecOption {
 // WithTargetSelectionAdd adds target ids to the selection.
 func WithTargetSelectionAdd(ids ...target.ID) ExecOption {
 	return func(o *opts) error {
-		if len(ids) != 0 && o.targetSelection == nil {
+		if o.targetSelection == nil {
 			s := set.NewUnorderedWithCap[target.ID](len(ids))
 			o.targetSelection = &s
 		}
