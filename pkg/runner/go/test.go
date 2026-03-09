@@ -75,7 +75,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		return err
 	}
 
-	flags, tagArgs, _ := GetBuildFlags(
+	flags, _, tagArgsGen := GetBuildFlags(
 		log,
 		comp.Root(),
 		r.settings.BuildType(),
@@ -90,7 +90,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	)
 
 	log.Info("Run Go generate.")
-	cmd := append([]string{"generate"}, tagArgs...)
+	cmd := append([]string{"generate"}, tagArgsGen...)
 	cmd = append(cmd, "./...")
 	err = goctx.Check(cmd...)
 	if err != nil {
