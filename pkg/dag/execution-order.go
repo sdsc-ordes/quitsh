@@ -990,9 +990,11 @@ func WithTargetSelection(sel *TargetSelection) ExecOption {
 }
 
 // WithTargetSelectionAdd adds target ids to the selection.
+// NOTE: This leaves the target selection deliberately
+// empty if non ar given.
 func WithTargetSelectionAdd(ids ...target.ID) ExecOption {
 	return func(o *opts) error {
-		if o.targetSelection == nil {
+		if len(ids) != 0 && o.targetSelection == nil {
 			s := set.NewUnorderedWithCap[target.ID](len(ids))
 			o.targetSelection = &s
 		}
