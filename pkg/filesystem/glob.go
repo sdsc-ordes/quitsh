@@ -2,6 +2,7 @@ package fs
 
 import (
 	"errors"
+	stderr "errors"
 	stdfs "io/fs"
 	"os"
 	"path/filepath"
@@ -23,6 +24,14 @@ func FindFiles(
 	return FindPaths(rootDir, append(opts, WithReportOnlyDirs(false))...)
 }
 
+// FilterFiles is the same as [FindFiles] but for a given list.
+func FilterFiles(
+	paths []string,
+	opts ...FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	return FilterPaths(paths, append(opts, WithReportOnlyDirs(false))...)
+}
+
 // FindFilesByPatterns finds all files in `rootDir` which match glob patterns
 // `includePatterns` and not `excludePatterns` (they match the full path).
 // This function uses goroutines under to hood.
@@ -39,6 +48,20 @@ func FindFilesByPatterns(
 	)
 }
 
+// FilterFilesByPatterns is the same as [FindFilesByPatterns] but for a given list.
+func FilterFilesByPatterns(
+	paths []string,
+	includeGlobPatterns []string,
+	excludeGlobPatterns []string,
+	opts ...FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	return FilterPaths(paths,
+		append(opts,
+			WithPathFilterPatterns(includeGlobPatterns, excludeGlobPatterns, true),
+			WithReportOnlyDirs(false))...,
+	)
+}
+
 // FindPaths finds all paths in `rootDir`.
 // Note: Take care when using [WithPathFilter] or [WithPathFilterPatterns] because
 // they will influence how the files are walked.
@@ -48,14 +71,9 @@ func FindPaths(
 	opts ...FindOptions,
 ) (files []string, traversedFiles int64, err error) {
 	var query queryOptions
-	for i := range opts {
-		if opts[i] == nil {
-			continue
-		}
-		err = opts[i](&query)
-		if err != nil {
-			return nil, 0, err
-		}
+	err = query.Apply(opts)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	// Always use the default walk filter to
@@ -89,13 +107,52 @@ func FindPaths(
 	)
 
 	// Weird workaround, since the Walk might return the last skipdir err
-	if errors.Is(err, fastwalk.SkipDir) {
+	if stderr.Is(err, fastwalk.SkipDir) {
 		err = nil
 	}
 
 	traversedFiles = countA.Load()
 
 	return files, traversedFiles, err
+}
+
+// FilterPaths is the same as [FindPaths] but for given paths.
+func FilterPaths(paths []string, opts ...FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	var query queryOptions
+	err = query.Apply(opts)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	countA := atomic.Int64{}
+
+	walkFunc := createVisitor(
+		&countA,
+		nil,
+		&files,
+		query.dirsOnly,
+		query.walkDirFilter,
+		query.pathFilter,
+	)
+
+	for i := range paths {
+		fI, e := os.Lstat(paths[i])
+		if e != nil {
+			return nil, 0, e
+		}
+
+		dirE := stdfs.FileInfoToDirEntry(fI)
+		e = walkFunc(paths[i], dirE, nil)
+		if e != nil && !errors.Is(e, filepath.SkipDir) {
+			// Should only return skip, dir, otherwise report.
+			return nil, 0, e
+		}
+	}
+
+	traversedFiles = countA.Load()
+
+	return files, traversedFiles, nil
 }
 
 //nolint:gocognit
@@ -147,9 +204,13 @@ func createVisitor(
 
 		// Add the path if it matches.
 		if add && match {
-			lock.Lock()
+			if lock != nil {
+				lock.Lock()
+			}
 			*paths = append(*paths, p)
-			lock.Unlock()
+			if lock != nil {
+				lock.Unlock()
+			}
 		}
 
 		return nil

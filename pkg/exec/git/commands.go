@@ -8,6 +8,7 @@ import (
 
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
+	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 
 	"github.com/hashicorp/go-version"
@@ -123,6 +124,59 @@ func (gitx *Context) Files(dir string, noRelative bool) ([]string, error) {
 	}
 
 	return paths, err
+}
+
+func (gitx *Context) filesExceptIgnored() ([]string, error) {
+	files, err := gitx.GetSplit("ls-files", "--full-name", "-c", "-o", "--exclude-standard")
+	if err != nil {
+		return nil, err
+	}
+	for i := range files {
+		files[i] = fs.MakeAbsolute(path.Join(gitx.Cwd(), files[i]))
+	}
+
+	return files, nil
+}
+
+// FilterPaths is the same as [fs.FilterPaths] but for Git files
+// in the working tree (except ignored ones).
+func (gitx *Context) FilterPaths(
+	opts ...fs.FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	files, err = gitx.filesExceptIgnored()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return fs.FilterPaths(files, opts...)
+}
+
+// FilterFiles is the same as [fs.FilterPaths] but for Git files
+// in the working tree (except ignored ones).
+func (gitx *Context) FilterFiles(
+	opts ...fs.FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	files, err = gitx.filesExceptIgnored()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return fs.FilterFiles(files, opts...)
+}
+
+// FilterFilesByPatterns is the same as [fs.FilterFilesByPatterns] but for Git files
+// in the working tree (except ignored ones).
+func (gitx *Context) FilterFilesByPatterns(
+	includeGlobPatterns []string,
+	excludeGlobPatterns []string,
+	opts ...fs.FindOptions,
+) (files []string, traversedFiles int64, err error) {
+	files, err = gitx.filesExceptIgnored()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return fs.FilterFilesByPatterns(files, includeGlobPatterns, excludeGlobPatterns, opts...)
 }
 
 // CommitIsAMerge checks if the current commit is a merge commit.
