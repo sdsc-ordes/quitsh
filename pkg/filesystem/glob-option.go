@@ -97,7 +97,12 @@ func IgnoredDirectoriesDefault() []string {
 // IgnoredDirectoriesDefaultBasic returns all by default ignored directories (basic)
 // without output folders.
 func IgnoredDirectoriesDefaultBasic() []string {
-	return []string{".git", ".direnv", ".devenv", ".venv"}
+	return []string{
+		".git",
+		".direnv",
+		".devenv",
+		".venv",
+		"node_modules"}
 }
 
 // WithWalkDirFilterDefault sets the default walk directory filter if non it set.
