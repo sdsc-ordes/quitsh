@@ -50,6 +50,34 @@ func makeDirs(t testing.TB, dir string) {
 	}
 }
 
+func TestGlobSymlinks(t *testing.T) {
+	err := log.Setup("trace")
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	makeDirs(t, dir)
+	err = os.Symlink(path.Join(dir, "a/f.txt"), path.Join(dir, "symlink"))
+	require.NoError(t, err)
+
+	{
+		files, _, e := FindFiles(dir,
+			WithPathFilterPatterns([]string{"**/*/symlink"}, nil, true),
+		)
+		require.NoError(t, e)
+		assert.Len(t, files, 1)
+		assert.Contains(t, files, path.Join(dir, "symlink"))
+	}
+
+	{
+		files, _, e := FindFiles(dir,
+			WithPathFilterPatterns([]string{"**/*/symlink"}, nil, true),
+			WithOnlyRegularFiles(true),
+		)
+		require.NoError(t, e)
+		assert.Empty(t, files)
+	}
+}
+
 func TestGlob(t *testing.T) {
 	err := log.Setup("trace")
 	require.NoError(t, err)

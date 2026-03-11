@@ -53,6 +53,20 @@ func WithPathFilter(f PathFilter, useAnd bool) FindOptions {
 	}
 }
 
+// WithOnlyRegularPaths only reports regular paths (no symlinks).
+func WithOnlyRegularPaths(useAnd bool) FindOptions {
+	return WithPathFilter(func(_ string, info os.DirEntry) bool {
+		return info.Type().IsRegular()
+	}, useAnd)
+}
+
+// WithOnlyRegularFiles only reports regular files (no symlinks).
+func WithOnlyRegularFiles(useAnd bool) FindOptions {
+	return WithPathFilter(func(_ string, info os.DirEntry) bool {
+		return info.Type().IsRegular() && !info.Type().IsDir()
+	}, useAnd)
+}
+
 // WithWalkDirFilter sets a custom walk filter
 // to determine which directories to skip.
 func WithWalkDirFilter(f PathFilter, useAnd bool) FindOptions {
