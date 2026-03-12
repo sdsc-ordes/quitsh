@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"errors"
 	stderr "errors"
 	stdfs "io/fs"
 	"os"
@@ -144,7 +143,7 @@ func FilterPaths(paths []string, opts ...FindOptions,
 
 		dirE := stdfs.FileInfoToDirEntry(fI)
 		e = walkFunc(paths[i], dirE, nil)
-		if e != nil && !errors.Is(e, filepath.SkipDir) {
+		if e != nil && !stderr.Is(e, filepath.SkipDir) {
 			// Should only return skip, dir, otherwise report.
 			return nil, 0, e
 		}

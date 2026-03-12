@@ -44,7 +44,7 @@ func TestFind(t *testing.T) {
 
 	dir := t.TempDir()
 	makeDirs(t, dir)
-	gitx := NewCtx(dir)
+	gitx := NewCtx(dir, adjustGitCtx)
 
 	err = gitx.Check("init")
 	require.NoError(t, err)

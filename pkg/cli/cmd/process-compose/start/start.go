@@ -130,6 +130,14 @@ func startProcessCompose(
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
 
+	if socketPathFile != "" {
+		log.Infof("Write socket path file '%s'.", socketPathFile)
+		err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
+		if err != nil {
+			log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutWait)
 	defer cancel()
 
@@ -164,14 +172,6 @@ func startProcessCompose(
 		return pcCtx, errors.AddContext(err, "could not get process summary")
 	}
 	log.Info("Processes status.", "summary", strings.ReplaceAll(summary, "\t", "  "))
-
-	if socketPathFile != "" {
-		log.Infof("Write socket path file '%s'.", socketPathFile)
-		err = os.WriteFile(socketPathFile, []byte(pcCtx.Socket()), fs.DefaultPermissionsFile)
-		if err != nil {
-			log.WarnE(err, "Could not write socket path to file '%s'.", socketPathFile)
-		}
-	}
 
 	if attach {
 		e := pcCtx.Check("attach")
