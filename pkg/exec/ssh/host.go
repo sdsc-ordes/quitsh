@@ -14,10 +14,17 @@ func AddKnownHost(hostName string, publicKey string) error {
 	if e != nil {
 		return e
 	}
+	dir = path.Join(dir, ".ssh")
+	file := path.Join(dir, "known_hosts")
 
-	f, e := os.OpenFile(path.Join(dir, ".ssh/known_hosts"),
+	e = os.MkdirAll(dir, fs.StrictPermissionsDir)
+	if e != nil {
+		return e
+	}
+
+	f, e := os.OpenFile(file,
 		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
-		fs.DefaultPermissionsFile)
+		fs.StrictPermissionsFile)
 	if e != nil {
 		return e
 	}
