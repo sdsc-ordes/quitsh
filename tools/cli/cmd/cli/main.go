@@ -5,7 +5,7 @@ package main
 import (
 	"os"
 
-	cliconfig "quitsh-cli/config"
+	cliconfig "quitsh-cli/pkg/config"
 	cliGoRunner "quitsh-cli/pkg/runner/go"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"

@@ -6,8 +6,8 @@ go 1.24
 
 require (
 	github.com/creasty/defaults v1.8.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/huandu/go-clone v1.7.3
-	github.com/huandu/go-clone/generic v1.7.3
 	github.com/sdsc-ordes/quitsh v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.9.1
 )
@@ -33,7 +33,6 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect

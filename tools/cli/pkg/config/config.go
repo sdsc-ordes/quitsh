@@ -1,25 +1,29 @@
 package config
 
 import (
-	cnConfig "quitsh-cli/pkg/runner/config"
-
 	"github.com/creasty/defaults"
+	"github.com/go-playground/validator/v10"
+	"github.com/huandu/go-clone"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 
-	"github.com/huandu/go-clone"
+	cconfig "quitsh-cli/pkg/runner/config"
 )
 
 type CommandArgs struct {
 	// Arguments needed to make the root command in `quitsh` work.
-	Root rootcmd.Args `yaml:"general"`
+	Root rootcmd.Args `yaml:"root"`
 
 	// Arguments needed to make the `execute`
 	// command in `quitsh` work. This is used when `quitsh` dispatches over a toolchain
 	// and needs to call it self (see `exec.AddCmd`).
 	DispatchArgs toolchain.DispatchArgs `yaml:"toolchainDispatch"`
+
+	// Exec Arguments.
+	ExecArgs dag.ExecArgs `yaml:"execArgs"`
 }
 
 type Config struct {
@@ -27,32 +31,34 @@ type Config struct {
 	Commands CommandArgs `yaml:"commands"`
 
 	// The build settings which get copied and injected into the runners:
-	// - `custodian::build-go`
-	Build cnConfig.BuildSettings `yaml:"build"`
+	Build cconfig.BuildSettings `yaml:"build"`
 
 	// The lint settings which get copied and injected into the runners:
 	// - `custodian::lint-go`
-	Lint cnConfig.LintSettings `yaml:"lint"`
+	Lint cconfig.LintSettings `yaml:"lint"`
 
 	// The test settings which get copied and injected into the runners:
-	// - `custodian::test-go`
-	Test cnConfig.TestSettings `yaml:"test"`
+	Test cconfig.TestSettings `yaml:"test"`
 }
 
 // New returns custodians arguments with default values.
 func New() (args Config) {
-	// Fields which are also flags will be initialized
-	// by the flags default values.
-
 	err := defaults.Set(&args)
 	log.PanicE(err, "could not default initialize config")
 
+	// Fields which are also flags will be initialized
+	// by the flags default values.
 	return
 }
 
-// Implement `cli.IConfig` interface.
+// Clone implements [config.IConfig] interface.
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 
 	return v
+}
+
+// Validate implements [config.IConfig] interface.
+func (c *Config) Validate() error {
+	return validator.New().StructExcept(c, "Commands")
 }

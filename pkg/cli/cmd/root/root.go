@@ -327,6 +327,11 @@ func initConfig(configPath string, conf config.IConfig, errorIfNotExists bool) (
 			"could not decode config file '%s'", configPath)
 	}
 
+	err = conf.Validate()
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
