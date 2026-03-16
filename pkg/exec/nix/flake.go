@@ -28,6 +28,61 @@ func GetFlakePackages(
 	rootDir string,
 	flakePath string,
 ) (packages map[string]*Package, err error) {
+	pkgs, err := getFlakeAttributes(rootDir, flakePath, "packages")
+	if err != nil {
+		return nil, err
+	}
+
+	packages = make(map[string]*Package, len(pkgs))
+	for _, p := range pkgs {
+		packages[p.Name] = p
+	}
+
+	return packages, nil
+}
+
+// GetFlakeShells is similar to [GetFlakeShells] but reports all Dev shells.
+func GetFlakeShells(
+	rootDir string,
+	flakePath string,
+) (packages map[string]*Package, err error) {
+	pkgs, err := getFlakeAttributes(rootDir, flakePath, "devShells")
+	if err != nil {
+		return nil, err
+	}
+
+	packages = make(map[string]*Package, len(pkgs))
+	for _, p := range pkgs {
+		packages[p.Name] = p
+	}
+
+	return packages, nil
+}
+
+// GetFlakeOutputs returns all flake outputs for current system
+// such as `<prefix>.<currentSystem>.X`.
+func GetFlakeOutputs(
+	rootDir string,
+	flakePath string,
+	prefixes []string,
+) (packages []*Package, err error) {
+	for _, p := range prefixes {
+		m, e := getFlakeAttributes(rootDir, flakePath, p)
+		if e != nil {
+			return nil, e
+		}
+
+		packages = append(packages, m...)
+	}
+
+	return packages, nil
+}
+
+func getFlakeAttributes(
+	rootDir string,
+	flakePath string,
+	prefixPath string,
+) (packages []*Package, err error) {
 	nixx := NewEvalCtx(rootDir)
 
 	currentSystem, err := CurrentSystem()
@@ -35,7 +90,7 @@ func GetFlakePackages(
 		return nil, err
 	}
 
-	attrPath := "packages." + currentSystem
+	attrPath := prefixPath + "." + currentSystem
 
 	cmd := []string{"--json", FlakeInstallable(flakePath, attrPath)}
 
@@ -52,10 +107,13 @@ func GetFlakePackages(
 		return nil, errors.AddContext(err, "Could not decode Nix json result.")
 	}
 
-	packages = make(map[string]*Package, len(json))
+	packages = make([]*Package, 0, len(json))
 	for name, storePath := range json {
-		packages[name] = &Package{Name: name, StorePath: storePath, AttrPath: attrPath + "." + name}
+		packages = append(
+			packages,
+			&Package{Name: name, StorePath: storePath, AttrPath: attrPath + "." + name},
+		)
 	}
 
-	return
+	return packages, nil
 }
