@@ -164,6 +164,11 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 				return e
 			}
 
+			e = config.Validate()
+			if e != nil {
+				return e
+			}
+
 			_ = printcmd.PrintConfig(config, true)
 
 			return nil
@@ -325,11 +330,6 @@ func initConfig(configPath string, conf config.IConfig, errorIfNotExists bool) (
 	if err != nil {
 		return false, errors.AddContext(err,
 			"could not decode config file '%s'", configPath)
-	}
-
-	err = conf.Validate()
-	if err != nil {
-		return false, err
 	}
 
 	return true, nil
