@@ -1,3 +1,5 @@
+//go:build test && (test_small || test_all)
+
 package git
 
 import (

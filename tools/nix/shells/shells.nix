@@ -45,8 +45,20 @@ let
         }
       ];
 
+      ci = [
+        {
+          packages = [
+            pkgs.quitsh.bootstrap
+            pkgs.openssh # For tests.
+          ];
+
+          quitsh.languages.go.enable = true;
+          quitsh.toolchains = [ "ci" ];
+        }
+      ] ++ build-go;
+
       general =
-        build-go
+        ci
         ++ lint-go
         ++ [
           {
@@ -69,17 +81,6 @@ let
 
         ];
 
-      ci = [
-        {
-          packages = [
-            pkgs.quitsh.bootstrap
-            # pkgs.quitsh.cli
-          ];
-
-          quitsh.languages.go.enable = true;
-          quitsh.toolchains = [ "ci" ];
-        }
-      ] ++ build-go;
     in
     {
       inherit
