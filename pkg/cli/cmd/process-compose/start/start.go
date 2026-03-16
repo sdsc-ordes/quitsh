@@ -107,7 +107,7 @@ func startProcessCompose(
 	timeoutWaitInterval time.Duration,
 	attach bool,
 ) (
-	pcCtx pc.ProcessComposeCtx,
+	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
-	processcompose "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
+	pc "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -53,23 +53,23 @@ func StopService(
 	rootDir string,
 	flakeDir string,
 	devenvShellAttrPath string) (
-	pcCtx processcompose.ProcessComposeCtx,
+	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
 	if strings.Contains(devenvShellAttrPath, "#") {
-		pcCtx, err = processcompose.StartFromInstallable(
+		pcCtx, err = pc.StartFromInstallable(
 			log.Global(),
 			rootDir,
 			devenvShellAttrPath,
-			processcompose.WithMustBeStarted(true),
+			pc.WithMustBeStarted(true),
 		)
 	} else {
-		pcCtx, err = processcompose.Start(
+		pcCtx, err = pc.Start(
 			log.Global(),
 			rootDir,
 			flakeDir,
 			devenvShellAttrPath,
-			processcompose.WithMustBeStarted(true))
+			pc.WithMustBeStarted(true))
 	}
 
 	if err != nil {

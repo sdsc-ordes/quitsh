@@ -25,7 +25,7 @@ const ProcessCompleted ProcessState = 2
 // ProcessComposeCtx represents a `process-compose` context.
 type (
 	ProcessComposeCtx struct {
-		*exec.CmdContext
+		exec.CmdContext
 		socket string
 
 		tempDir string
@@ -63,7 +63,7 @@ func Start(
 	flakeDir string,
 	devShellAttrPath string,
 	opts ...StartOption,
-) (pc ProcessComposeCtx, err error) {
+) (pc *ProcessComposeCtx, err error) {
 	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
 
 	return StartFromInstallable(log, rootDir, devShellAttrPath, opts...)
@@ -81,7 +81,7 @@ func StartFromInstallable(
 	rootDir string,
 	devShellInstallable string,
 	opts ...StartOption,
-) (pc ProcessComposeCtx, err error) {
+) (pc *ProcessComposeCtx, err error) {
 	var o startOpts
 	err = o.Apply(opts...)
 	if err != nil {
@@ -127,9 +127,9 @@ func StartFromInstallable(
 	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
 		rootDir, devShellInstallable).BaseArgs(procCompExe))
 
-	pc = ProcessComposeCtx{
+	pc = &ProcessComposeCtx{
+		CmdContext: *build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		log:        log,
-		CmdContext: build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
 		socket:     socketPath,
 		tempDir:    dir,
 		logFile:    logFile,
