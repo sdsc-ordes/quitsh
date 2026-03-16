@@ -27,7 +27,7 @@ type Package struct {
 func GetFlakePackages(
 	rootDir string,
 	flakePath string,
-) (packages map[string]Package, err error) {
+) (packages map[string]*Package, err error) {
 	nixx := NewEvalCtx(rootDir)
 
 	currentSystem, err := CurrentSystem()
@@ -52,9 +52,9 @@ func GetFlakePackages(
 		return nil, errors.AddContext(err, "Could not decode Nix json result.")
 	}
 
-	packages = make(map[string]Package, len(json))
+	packages = make(map[string]*Package, len(json))
 	for name, storePath := range json {
-		packages[name] = Package{Name: name, StorePath: storePath, AttrPath: attrPath + "." + name}
+		packages[name] = &Package{Name: name, StorePath: storePath, AttrPath: attrPath + "." + name}
 	}
 
 	return
