@@ -93,19 +93,19 @@ func StartAgent(log log.ILog, options ...StartOption) (agent Agent, err error) {
 }
 
 // Close closes the agent if started.
-func (c *Agent) Close() error {
-	if c.pid == 0 {
+func (s *Agent) Close() error {
+	if s.pid == 0 {
 		return nil
 	}
 
-	p, _ := os.FindProcess(c.pid)
+	p, _ := os.FindProcess(s.pid)
 	if p == nil {
 		return nil
 	}
 
 	e := p.Kill()
 	if e != nil {
-		return errors.AddContext(e, "Could not kill ssh-agent with PID '%v'.", c.pid)
+		return errors.AddContext(e, "Could not kill ssh-agent with PID '%v'.", s.pid)
 	}
 
 	return nil
