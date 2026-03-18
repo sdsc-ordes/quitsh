@@ -57,6 +57,10 @@ func (c *Config) Clone() config.IConfig {
 	return v
 }
 
+func (c *Config) Validate() error {
+	return nil
+}
+
 func (c *Config) ExpandEnv() error {
 	c.ValWithEnv = os.ExpandEnv(c.ValWithEnv)
 	log.Infof("Replaced ValWithEnv: '%v'", c.ValWithEnv)
