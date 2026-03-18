@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"regexp"
@@ -20,19 +21,6 @@ type StartOption func(*opts)
 
 type opts struct {
 	newInstance bool
-}
-
-func (c *opts) Apply(options ...StartOption) {
-	for _, f := range options {
-		f(c)
-	}
-}
-
-// WithNewInstance recreats a new agent instead of testing if one already runs.
-func WithNewInstance(enable bool) StartOption {
-	return func(o *opts) {
-		o.newInstance = enable
-	}
 }
 
 // StartAgent starts the `ssh-agent` if its not yet running and returns
@@ -121,4 +109,28 @@ func (c *Agent) Close() error {
 	}
 
 	return nil
+}
+
+// Env returns the env. variables of the agent.
+// If not started by its own, `SSH_AGENT_PID` is not returned.
+func (s *Agent) Env() (e []string) {
+	e = append(e, "SSH_AUTH_SOCK="+s.SocketPath)
+	if s.pid != 0 {
+		e = append(e, fmt.Sprintf("SSH_AGENT_PID=%v", s.pid))
+	}
+
+	return e
+}
+
+func (c *opts) Apply(options ...StartOption) {
+	for _, f := range options {
+		f(c)
+	}
+}
+
+// WithNewInstance recreats a new agent instead of testing if one already runs.
+func WithNewInstance(enable bool) StartOption {
+	return func(o *opts) {
+		o.newInstance = enable
+	}
 }
