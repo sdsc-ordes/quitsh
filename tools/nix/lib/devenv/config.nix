@@ -15,7 +15,8 @@ in
       };
       default = "";
       description = ''
-        The config file (relative to `devenv` root) used by default (same as `--config`, must exist).
+        The config file used by default (same as `--config`, must exist).
+        If a relative path is given it is searched in all parents.
       '';
     };
 
@@ -26,7 +27,8 @@ in
       };
       default = "";
       description = ''
-        The user config file (relative to `devenv` root) used by default (same as `--config-user`, may not exists).
+        The user config file used by default (same as `--config-user`, may not exists).
+        If a relative path is given it is searched in all parents.
       '';
     };
   };
@@ -34,10 +36,10 @@ in
   config = {
     env =
       lib.optionalAttrs (cfg.config != "") {
-        QUITSH_CONFIG = "${config.devenv.root}/${cfg.config}";
+        QUITSH_CONFIG = cfg.config;
       }
       // lib.optionalAttrs (cfg.configUser != "") {
-        QUITSH_CONFIG_USER = "${config.devenv.root}/${cfg.configUser}";
+        QUITSH_CONFIG_USER = cfg.configUser;
       };
   };
 }

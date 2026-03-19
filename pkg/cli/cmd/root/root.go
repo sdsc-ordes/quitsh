@@ -152,11 +152,11 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 				return e
 			}
 
-			if parsedConfig {
-				log.Debug("Parsed general config.", "path", rootArgs.Config)
+			if parsedConfig != "" {
+				log.Debug("Parsed general config.", "path", parsedConfig)
 			}
-			if parsedConfigUser {
-				log.Debug("Parsed user config.", "path", rootArgs.ConfigUser)
+			if parsedConfigUser != "" {
+				log.Debug("Parsed user config.", "path", parsedConfigUser)
 			}
 
 			e = applyEnvReplacementConfig(config)
@@ -250,7 +250,7 @@ func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 		)
 }
 
-func parseConfigs(conf config.IConfig) (parsedConfig, parsedUserConfig bool, err error) {
+func parseConfigs(conf config.IConfig) (parsedConfigPath, parsedUserConfigPath string, err error) {
 	// Parse here the --config, and --config-user and `--config-values`
 	// and init the config, because that needs to happen before
 	// cobra parses the flags and set defaults.
@@ -273,17 +273,17 @@ func parseConfigs(conf config.IConfig) (parsedConfig, parsedUserConfig bool, err
 	if e.Is(err, pflag.ErrHelp) {
 		// WARN: any `-h` will get into an error. Noway to disable that.
 		// So we set the error to nil, and return.
-		return false, false, nil
+		return "", "", nil
 	}
 
 	applyEnvReplacement(&args)
 
-	parsedConfig, err = initConfig(args.Config, conf, true)
+	parsedConfigPath, err = initConfig(args.RootDir, args.Config, conf, true)
 	if err != nil {
 		return
 	}
 
-	parsedUserConfig, err = initConfig(args.ConfigUser, conf, false)
+	parsedUserConfigPath, err = initConfig(args.RootDir, args.ConfigUser, conf, false)
 	if err != nil {
 		return
 	}
@@ -296,29 +296,35 @@ func parseConfigs(conf config.IConfig) (parsedConfig, parsedUserConfig bool, err
 	return
 }
 
-func initConfig(configPath string, conf config.IConfig, errorIfNotExists bool) (bool, error) {
+func initConfig(
+	rootDir string,
+	configPath string,
+	conf config.IConfig,
+	errorIfNotExists bool,
+) (string, error) {
 	if configPath == "" {
-		return false, nil
+		return "", nil
 	}
 
 	var f io.Reader
 	switch configPath {
 	case "-":
 		f = os.Stdin
+		configPath = "[stdin]"
 	default:
-		exists := fs.Exists(configPath)
-
-		if !exists {
+		// Traverse up until found if relative path.
+		configPath = fs.FindRelPathInParents(".", configPath, rootDir)
+		if configPath == "" {
 			if errorIfNotExists {
-				return false, errors.New("Config file '%s' does not exists", configPath)
-			} else {
-				return false, nil
+				return "", errors.New("Config file '%s' does not exists in parents.", configPath)
 			}
+
+			return "", nil
 		}
 
 		ff, err := os.OpenFile(configPath, os.O_RDONLY, fs.DefaultPermissionsFile)
 		if err != nil {
-			return false, errors.New("Could not load config file '%s'", configPath)
+			return "", errors.New("Could not load config file '%s'", configPath)
 		}
 		defer ff.Close()
 
@@ -328,11 +334,11 @@ func initConfig(configPath string, conf config.IConfig, errorIfNotExists bool) (
 	decoder := yaml.NewDecoder(f, yaml.Strict())
 	err := decoder.Decode(conf)
 	if err != nil {
-		return false, errors.AddContext(err,
+		return configPath, errors.AddContext(err,
 			"could not decode config file '%s'", configPath)
 	}
 
-	return true, nil
+	return configPath, nil
 }
 
 func runRoot(rootCmd *cobra.Command, setts *Settings, version bool) error {

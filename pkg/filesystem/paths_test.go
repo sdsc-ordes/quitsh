@@ -31,6 +31,44 @@ func TestPathExists(t *testing.T) {
 	assert.False(t, e)
 }
 
+func TestPathFindInParent(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+
+	expected := path.Join(dir, "a/b/e1/e2/e3")
+	e := os.MkdirAll(expected, DefaultPermissionsDir)
+	require.NoError(t, e)
+	expected2 := path.Join(dir, "a/b/r1/r2/r3")
+	e = os.MkdirAll(expected2, DefaultPermissionsDir)
+	require.NoError(t, e)
+
+	f := FindRelPathInParents(path.Join(dir, "a/b"), "e1/e2/e3", path.Join(dir, "a"))
+	assert.Equal(t, expected, f)
+	f = FindRelPathInParents(path.Join(dir, "a/b/e1/e2"), "e1/e2/e3", path.Join(dir, "a"))
+	assert.Equal(t, expected, f)
+	f = FindRelPathInParents(path.Join(dir, "a"), "e1/e2/e3", "") // Go up to the root.
+	assert.Empty(t, f)
+
+	f = FindRelPathInParents(
+		path.Join(dir, "a/b/e1/e2/e3"),
+		"r1/r2/r3",
+		path.Join(dir, "a/b/e1"),
+	) // To early stop.
+	assert.Empty(t, f)
+	f = FindRelPathInParents(
+		path.Join(dir, "a/b/e1/e2/e3"),
+		"r1/r2/r3",
+		path.Join(dir, "a/b"),
+	) // Not to early.
+	assert.Equal(t, expected2, f)
+	f = FindRelPathInParents(
+		path.Join(dir, "a/b/e1/e2/e3"),
+		"r1/r2/r3",
+		path.Join(dir, "a"),
+	) // Not to early.
+	assert.Equal(t, expected2, f)
+}
+
 func TestPathExistsLinks(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

@@ -72,6 +72,45 @@ func ExistsLE(path string) (bool, error) {
 	return true, nil
 }
 
+// FindRelPathInParents finds the existing relative path `p` (e.g `a/b/c/test`)
+// (if not relative the absolute is returned)
+// starting from `start` (can be relative)
+// against all parents until (and including) the `root`
+// is discovered or no more parents exist.
+func FindRelPathInParents(start string, p string, root string) (found string) {
+	if path.IsAbs(p) {
+		if Exists(p) {
+			return p
+		} else {
+			return ""
+		}
+	}
+
+	if root != "" {
+		root = MakeAbsolute(root)
+	}
+	dir := MakeAbsolute(start)
+
+	for {
+		file := path.Join(dir, p)
+		if Exists(file) {
+			found = file
+
+			break
+		} else if root != "" && dir == root {
+			break
+		}
+
+		n := path.Dir(dir) // `n` is cleaned.
+		if n == dir {
+			break
+		}
+		dir = n
+	}
+
+	return found
+}
+
 // MakeAbsoluteTo makes a path absolute to the `base` directory.
 func MakeAbsoluteTo(base string, p string) string {
 	debug.Assert(path.IsAbs(base), "Base path is not absolute.")
