@@ -104,7 +104,7 @@ func (c CmdContextBuilder) Env(env ...string) CmdContextBuilder {
 	// NOTE:
 	// If we add here something and the default is set (.env == nil -> means use
 	// os.Environ()) -> we need to add it back!
-	if env != nil && c.cmdCtx.env == nil {
+	if c.cmdCtx.env == nil && env != nil {
 		c.cmdCtx.env = os.Environ()
 	}
 

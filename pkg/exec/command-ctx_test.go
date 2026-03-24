@@ -211,6 +211,15 @@ func TestCommandCtxPipeStdErr(t *testing.T) {
 	assert.Contains(t, output, "this-is-not-existing")
 }
 
+func TestCommandCtxEnvEmpty(t *testing.T) {
+	envs := []string{}
+	ctx := NewCmdCtxBuilder().Env(envs...).Build()
+
+	out, err := ctx.Get("env")
+	require.NoError(t, err)
+	assert.Contains(t, out, "PATH")
+}
+
 func TestCommandCtxEnv(t *testing.T) {
 	envs := []string{"A=banana", "B=monkey", "C=monkey"}
 	ctx := NewCmdCtxBuilder().Env(envs...).Build()
