@@ -151,7 +151,7 @@ func (c CmdContextBuilder) BaseArgs(args ...string) CmdContextBuilder {
 	return c
 }
 
-// PrependCommand prepends a command `cmd` with) `args` infront of the command.
+// PrependCommand prepends a command `cmd` with `args` infront of the command.
 func (c CmdContextBuilder) PrependCommand(cmd string, args ...string) CmdContextBuilder {
 	n := make([]string, 0, len(c.cmdCtx.baseArgs)+len(args))
 	n = append(n, args...)

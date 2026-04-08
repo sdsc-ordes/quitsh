@@ -2,7 +2,7 @@
   lib,
   remarshal,
   runCommand,
-  buildGo124Module,
+  buildGo125Module,
   installShellFiles,
   testers,
   git,
@@ -21,7 +21,7 @@ let
     fileset = fs.difference files test;
   };
 
-  cli = buildGo124Module rec {
+  cli = buildGo125Module rec {
     pname = name;
     version = (yaml.read (rootDir + "/.component.yaml")).version;
     inherit src;

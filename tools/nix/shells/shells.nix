@@ -8,7 +8,7 @@
 let
 
   pkgsPinned = {
-    go = pkgs.go_1_24;
+    go = pkgs.go_1_25;
   };
 
   toolchains =
@@ -55,7 +55,8 @@ let
           quitsh.languages.go.enable = true;
           quitsh.toolchains = [ "ci" ];
         }
-      ] ++ build-go;
+      ]
+      ++ build-go;
 
       general =
         ci
