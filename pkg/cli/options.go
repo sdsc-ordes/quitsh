@@ -20,10 +20,10 @@ import (
 
 type Option func(c *cliApp) error
 
-// WithGlobalContext sets the context to use on the [ICLI] instance.
+// WithContext sets the context to use on the [ICLI] instance.
 // If `setGlobally` is set, it will set a singleton [exec.GlobalContext]
 // which gets used in any `exec.CmdContext` creation.
-func WithGlobalContext(ctx context.Context, setGlobally bool) Option {
+func WithContext(ctx context.Context, setGlobally bool) Option {
 	return func(c *cliApp) error {
 		c.context = ctx
 
@@ -37,19 +37,19 @@ func WithGlobalContext(ctx context.Context, setGlobally bool) Option {
 	}
 }
 
-// WithGlobalSignalContext adds a default signal handling context to
+// WithSignalContext adds a default signal handling context to
 // abort command execution.
 // If `setGlobally` is set, it will set a singleton [exec.GlobalContext]
 // which gets used in any `exec.CmdContext` creation.
 // Note: You must call `[ICLI.Shutdown]` when using this function.
-func WithGlobalSignalContext(setGlobally bool) Option {
+func WithSignalContext(setGlobally bool) Option {
 	return func(c *cliApp) error {
 		ctx, stopSigHandling :=
 			signal.NotifyContext(
 				context.Background(),
 				syscall.SIGINT, syscall.SIGTERM)
 
-		e := WithGlobalContext(ctx, setGlobally)(c)
+		e := WithContext(ctx, setGlobally)(c)
 		if e != nil {
 			return e
 		}

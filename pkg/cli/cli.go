@@ -18,8 +18,9 @@ import (
 )
 
 type ICLI interface {
-	// The root context which has a signal handler installed listening on
-	// SIGINT, SIGTERM.
+	// The root context to be used for `exec.CmdContext` or
+	// other operations which need cancelation.
+	// See [WithContext] and [WithSignalContext].
 	Ctx() context.Context
 
 	// The root directory from where certain operations are done,
