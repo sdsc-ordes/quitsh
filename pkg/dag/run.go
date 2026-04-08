@@ -178,13 +178,21 @@ func executeRunners(
 			rD.inst.RunnerID,
 		}
 
-		if rD.node.Execution.Cancel {
+		switch {
+		case rD.node.Execution.Cancel:
 			log.Debugf(
 				"Target '%v' is cancelled by prev. target. Skip runner '%v'",
-				rD.inst.RunnerID,
 				rD.node.Target.ID,
+				rD.inst.RunnerID,
 			)
-		} else {
+		case rD.node.StatusAnyFailed():
+			log.Debugf(
+				"Target '%v' is failed already. Skip runner '%v', step: '%v'.",
+				rD.node.Target.ID,
+				rD.inst.RunnerID,
+				rD.step.Index,
+			)
+		default:
 			log.Info("Starting runner.", "runner", rD.inst.RunnerID, "target", rD.targetID)
 
 			e := ExecuteRunner(

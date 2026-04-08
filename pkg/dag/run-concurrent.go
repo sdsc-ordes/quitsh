@@ -161,6 +161,9 @@ func addRunnerTasks(
 				runner.RunnerID,
 			}
 
+			// Always on finish propagate exec status.
+			defer func() { node.PropagateExecStatus() }()
+
 			if node.Execution.Cancel {
 				log.Debugf(
 					"Runner '%v' for target '%v' is cancelled by dependency.",
@@ -168,7 +171,14 @@ func addRunnerTasks(
 					node.Target.ID,
 				)
 
-				node.PropagateExecStatus()
+				return
+			} else if node.StatusAnyFailed() {
+				log.Debugf(
+					"Target '%v' is failed already. Skip runner '%v', step: '%v'.",
+					node.Target.ID,
+					runner.RunnerID,
+					stepIdx,
+				)
 
 				return
 			}
@@ -191,8 +201,6 @@ func addRunnerTasks(
 				} else {
 					status.Status = ExecStatusSuccess
 				}
-
-				node.PropagateExecStatus()
 			}()
 
 			err = ExecuteRunner(
