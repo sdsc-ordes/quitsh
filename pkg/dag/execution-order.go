@@ -886,7 +886,7 @@ func formatPath(stack *stack.Stack[target.ID]) string {
 	var sb strings.Builder
 
 	stack.VisitUpward(func(i int, n target.ID) bool {
-		sb.WriteString(fmt.Sprintf("  - '%v'\n", n))
+		fmt.Fprintf(&sb, "  - '%v'\n", n)
 		if i != stack.Len()-1 {
 			sb.WriteString("  |\n  v\n")
 		}
@@ -901,9 +901,9 @@ func formatStack(stack *stack.Stack[*TargetNode], withPrio bool) string {
 	var sb strings.Builder
 
 	stack.VisitUpward(func(_ int, n *TargetNode) bool {
-		sb.WriteString(fmt.Sprintf("  - '%v'", n.Target.ID))
+		fmt.Fprintf(&sb, "  - '%v'", n.Target.ID)
 		if withPrio {
-			sb.WriteString(fmt.Sprintf(" prio: '%v'", n.Priority))
+			fmt.Fprintf(&sb, " prio: '%v'", n.Priority)
 		}
 		sb.WriteString("\n")
 
@@ -918,9 +918,9 @@ func (prios *Priorities) Format() string {
 	var sb strings.Builder
 	sb.WriteString("Execution Targets:\n")
 	for _, set := range *prios {
-		sb.WriteString(fmt.Sprintf("- Priority: '%v'\n", set.Priority))
+		fmt.Fprintf(&sb, "- Priority: '%v'\n", set.Priority)
 		for _, n := range set.Nodes {
-			sb.WriteString(fmt.Sprintf("  - '%v'\n", n.Target.ID))
+			fmt.Fprintf(&sb, "  - '%v'\n", n.Target.ID)
 		}
 	}
 

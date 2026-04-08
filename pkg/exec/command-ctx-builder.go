@@ -1,9 +1,14 @@
 package exec
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"runtime"
 	"strings"
+	"syscall"
 
+	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
@@ -22,7 +27,13 @@ func NewCommandCtx(cwd string) *CmdContext {
 // NewCmdCtxBuilder returns a builder to build a command context.
 // By default: not quiet.
 func NewCmdCtxBuilder() CmdContextBuilder {
-	ctx := CmdContext{}
+	debug.Assert(runtime.GOOS == "windows", "Windows is not supported.")
+
+	sigCtx, _ := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT, syscall.SIGTERM)
+
+	ctx := CmdContext{ctx: sigCtx}
 
 	return CmdContextBuilder{cmdCtx: &ctx}.NoQuiet().CredentialFilter(nil)
 }

@@ -2,6 +2,7 @@ package exec
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -25,6 +26,8 @@ type (
 
 	// CmdContext defines the command context to execute commands.
 	CmdContext struct {
+		ctx context.Context
+
 		baseCmd  string
 		baseArgs []string
 
@@ -119,7 +122,7 @@ func (c *CmdContext) GetWithEC(handleExit ExitCodeHandler, args ...string) (stri
 		return "", err
 	}
 
-	cmd := exec.Command(baseCmd, args...)
+	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -149,7 +152,7 @@ func (c *CmdContext) GetStdErrWithEC(
 		return "", "", err
 	}
 
-	cmd := exec.Command(baseCmd, args...)
+	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -196,7 +199,7 @@ func (c *CmdContext) GetCombinedWithEC(handleExit ExitCodeHandler, args ...strin
 		return "", err
 	}
 
-	cmd := exec.Command(baseCmd, args...)
+	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -227,7 +230,7 @@ func (c *CmdContext) CheckWithEC(handleExit ExitCodeHandler, args ...string) err
 		return err
 	}
 
-	cmd := exec.Command(baseCmd, args...)
+	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -260,7 +263,7 @@ func (c *CmdContext) CheckPipe(args ...string) (waiter Waiter, pipe io.ReadClose
 		return
 	}
 
-	cmd := exec.Command(baseCmd, args...)
+	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
