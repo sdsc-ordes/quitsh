@@ -42,6 +42,7 @@ func main() {
 					[]string{"**/test/repo/**"}, true))),
 		cli.WithStages("lint", "build", "test"),
 		cli.WithTargetToStageMapperDefault(),
+		cli.WithGlobalSignalContext(true),
 		cli.WithToolchainDispatcherNix(
 			"tools/nix",
 			func(c config.IConfig) *toolchain.DispatchArgs {
@@ -54,6 +55,10 @@ func main() {
 	if err != nil {
 		log.PanicE(err, "Could not initialize CLI app.")
 	}
+	defer func() {
+		e := cli.Shutdown()
+		log.PanicE(e, "Could not shutdown CLI app.")
+	}()
 
 	// Setup quitsh provided helper commands.
 	versionupcmd.AddCmd(cli, cli.RootCmd())
@@ -67,7 +72,6 @@ func main() {
 	// Run the app.
 	err = cli.Run()
 	if err != nil {
-		log.ErrorE(err, "Error occurred.")
 		os.Exit(1)
 	}
 }

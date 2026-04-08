@@ -20,6 +20,9 @@ import (
 )
 
 var EnableEnvPrint = false //nolint:gochecknoglobals // Allowed for CLI disabling.
+// FIXME: This is really ugly, but its hard to push a context (with signal handling)
+// through to all constructors, cause it was not designed like that.
+var GlobalContext context.Context //nolint:gochecknoglobals // If set, this context is used as `exec.CommandContext`.
 
 type (
 	ExitCodeHandler func(cmdError *CmdError) error

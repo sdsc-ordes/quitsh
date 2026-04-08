@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
@@ -16,6 +18,10 @@ import (
 )
 
 type ICLI interface {
+	// The root context which has a signal handler installed listening on
+	// SIGINT, SIGTERM.
+	Ctx() context.Context
+
 	// The root directory from where certain operations are done,
 	// i.e finding components etc.
 	RootDir() string
@@ -49,6 +55,11 @@ type ICLI interface {
 
 	// Run will run the CLI.
 	Run() error
+
+	// Shutdown will shutdown the CLI.
+	// This function should be called in a `defer`
+	// to correctly cleanup resources.
+	Shutdown() error
 }
 
 // New creates a new `quitsh` CLI application.
@@ -56,9 +67,9 @@ type ICLI interface {
 // The CLI instance needs the full `config`
 // because it will marshall/unmarshall it
 // from disk by the `rootCmd`.
-
 func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error) {
 	app := &cliApp{
+		context:  context.Background(),
 		rootArgs: args,
 		config:   config,
 	}
@@ -85,6 +96,7 @@ func New(args *rootcmd.Args, config config.IConfig, opts ...Option) (ICLI, error
 }
 
 type cliApp struct {
+	context context.Context
 	rootCmd *cobra.Command
 
 	rootDirResolved bool
@@ -103,4 +115,6 @@ type cliApp struct {
 
 	factory             factory.IFactory
 	toolchainDispatcher toolchain.IDispatcher
+
+	shutdown func() error
 }

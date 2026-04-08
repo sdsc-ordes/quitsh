@@ -1,13 +1,17 @@
 package cli
 
 import (
+	"context"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	sets "github.com/sdsc-ordes/quitsh/pkg/common/set"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
+	"github.com/sdsc-ordes/quitsh/pkg/exec"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 	nixtoolchain "github.com/sdsc-ordes/quitsh/pkg/toolchain/nix"
 
@@ -15,6 +19,50 @@ import (
 )
 
 type Option func(c *cliApp) error
+
+// WithGlobalContext sets the context to use on the [ICLI] instance.
+// If `setGlobally` is set, it will set a singleton [exec.GlobalContext]
+// which gets used in any `exec.CmdContext` creation.
+func WithGlobalContext(ctx context.Context, setGlobally bool) Option {
+	return func(c *cliApp) error {
+		c.context = ctx
+
+		if setGlobally {
+			debug.Assert(exec.GlobalContext == nil,
+				"You can only set exec.GlobalContext once!")
+			exec.GlobalContext = c.context
+		}
+
+		return nil
+	}
+}
+
+// WithGlobalSignalContext adds a default signal handling context to
+// abort command execution.
+// If `setGlobally` is set, it will set a singleton [exec.GlobalContext]
+// which gets used in any `exec.CmdContext` creation.
+// Note: You must call `[ICLI.Shutdown]` when using this function.
+func WithGlobalSignalContext(setGlobally bool) Option {
+	return func(c *cliApp) error {
+		ctx, stopSigHandling :=
+			signal.NotifyContext(
+				context.Background(),
+				syscall.SIGINT, syscall.SIGTERM)
+
+		e := WithGlobalContext(ctx, setGlobally)(c)
+		if e != nil {
+			return e
+		}
+
+		c.AddShutdown(func() error {
+			stopSigHandling()
+
+			return nil
+		})
+
+		return nil
+	}
+}
 
 // WithVersion setts the version on the CLI application.
 func WithVersion(version *version.Version) Option {

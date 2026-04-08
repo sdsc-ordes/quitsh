@@ -3,10 +3,8 @@ package exec
 import (
 	"context"
 	"os"
-	"os/signal"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -27,13 +25,8 @@ func NewCommandCtx(cwd string) *CmdContext {
 // NewCmdCtxBuilder returns a builder to build a command context.
 // By default: not quiet.
 func NewCmdCtxBuilder() CmdContextBuilder {
-	debug.Assert(runtime.GOOS == "windows", "Windows is not supported.")
-
-	sigCtx, _ := signal.NotifyContext(
-		context.Background(),
-		syscall.SIGINT, syscall.SIGTERM)
-
-	ctx := CmdContext{ctx: sigCtx}
+	debug.Assert(runtime.GOOS != "windows", "Windows is not supported.")
+	ctx := CmdContext{}
 
 	return CmdContextBuilder{cmdCtx: &ctx}.NoQuiet().CredentialFilter(nil)
 }
@@ -47,7 +40,24 @@ func (c CmdContextBuilder) Clone() CmdContextBuilder {
 
 // Build finalizes the context.
 func (c CmdContextBuilder) Build() *CmdContext {
+	// Init the context.
+	if c.cmdCtx.ctx == nil {
+		if GlobalContext != nil {
+			c.cmdCtx.ctx = GlobalContext
+		} else {
+			c.cmdCtx.ctx = context.Background()
+		}
+	}
+
 	return c.cmdCtx
+}
+
+// Context sets the execution context to use when executing the command.
+// If not set `context.Background()` is used.
+func (c CmdContextBuilder) Context(ctx context.Context) CmdContextBuilder {
+	c.cmdCtx.ctx = ctx
+
+	return c
 }
 
 // Quiet disables pipeing stdout,stderr and logging the commands.
