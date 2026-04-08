@@ -100,6 +100,17 @@ func (n *TargetNode) Status() ExecStatus {
 	return ExecStatusSuccess
 }
 
+// StatusAnyFailed determines if any runner in the target has failed.
+func (n *TargetNode) StatusAnyFailed() bool {
+	for _, r := range n.Execution.Runners {
+		if r.Status == ExecStatusFailed {
+			return true
+		}
+	}
+
+	return false
+}
+
 // PropagateExecStatus propagates the execution status forward.
 func (n *TargetNode) PropagateExecStatus() {
 	for _, f := range n.Forward {
