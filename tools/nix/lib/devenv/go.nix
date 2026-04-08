@@ -84,13 +84,12 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    packages =
-      [
-        cfg.package
-      ]
-      ++ lib.optionals (cfg.tools.enable) (
-        lib.map (p: buildWithSpecificGo p) (cfg.tools.packages ++ cfg.tools.packagesDefaults)
-      );
+    packages = [
+      cfg.package
+    ]
+    ++ lib.optionals (cfg.tools.enable) (
+      lib.map (p: buildWithSpecificGo p) (cfg.tools.packages ++ cfg.tools.packagesDefaults)
+    );
 
     hardeningDisable = lib.optional (cfg.enableHardeningWorkaround) "fortify";
 
