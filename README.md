@@ -171,6 +171,8 @@ cli, err := cli.New(
     },
   ),
 )
+
+cli.Run()
 ```
 
 You can now add runners and your own commands depending on the needs of your

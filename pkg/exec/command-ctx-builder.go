@@ -1,9 +1,12 @@
 package exec
 
 import (
+	"context"
 	"os"
+	"runtime"
 	"strings"
 
+	"github.com/sdsc-ordes/quitsh/pkg/debug"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
@@ -22,6 +25,7 @@ func NewCommandCtx(cwd string) *CmdContext {
 // NewCmdCtxBuilder returns a builder to build a command context.
 // By default: not quiet.
 func NewCmdCtxBuilder() CmdContextBuilder {
+	debug.Assert(runtime.GOOS != "windows", "Windows is not supported.")
 	ctx := CmdContext{}
 
 	return CmdContextBuilder{cmdCtx: &ctx}.NoQuiet().CredentialFilter(nil)
@@ -36,7 +40,24 @@ func (c CmdContextBuilder) Clone() CmdContextBuilder {
 
 // Build finalizes the context.
 func (c CmdContextBuilder) Build() *CmdContext {
+	// Init the context.
+	if c.cmdCtx.ctx == nil {
+		if GlobalContext != nil {
+			c.cmdCtx.ctx = GlobalContext
+		} else {
+			c.cmdCtx.ctx = context.Background()
+		}
+	}
+
 	return c.cmdCtx
+}
+
+// Context sets the execution context to use when executing the command.
+// If not set `context.Background()` is used.
+func (c CmdContextBuilder) Context(ctx context.Context) CmdContextBuilder {
+	c.cmdCtx.ctx = ctx
+
+	return c
 }
 
 // Quiet disables pipeing stdout,stderr and logging the commands.
@@ -151,7 +172,7 @@ func (c CmdContextBuilder) BaseArgs(args ...string) CmdContextBuilder {
 	return c
 }
 
-// PrependCommand prepends a command `cmd` with) `args` infront of the command.
+// PrependCommand prepends a command `cmd` with `args` infront of the command.
 func (c CmdContextBuilder) PrependCommand(cmd string, args ...string) CmdContextBuilder {
 	n := make([]string, 0, len(c.cmdCtx.baseArgs)+len(args))
 	n = append(n, args...)

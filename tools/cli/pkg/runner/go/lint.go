@@ -47,7 +47,7 @@ func getFlags(rootDir string) (flags []string) {
 		"--max-issues-per-linter", "0",
 		"--max-same-issues", "0",
 		"--timeout", "20m0s",
-		"--print-resources-usage",
+		"--verbose",
 		"--config",
 		path.Join(rootDir, ".golangci.yaml"))
 

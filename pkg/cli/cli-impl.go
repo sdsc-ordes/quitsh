@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/r3labs/diff"
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
@@ -21,6 +23,10 @@ import (
 
 func (c *cliApp) Config() config.IConfig {
 	return c.config
+}
+
+func (c *cliApp) Ctx() context.Context {
+	return c.context
 }
 
 func (c *cliApp) ToolchainDispatcher() toolchain.IDispatcher {
@@ -71,7 +77,47 @@ func (c *cliApp) Run() error {
 		}
 	}
 
-	return c.rootCmd.Execute()
+	e := c.rootCmd.Execute()
+	if e != nil {
+		if c.rootArgs.ErrorSummary {
+			log.ErrorE(e, "Errors occurred.")
+		} else {
+			log.Error("Errors occurred, see above.")
+		}
+	}
+
+	return e
+}
+
+func (c *cliApp) Shutdown() error {
+	if c.shutdown != nil {
+		return c.shutdown()
+	}
+
+	return nil
+}
+
+// AddShutdown adds another shutdown task to the
+// shutdown function chain.
+func (c *cliApp) AddShutdown(f func() error) {
+	if f == nil {
+		return
+	}
+
+	// Wrap shutdown function.
+	oldFunc := c.shutdown
+	c.shutdown = func() error {
+		e := f()
+		if e != nil {
+			return e
+		}
+
+		if oldFunc != nil {
+			return oldFunc()
+		}
+
+		return nil
+	}
 }
 
 func (c *cliApp) FindComponents(

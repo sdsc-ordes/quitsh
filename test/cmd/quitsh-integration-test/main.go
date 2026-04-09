@@ -8,12 +8,14 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	configcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config"
 	exrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
+	exstage "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-stage"
 	extarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
 	processcompose "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	rootcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/root"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
+	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/dag"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
@@ -87,6 +89,7 @@ func main() {
 				fs.WithWalkDirFilterPatterns(nil, []string{"**/component-b"}, true))),
 		cli.WithStages("lint", "build", "test", "monkey-stage", "deploy"),
 		cli.WithTargetToStageMapperDefault(),
+		cli.WithSignalContext(true),
 		cli.WithToolchainDispatcherNix(
 			flakeDir,
 			func(c config.IConfig) *toolchain.DispatchArgs {
@@ -103,6 +106,8 @@ func main() {
 	// Setup quitsh provided helper commands.
 	exrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
 	extarget.AddCmd(cli, cli.RootCmd(), &args.Commands.ExecArgs)
+	exstage.AddCmdGeneral(cli, cli.RootCmd(), &args.Commands.ExecArgs)
+	exstage.AddCmdAlias(cli, cli.RootCmd(), stage.Stage("build"), &args.Commands.ExecArgs)
 	configcmd.AddCmd(cli.RootCmd(), &args)
 	listcmd.AddCmd(cli, cli.RootCmd())
 	processcompose.AddCmd(cli, cli.RootCmd(), flakeDir)
