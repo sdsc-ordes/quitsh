@@ -918,9 +918,9 @@ func (prios *Priorities) Format() string {
 	var sb strings.Builder
 	sb.WriteString("Execution Targets:\n")
 	for _, set := range *prios {
-		fmt.Fprintf(&sb, "- Priority: '%v'\n", set.Priority)
+		fmt.Fprintf(&sb, "• Priority: '%v'\n", set.Priority)
 		for _, n := range set.Nodes {
-			fmt.Fprintf(&sb, "  - '%v'\n", n.Target.ID)
+			fmt.Fprintf(&sb, "  • '%v'\n", n.Target.ID)
 		}
 	}
 

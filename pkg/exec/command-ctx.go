@@ -20,8 +20,11 @@ import (
 )
 
 var EnableEnvPrint = false //nolint:gochecknoglobals // Allowed for CLI disabling.
-// FIXME: This is really ugly, but its hard to push a context (with signal handling)
+
+// GlobalContext is the context which the command execution will use if set.
+// NOTE: This is a bit ugly, but its hard to push a context (with signal handling)
 // through to all constructors, cause it was not designed like that.
+// This variable must be deliberately set and has no effect otherwise.
 var GlobalContext context.Context //nolint:gochecknoglobals // If set, this context is used as `exec.CommandContext`.
 
 type (

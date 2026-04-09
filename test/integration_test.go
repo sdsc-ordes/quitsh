@@ -81,6 +81,38 @@ func TestCLIExecTarget(t *testing.T) {
 	assert.FileExists(t, path.Join(cli.Cwd(), "repo/component-a/.output/build/bin/cmd"))
 }
 
+func TestCLIExecStage(t *testing.T) {
+	cli := setup(t).Build()
+
+	_, stderr, err := cli.GetStdErr(
+		"build",
+		"--tag", "do-echo",
+		"--log-level",
+		"debug",
+		"-c",
+		"component-a",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+	assert.Contains(t, stderr, "• 'component-a::build-banana'")
+	assert.Contains(t, stderr, "• 'component-a::build'")
+
+	_, stderr, err = cli.GetStdErr(
+		"exec-stage",
+		"--tag", "do-echo",
+		"--log-level",
+		"debug",
+		"-c",
+		"component-a",
+		"build",
+	)
+
+	require.NoError(t, err, "Stderr:\n"+stderr)
+	assert.Contains(t, stderr, "• 'component-a::build-banana'")
+	assert.Contains(t, stderr, "• 'component-a::build'")
+	assert.NotContains(t, stderr, "excluded-step-should-not-be-run")
+}
+
 func TestCLIExecTargetWithExcludedStep(t *testing.T) {
 	cli := setup(t).Build()
 
