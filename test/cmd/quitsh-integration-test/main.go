@@ -87,6 +87,7 @@ func main() {
 				fs.WithWalkDirFilterPatterns(nil, []string{"**/component-b"}, true))),
 		cli.WithStages("lint", "build", "test", "monkey-stage", "deploy"),
 		cli.WithTargetToStageMapperDefault(),
+		cli.WithSignalContext(true),
 		cli.WithToolchainDispatcherNix(
 			flakeDir,
 			func(c config.IConfig) *toolchain.DispatchArgs {
