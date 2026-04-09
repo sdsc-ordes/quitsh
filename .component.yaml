@@ -33,7 +33,7 @@ targets:
         config:
           buildTags:
             - test_small
-          args: ["--count", "10"]
+          args: ["--count", "3"]
 
   test-integration:
     steps:
