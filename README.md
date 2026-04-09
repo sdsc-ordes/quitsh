@@ -161,6 +161,7 @@ cli, err := cli.New(
       fs.WithWalkDirFilterPatterns(nil,
         []string{"**/test/repo/**"}, true))),
   cli.WithStages("lint", "build", "test"),
+  cli.WithSignalContext(true),
   cli.WithTargetToStageMapperDefault(),
   cli.WithToolchainDispatcherNix(
     "tools/nix",
@@ -172,7 +173,14 @@ cli, err := cli.New(
   ),
 )
 
-cli.Run()
+if err != nil { return err }
+defer func() {
+  _ := cli.Shutdown()
+}
+
+if err = cli.Run(); err != nil {
+  return err
+}
 ```
 
 You can now add runners and your own commands depending on the needs of your
