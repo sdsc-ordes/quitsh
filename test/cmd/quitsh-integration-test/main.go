@@ -102,6 +102,10 @@ func main() {
 	if err != nil {
 		log.PanicE(err, "Could not setup cli.")
 	}
+	defer func() {
+		e := cli.Shutdown()
+		log.PanicE(e, "Could not shutdown CLI app.")
+	}()
 
 	// Setup quitsh provided helper commands.
 	exrunner.AddCmd(cli, cli.RootCmd(), &args.Commands.DispatchArgs)
