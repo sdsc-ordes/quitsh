@@ -54,12 +54,14 @@ func main() {
 			},
 		),
 	)
-	if err != nil {
-		log.PanicE(err, "Could not initialize CLI app.")
-	}
+	log.PanicE(err, "Could not initialize CLI app.")
+
 	defer func() {
 		e := cli.Shutdown()
 		log.PanicE(e, "Could not shutdown CLI app.")
+		if err != nil {
+			os.Exit(1)
+		}
 	}()
 
 	// Setup quitsh provided helper commands.
@@ -73,9 +75,6 @@ func main() {
 
 	// Run the app.
 	err = cli.Run()
-	if err != nil {
-		os.Exit(1)
-	}
 }
 
 func registerRunners(cl cli.ICLI, args *cliconfig.Config) {

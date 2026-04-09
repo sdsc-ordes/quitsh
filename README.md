@@ -172,15 +172,17 @@ cli, err := cli.New(
     },
   ),
 )
+log.PanicE(err, "Could not initialize CLI app.")
 
-if err != nil { return err }
 defer func() {
-  _ := cli.Shutdown()
-}
+  e := cli.Shutdown()
+  log.PanicE(e, "Could not shutdown CLI app.")
+  if err != nil {
+    os.Exit(1)
+  }
+}()
 
-if err = cli.Run(); err != nil {
-  return err
-}
+err = cli.Run()
 ```
 
 You can now add runners and your own commands depending on the needs of your

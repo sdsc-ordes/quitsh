@@ -1,3 +1,5 @@
 commands:
   root:
     logLevel: info
+test:
+  showTestLog: true
