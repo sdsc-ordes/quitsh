@@ -56,6 +56,9 @@ func (l logger) Warnf(msg string, args ...any) {
 	l.l.Warnf(msg, args...)
 }
 func (l logger) WarnE(err error, msg string, args ...any) {
+	if err == nil {
+		return
+	}
 	l.l.Helper()
 	//FIXME: I want here to print a nice string but
 	//       until resolved: https://github.com/charmbracelet/log/issues/187
@@ -76,6 +79,9 @@ func (l logger) Errorf(msg string, args ...any) {
 	l.l.Errorf(msg, args...)
 }
 func (l logger) ErrorE(err error, msg string, args ...any) {
+	if err == nil {
+		return
+	}
 	globalLogger.l.Helper()
 	//FIXME: I want here to print a nice string but
 	//       until resolved: https://github.com/charmbracelet/log/issues/187
@@ -97,9 +103,9 @@ func (l logger) Panicf(msg string, args ...any) {
 	l.Panic(fmt.Sprintf(msg, args...))
 }
 func (l logger) PanicE(err error, msg string, args ...any) {
+	l.l.Helper()
+	l.ErrorE(err, msg, args...)
 	if err != nil {
-		l.l.Helper()
-		l.ErrorE(err, msg, args...)
 		panic(err)
 	}
 }
