@@ -99,12 +99,14 @@ func main() {
 			},
 		),
 	)
-	if err != nil {
-		log.PanicE(err, "Could not setup cli.")
-	}
+	log.PanicE(err, "Could not setup cli.")
+
 	defer func() {
 		e := cli.Shutdown()
-		log.PanicE(e, "Could not shutdown CLI app.")
+		log.WarnE(e, "Could not shutdown CLI app.")
+		if err != nil {
+			os.Exit(1)
+		}
 	}()
 
 	// Setup quitsh provided helper commands.
@@ -121,26 +123,16 @@ func main() {
 		args.Build.WrapToIBuildSettings(),
 		cli.RunnerFactory(), true)
 
-	if err != nil {
-		log.PanicE(err, "Could not register runners.")
-	}
+	log.PanicE(err, "Could not register runners.")
 
 	// Register some Go runner.
 	err = gorunner.Register(&args.Build, cli.RunnerFactory())
-	if err != nil {
-		log.PanicE(err, "Could not register runners.")
-	}
+	log.PanicE(err, "Could not register runners.")
 
 	// Register some other dummy runner.
 	err = echorunner.Register(&args.Build, cli.RunnerFactory())
-	if err != nil {
-		log.PanicE(err, "Could not register runners.")
-	}
+	log.PanicE(err, "Could not register runners.")
 
 	// Run the app.
 	err = cli.Run()
-	if err != nil {
-		log.ErrorE(err, "Error occurred.")
-		os.Exit(1)
-	}
 }
