@@ -176,7 +176,7 @@ log.PanicE(err, "Could not initialize CLI app.")
 
 defer func() {
   e := cli.Shutdown()
-  log.PanicE(e, "Could not shutdown CLI app.")
+  log.WarnE(e, "Could not shutdown CLI app.")
   if err != nil {
     os.Exit(1)
   }
