@@ -99,6 +99,16 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 		return err
 	}
 
+	//FIXME: Somehow we have a cache write/exec race problem with the
+	//       `go tool covdata` binary.
+	//       Ref: https://github.com/golang/go/issues/78777
+	//       Run dummy command to make the tool cached...
+	log.Info("Cache 'go tool covdata'. (workaround).")
+	_, err = goctx.Get("tool", "covdata", "pkglist", "-i", ".")
+	if err != nil {
+		return err
+	}
+
 	// TODO: Run `go test` over `grc --config root_dir/tools/config/grc/...` to colorize.
 	//       Issue: https://gitlab.com/data-custodian/custodian/-/issues/194
 	log.Info("Run Go test.")
