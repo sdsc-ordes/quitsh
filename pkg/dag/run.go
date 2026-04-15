@@ -52,14 +52,14 @@ func Execute(
 	opts ...ExecuteOption,
 ) error {
 	if parallel {
-		return ExecuteConcurrent(
+		return executeConcurrent(
 			targets,
 			runnerFactory,
 			dispatcher,
 			config,
 			rootDir, opts...)
 	} else {
-		return ExecuteNormal(
+		return executeNormal(
 			prios,
 			runnerFactory,
 			dispatcher,
@@ -69,9 +69,9 @@ func Execute(
 	}
 }
 
-// ExecuteNormal executes the DAG non-concurrent.
+// executeNormal executes the DAG non-concurrent.
 // If no dispatcher is given, the toolchain dispatch is not done.
-func ExecuteNormal(
+func executeNormal(
 	prios Priorities,
 	runnerFactory factory.IFactory,
 	toolchainDispatcher toolchain.IDispatcher,
@@ -224,7 +224,7 @@ func executeRunners(
 		rD.node.PropagateExecStatus()
 	}
 
-	summary.statuses.Log()
+	summary.Log()
 
 	return summary.allErrors
 }

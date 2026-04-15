@@ -377,7 +377,7 @@ func visitNodesBFS(
 	for bfsStack.Len() != 0 {
 		log.Tracef("Current BFS stack:\n%v", formatStack(&bfsStack, true))
 
-		n := bfsStack.PopFront()
+		n := bfsStack.PopBottom()
 		if !visit(n) {
 			continue
 		}

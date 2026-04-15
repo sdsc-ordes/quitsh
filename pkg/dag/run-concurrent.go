@@ -16,8 +16,8 @@ import (
 
 const MaxCoroutineConcurrency = 10000
 
-// ExecuteConcurrent executes the DAG concurrent.
-func ExecuteConcurrent(
+// executeConcurrent executes the DAG concurrent.
+func executeConcurrent(
 	targetNodes TargetNodeMap,
 	runnerFactory factory.IFactory,
 	toolchainDispatcher toolchain.IDispatcher,
@@ -98,7 +98,7 @@ func ExecuteConcurrent(
 	for _, n := range targetNodes {
 		summary.AddStatus(n.Execution.Runners...)
 	}
-	summary.statuses.Log()
+	summary.Log()
 
 	return summary.allErrors
 }

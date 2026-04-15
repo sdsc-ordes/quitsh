@@ -65,9 +65,6 @@ type (
 
 		// Enable running targets in parallel.
 		Parallel bool `yaml:"parallel"`
-
-		// Error summary of all errors at the end.
-		ErrorSummary bool `yaml:"errorSummary"`
 	}
 
 	Settings struct {
