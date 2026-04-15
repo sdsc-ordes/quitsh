@@ -88,7 +88,7 @@ func (s RunnerStatuses) log() {
 func (s *Summary) Log() {
 	s.statuses.log()
 
-	// Add the sentinell error, for later dropping.
+	// Add the sentinel error, for later dropping.
 	if s.allErrors != nil {
 		s.allErrors = errorsfilter.WrapAsReported(s.allErrors)
 	}

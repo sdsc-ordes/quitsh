@@ -38,9 +38,9 @@ func (s *Stack[T]) Top() T {
 	return s.stack[len(s.stack)-1]
 }
 
-// PopFront pops the bottom level on the stack.
-// This method is useful to do Breath-First-Traversal.
-// instead of Depth-First-Traversal when using `Pop`.
+// PopBottom pops the bottom level on the stack.
+// This method is useful to do Breadth-First Traversal
+// instead of Depth-First Traversal when using `Pop`.
 func (s *Stack[T]) PopBottom() T {
 	res := s.Bottom()
 	s.stack = s.stack[1:]

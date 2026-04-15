@@ -6,25 +6,25 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-// alreadyReportedErr is an wrapping error which can be dropped by `DropReported`.
-type alreadyReportedErr struct {
+// alreadyReportedError is an wrapping error which can be dropped by `DropReported`.
+type alreadyReportedError struct {
 	e error
 }
 
-func (e *alreadyReportedErr) Error() string {
+func (e *alreadyReportedError) Error() string {
 	return e.e.Error()
 }
 
-func (e *alreadyReportedErr) Unwrap() error {
+func (e *alreadyReportedError) Unwrap() error {
 	return e.e
 }
 
-// WrapAsReported returns a new wrapped errors which indicates
+// WrapAsReported returns a new wrapped error which indicates
 // that it is already reported.
-// Useful for bigger errors, which you want to propagate upwards but
-// maybe ignore in logging with [FilterAlreadyReported].
+// Useful for bigger errors, which you still want to propagate upwards but
+// maybe ignore in logging then with [FilterAlreadyReported].
 func WrapAsReported(e error) error {
-	return &alreadyReportedErr{e: e}
+	return &alreadyReportedError{e: e}
 }
 
 // FilterAlreadyReported filters `ErrAlreadyReported` from the chain.
@@ -56,7 +56,7 @@ func FilterAlreadyReported(err error) error {
 			// Backtracking
 			// Reconstruct errors.
 			ignore := false
-			if _, ok := node.e.(*alreadyReportedErr); ok { //nolint:errorlint // This is ok.
+			if _, ok := node.e.(*alreadyReportedError); ok { //nolint:errorlint // This is ok.
 				ignore = true
 			}
 
