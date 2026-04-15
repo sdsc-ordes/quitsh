@@ -25,24 +25,34 @@ func NewStackWithCap[T any](capacity int) Stack[T] {
 // Pop pops the top element on the stack.
 // The stack size needs to be greater > 0.
 func (s *Stack[T]) Pop() T {
-	debug.Assert(s.Len() != 0, "the stack size is not > 0")
-
-	res := s.stack[len(s.stack)-1]
+	res := s.Top()
 	s.stack = s.stack[:len(s.stack)-1]
 
 	return res
 }
 
+// Returns the top element on the stack.
+func (s *Stack[T]) Top() T {
+	debug.Assert(s.Len() != 0, "the stack size is not > 0")
+
+	return s.stack[len(s.stack)-1]
+}
+
 // PopFront pops the bottom level on the stack.
 // This method is useful to do Breath-First-Traversal.
 // instead of Depth-First-Traversal when using `Pop`.
-func (s *Stack[T]) PopFront() T {
-	debug.Assert(s.Len() != 0, "the stack size is not > 0")
-
-	res := s.stack[0]
+func (s *Stack[T]) PopBottom() T {
+	res := s.Bottom()
 	s.stack = s.stack[1:]
 
 	return res
+}
+
+// Returns the bottom element.
+func (s *Stack[T]) Bottom() T {
+	debug.Assert(s.Len() != 0, "the stack size is not > 0")
+
+	return s.stack[0]
 }
 
 // Visit travers the stack from top to bottom and applies a function.

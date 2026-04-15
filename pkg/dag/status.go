@@ -9,6 +9,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
+	errorsfilter "github.com/sdsc-ordes/quitsh/pkg/errors/filter"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
 )
@@ -46,8 +47,7 @@ func (s *Summary) AddStatus(r ...*RunnerStatus) {
 	}
 }
 
-// Log prints the log of the summary.
-func (s RunnerStatuses) Log() {
+func (s RunnerStatuses) log() {
 	var sb strings.Builder
 	sb.WriteString("Summary:\n")
 
@@ -82,4 +82,14 @@ func (s RunnerStatuses) Log() {
 	}
 
 	log.Info(sb.String())
+}
+
+// Log prints the log of the summary.
+func (s *Summary) Log() {
+	s.statuses.log()
+
+	// Add the sentinell error, for later dropping.
+	if s.allErrors != nil {
+		s.allErrors = errorsfilter.WrapAsReported(s.allErrors)
+	}
 }

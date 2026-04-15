@@ -12,6 +12,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
+	errorsfilter "github.com/sdsc-ordes/quitsh/pkg/errors/filter"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -79,11 +80,7 @@ func (c *cliApp) Run() error {
 
 	e := c.rootCmd.Execute()
 	if e != nil {
-		if c.rootArgs.ErrorSummary {
-			log.ErrorE(e, "Errors occurred.")
-		} else {
-			log.Error("Errors occurred, see above.")
-		}
+		log.ErrorE(errorsfilter.FilterAlreadyReported(e), "Errors occurred.")
 	}
 
 	return e

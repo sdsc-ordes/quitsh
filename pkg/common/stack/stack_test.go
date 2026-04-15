@@ -43,19 +43,19 @@ func TestStackFrontPop(t *testing.T) {
 	stack.Push("b")
 	assert.Equal(t, 2, stack.Len())
 
-	assert.Equal(t, "a", stack.PopFront())
+	assert.Equal(t, "a", stack.PopBottom())
 	assert.Equal(t, 1, stack.Len())
 
 	stack.Push("c")
 	assert.Equal(t, 2, stack.Len())
 
-	assert.Equal(t, "b", stack.PopFront())
+	assert.Equal(t, "b", stack.PopBottom())
 	assert.Equal(t, 1, stack.Len())
 
 	assert.Equal(t, "c", stack.Pop())
 	assert.Equal(t, 0, stack.Len())
 
-	assert.Panics(t, func() { _ = stack.PopFront() })
+	assert.Panics(t, func() { _ = stack.PopBottom() })
 }
 
 func TestStackTraverse(t *testing.T) {
