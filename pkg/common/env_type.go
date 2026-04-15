@@ -37,6 +37,16 @@ func NewEnvironmentType(s string) (EnvironmentType, error) {
 	panic(fmt.Sprintf("EnvironmentType not implemented. '%s'", s))
 }
 
+// GetEnvTypes returns all env types.
+func GetEnvTypes() []EnvironmentType {
+	return []EnvironmentType{
+		EnvironmentDev,
+		EnvironmentTesting,
+		EnvironmentStaging,
+		EnvironmentProd,
+	}
+}
+
 // GetEnvTypesHelp reports some help string for env. types.
 func GetEnvTypesHelp() string {
 	return fmt.Sprintf(
