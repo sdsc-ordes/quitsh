@@ -4,12 +4,25 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 )
 
-type EvalOption func(cmd *[]string) error
+type EvalOption func(*opts) error
+
+type opts struct {
+	addArgs []string
+}
+
+func (c *opts) Apply(options ...EvalOption) error {
+	for _, f := range options {
+		if err := f(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // WithEvalImpure uses `impure` evaluation on `Eval`.
 func WithEvalImpure() EvalOption {
-	return func(cmd *[]string) error {
-		(*cmd) = append((*cmd), "--impure")
+	return func(o *opts) error {
+		o.addArgs = append(o.addArgs, "--impure")
 
 		return nil
 	}
@@ -17,17 +30,27 @@ func WithEvalImpure() EvalOption {
 
 // WithEvalOutputRaw uses `raw` output on `Eval`.
 func WithEvalOutputRaw() EvalOption {
-	return func(cmd *[]string) error {
-		(*cmd) = append((*cmd), "--raw")
+	return func(o *opts) error {
+		o.addArgs = append(o.addArgs, "--raw")
 
 		return nil
 	}
 }
 
-// WithEvalOutputRaw uses JSON output on `Eval`.
+// WithEvalOutputJSON uses JSON output on `Eval`.
 func WithEvalOutputJSON() EvalOption {
-	return func(cmd *[]string) error {
-		(*cmd) = append((*cmd), "--json")
+	return func(o *opts) error {
+		o.addArgs = append(o.addArgs, "--json")
+
+		return nil
+	}
+}
+
+// WithEvalNoCache uses no eval cache.
+// Note: Good when used in parallel to reduce SQLite contention.
+func WithEvalNoCache() EvalOption {
+	return func(o *opts) error {
+		o.addArgs = append(o.addArgs, "--no-eval-cache")
 
 		return nil
 	}
@@ -38,16 +61,13 @@ func EvalTemplate(
 	nixx *exec.CmdContext,
 	temp string,
 	data any,
-	opts ...EvalOption) (string, error) {
+	option ...EvalOption) (string, error) {
+	var o opts
+	o.Apply(option...)
+
 	run := func(c *exec.CmdContext, file string) (string, error) {
 		cmd := []string{"eval", "--file", file}
-
-		for i := range opts {
-			e := opts[i](&cmd)
-			if e != nil {
-				return "", e
-			}
-		}
+		cmd = append(cmd, o.addArgs...)
 
 		return c.Get(cmd...)
 	}
