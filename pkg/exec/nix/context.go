@@ -11,35 +11,52 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
+type (
+	CmdCtxBuilderOption = func(b exec.CmdContextBuilder) exec.CmdContextBuilder
+
+	NixBuildCtx struct {
+		*exec.CmdContext
+	}
+
+	NixEvalCtx struct {
+		*exec.CmdContext
+	}
+
+	NixRunCtx struct {
+		*exec.CmdContext
+	}
+)
+
 // NewCtxBuilder returns a new Nix command context builder.
 func NewCtxBuilder() exec.CmdContextBuilder {
 	return exec.NewCmdCtxBuilder().BaseCmd("nix")
 }
 
-// NewBuildCtxBuilder returns a new `nix build` command context for flake builds.
+// NewBuildCtx returns a new `nix build` command context for flake builds.
 func NewBuildCtx(
 	rootDir string,
-	applyOpts ...func(b exec.CmdContextBuilder) exec.CmdContextBuilder) BuildCtx {
-	c := addDefaultArgs(rootDir, exec.NewCmdCtxBuilder().BaseCmd("nix").BaseArgs("build"))
+	applyOpts ...CmdCtxBuilderOption,
+) NixBuildCtx {
+	c := AddFlakeDefaultArguments(
+		rootDir, NewCtxBuilder().BaseArgs("build"),
+	)
+
 	for i := range applyOpts {
 		c = applyOpts[i](c)
 	}
 
-	return BuildCtx{c.Build()}
+	return NixBuildCtx{c.Build()}
 }
 
-type BuildCtx struct {
-	*exec.CmdContext
-}
-
-// NewEvalCtxBuilder returns a new `nix eval` command context for flake evaluations.
+// NewEvalCtx returns a new `nix eval` command context for flake evaluations.
 func NewEvalCtx(
 	rootDir string,
-	applyOpts ...func(b exec.CmdContextBuilder) exec.CmdContextBuilder,
+	applyOpts ...CmdCtxBuilderOption,
 ) NixEvalCtx {
-	c := addDefaultArgs(
-		rootDir, exec.NewCmdCtxBuilder().BaseCmd("nix").BaseArgs("eval"),
+	c := AddFlakeDefaultArguments(
+		rootDir, NewCtxBuilder().BaseArgs("eval"),
 	)
+
 	for i := range applyOpts {
 		c = applyOpts[i](c)
 	}
@@ -47,18 +64,15 @@ func NewEvalCtx(
 	return NixEvalCtx{c.Build()}
 }
 
-type NixEvalCtx struct {
-	*exec.CmdContext
-}
-
-// NewEvalCtxBuilder returns a new `nix run` command context builder.
+// NewRunCtx returns a new `nix run` command context builder.
 func NewRunCtx(
 	rootDir string,
-	applyOpts ...func(b exec.CmdContextBuilder) exec.CmdContextBuilder,
+	applyOpts ...CmdCtxBuilderOption,
 ) NixRunCtx {
-	c := addDefaultArgs(
-		rootDir, exec.NewCmdCtxBuilder().BaseCmd("nix").BaseArgs("run"),
+	c := AddFlakeDefaultArguments(
+		rootDir, NewCtxBuilder().BaseArgs("run"),
 	)
+
 	for i := range applyOpts {
 		c = applyOpts[i](c)
 	}
@@ -66,21 +80,14 @@ func NewRunCtx(
 	return NixRunCtx{c.Build()}
 }
 
-type NixRunCtx struct {
-	*exec.CmdContext
-}
-
-// NewDevShellCtxBuilder returns a new command context builder which runs all
-// commands over a Nix development shell.
-func NewDevShellCtxBuilder(
+// AddFlakeDefaultArguments adds default arguments for nix commands targeting a flake
+// to an already existing `ctx`.
+// Note: It assumes that no sub-command on the `ctx` is set (`BaseArgs`) and that
+// the `BaseCmd` is `nix`.
+func AddFlakeDefaultArguments(
 	rootDir string,
-	flakePath string,
-	attrPath string,
+	b exec.CmdContextBuilder,
 ) exec.CmdContextBuilder {
-	return NewDevShellCtxBuilderI(rootDir, FlakeInstallable(flakePath, attrPath))
-}
-
-func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBuilder {
 	b = b.
 		Cwd(rootDir).
 		BaseArgs(
@@ -104,13 +111,11 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 		// See: https://github.com/cachix/devenv/issues/1461
 		// NOTE: This will also work if no input matches the override which is important
 		//       for users not using this.
-		b = b.
-			Cwd(rootDir).
-			BaseArgs(
-				"--override-input",
-				"devenv-root",
-				"path:"+rootDir+"/.devenv/state/pwd",
-			)
+		b = b.BaseArgs(
+			"--override-input",
+			"devenv-root",
+			"path:"+rootDir+"/.devenv/state/pwd",
+		)
 	}
 
 	if os.Getenv(EnvVarQuitshNixNoPureEval) == "true" {
@@ -120,19 +125,27 @@ func addDefaultArgs(rootDir string, b exec.CmdContextBuilder) exec.CmdContextBui
 	return b
 }
 
-// NewDevShellCtxBuilderI see `NewDevShellCtxBuilder`.
+// NewDevShellCtxBuilder returns a new command context builder which runs all
+// commands over a Nix development shell.
+func NewDevShellCtxBuilder(
+	rootDir string,
+	flakePath string,
+	attrPath string,
+) exec.CmdContextBuilder {
+	return NewDevShellCtxBuilderI(rootDir, FlakeInstallable(flakePath, attrPath))
+}
+
+// NewDevShellCtxBuilderI see [NewDevShellCtxBuilder].
 func NewDevShellCtxBuilderI(rootDir string, installable string) exec.CmdContextBuilder {
 	debug.Assert(path.IsAbs(rootDir), "Devenv root must be an absolute path.")
 
-	return addDefaultArgs(
-		rootDir,
-		exec.NewCmdCtxBuilder().
-			BaseCmd("nix").BaseArgs("develop"),
+	return AddFlakeDefaultArguments(
+		rootDir, NewCtxBuilder().BaseArgs("develop"),
 	).BaseArgs(installable, "--command")
 }
 
 // WrapOverDevShell wraps a command context builder
-// over a dev shell with `NewDevShellCtxBuilder`.
+// over a dev shell with [NewDevShellCtxBuilder].
 func WrapOverDevShell(
 	ctxBuilder exec.CmdContextBuilder,
 	rootDir string,
@@ -142,7 +155,7 @@ func WrapOverDevShell(
 	return WrapOverDevShellI(ctxBuilder, rootDir, FlakeInstallable(flakePath, attrPath))
 }
 
-// WrapOverDevShellI see `WrapOverDevShell`.
+// WrapOverDevShellI see [WrapOverDevShell].
 func WrapOverDevShellI(
 	ctxBuilder exec.CmdContextBuilder,
 	rootDir string,
