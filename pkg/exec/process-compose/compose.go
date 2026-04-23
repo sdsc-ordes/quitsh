@@ -307,12 +307,10 @@ func (pc *ProcessComposeCtx) WaitTill(
 					switch {
 					case cond.State == ProcessRunning && p.Status == "running":
 						log.Infof("Process condition: '%s': 'running' ✅", p.Name)
-
-						fallthrough
+						condsFulfilled += 1
 					case cond.State == ProcessReady && p.IsReady == "ready":
 						log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
-
-						fallthrough
+						condsFulfilled += 1
 					case cond.State == ProcessCompleted && p.Status == "completed":
 						log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
 						condsFulfilled += 1
@@ -321,8 +319,12 @@ func (pc *ProcessComposeCtx) WaitTill(
 			}
 
 			if condsFulfilled == len(conds) {
+				log.Infof("All conditions fulfilled.")
+
 				return true, nil
 			}
+
+			log.Infof("Conditions fulfilled: '%v/%v'", condsFulfilled, len(conds))
 		}
 
 		// Sleep for or until context is cancelled or check interval reached.
