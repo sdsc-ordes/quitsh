@@ -324,7 +324,7 @@ func (pc *ProcessComposeCtx) WaitTill(
 				return true, nil
 			}
 
-			log.Infof("Conditions fulfilled: '%v/%v'", condsFulfilled, len(conds))
+			log.Warnf("Not all conditions fulfilled: '%v/%v'", condsFulfilled, len(conds))
 		}
 
 		// Sleep for or until context is cancelled or check interval reached.
