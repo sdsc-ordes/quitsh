@@ -1,6 +1,7 @@
 package nix
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 )
 
@@ -16,6 +17,7 @@ func (c *opts) Apply(options ...EvalOption) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -63,7 +65,10 @@ func EvalTemplate(
 	data any,
 	option ...EvalOption) (string, error) {
 	var o opts
-	o.Apply(option...)
+	err := o.Apply(option...)
+	if err != nil {
+		return "", errors.AddContext(err, "could not apply options for eval template")
+	}
 
 	run := func(c *exec.CmdContext, file string) (string, error) {
 		cmd := []string{"eval", "--file", file}
