@@ -2,7 +2,7 @@ module quitsh-cli
 
 replace github.com/sdsc-ordes/quitsh => ../..
 
-go 1.25
+go 1.26
 
 require (
 	github.com/creasty/defaults v1.8.0
