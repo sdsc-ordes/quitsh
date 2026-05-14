@@ -26,29 +26,35 @@ func NewCommandCtx(cwd string) *CmdContext {
 // By default: not quiet.
 func NewCmdCtxBuilder() CmdContextBuilder {
 	debug.Assert(runtime.GOOS != "windows", "Windows is not supported.")
-	ctx := CmdContext{}
 
-	return CmdContextBuilder{cmdCtx: &ctx}.NoQuiet().CredentialFilter(nil)
+	c := CmdContext{}
+
+	// Init the exec context for cancelation.
+	if GlobalContext != nil {
+		c.ctx = GlobalContext
+	} else {
+		c.ctx = context.Background()
+	}
+
+	return CmdContextBuilder{cmdCtx: &c}.NoQuiet().CredentialFilter(nil)
+}
+
+// NewFromCmdCtx returns a new builder from an existing command context.
+func NewFromCmdCtx(cmdCtx *CmdContext) CmdContextBuilder {
+	c := cmdCtx.clone()
+
+	return CmdContextBuilder{cmdCtx: &c}
 }
 
 // Clone clones the builder.
 func (c CmdContextBuilder) Clone() CmdContextBuilder {
-	cmd := *c.cmdCtx
+	cmd := c.cmdCtx.clone()
 
 	return CmdContextBuilder{&cmd, c.withPathSet}
 }
 
 // Build finalizes the context.
 func (c CmdContextBuilder) Build() *CmdContext {
-	// Init the context.
-	if c.cmdCtx.ctx == nil {
-		if GlobalContext != nil {
-			c.cmdCtx.ctx = GlobalContext
-		} else {
-			c.cmdCtx.ctx = context.Background()
-		}
-	}
-
 	return c.cmdCtx
 }
 
@@ -56,6 +62,15 @@ func (c CmdContextBuilder) Build() *CmdContext {
 // If not set `context.Background()` is used.
 func (c CmdContextBuilder) Context(ctx context.Context) CmdContextBuilder {
 	c.cmdCtx.ctx = ctx
+
+	return c
+}
+
+// ContextWrap wraps the existing execution context (for cancellation) with a `wrap` function.
+// This allows to add e.g. `context.WithTimeout(...)` to the existing context.
+func (c CmdContextBuilder) ContextWrap(
+	wrap func(parent context.Context) context.Context) CmdContextBuilder {
+	c.cmdCtx.ctx = wrap(c.cmdCtx.ctx)
 
 	return c
 }
