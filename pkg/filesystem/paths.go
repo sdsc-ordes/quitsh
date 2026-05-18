@@ -113,7 +113,7 @@ func FindRelPathInParents(start string, p string, root string) (found string) {
 
 // MakeAbsoluteTo makes a path absolute to the `base` directory.
 func MakeAbsoluteTo(base string, p string) string {
-	debug.Assert(path.IsAbs(base), "Base path is not absolute.")
+	debug.Assertf(path.IsAbs(base), "Base path is not absolute: '%v'", base)
 
 	if !path.IsAbs(p) {
 		p = path.Join(base, p)
