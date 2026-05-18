@@ -8,7 +8,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
 )
 
-// The dispatcher interface which will
+// IDispatcher is the dispatcher interface to
 // run the runner over a toolchain.
 type IDispatcher interface {
 	Run(
@@ -29,6 +29,6 @@ type DispatchArgs struct {
 }
 
 // Validate validates the dispatch args.
-func (c *DispatchArgs) Validate() error {
+func (c DispatchArgs) Validate() error {
 	return common.Validator().Struct(c)
 }
