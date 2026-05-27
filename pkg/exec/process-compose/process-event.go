@@ -1,7 +1,7 @@
 package processcompose
 
-// pcEvent is the `ProcessStateEvent` is taken from `process-compose` we do not serialize
-// only stuff we really need.
+// pcEvent is the `ProcessStateEvent`taken from `process-compose`.
+// We seralize only the stuff we really need.
 // Version: 1.110.
 type pcEvent struct {
 	State pcState `json:"state"`

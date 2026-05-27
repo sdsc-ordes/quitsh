@@ -393,10 +393,10 @@ func (pc *ProcessComposeCtx) WaitTill(
 				log.Infof("All conditions fulfilled.")
 
 				return true, nil
-			} else {
-				log.Warnf("Not all conditions fulfilled: '%v/%v'",
-					condsFulfilled, len(conds))
 			}
+
+			log.Warnf("Not all conditions fulfilled: '%v/%v'",
+				condsFulfilled, len(conds))
 		}
 	}
 }
