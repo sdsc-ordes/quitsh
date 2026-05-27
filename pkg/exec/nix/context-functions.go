@@ -17,7 +17,7 @@ type Derivation struct {
 // BuildInstallable builds the derivation specified by the installable `installable`.
 // See [FlakeInstallable].
 func (ctx *NixBuildCtx) BuildInstallable(installable string) (*Derivation, error) {
-	js, err := ctx.Get("--json", installable)
+	js, err := ctx.Get("--no-link", "--json", installable)
 	if err != nil {
 		return nil, err
 	}
