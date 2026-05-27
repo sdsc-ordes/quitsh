@@ -32,7 +32,8 @@
     };
 
     quitsh = {
-      url = "../../?dir=tools/nix";
+      # Local to this flake.nix
+      url = "path:./../../tools/nix";
     };
   };
   outputs =

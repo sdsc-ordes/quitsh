@@ -1888,13 +1888,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "dir": "tools/nix",
-        "path": "../../",
+        "path": "./../../tools/nix",
         "type": "path"
       },
       "original": {
-        "dir": "tools/nix",
-        "path": "../../",
+        "path": "./../../tools/nix",
         "type": "path"
       },
       "parent": []
