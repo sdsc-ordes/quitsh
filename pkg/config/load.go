@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/creasty/defaults"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 
 	"github.com/goccy/go-yaml"
@@ -24,10 +25,16 @@ type (
 )
 
 // LoadFromReader loads a config file from reader `reader`.
+// It initializes the `conf` with `defaults.Set`.
 func LoadFromReader[T any, TP LoadIniter[T]](
 	reader io.Reader,
 	opts ...LoadOption,
 ) (conf T, err error) {
+	err = defaults.Set(&conf)
+	if err != nil {
+		return
+	}
+
 	err = LoadFromReaderInto[T, TP](reader, &conf, opts...)
 
 	return
