@@ -13,6 +13,7 @@ import (
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
+	pccmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	versionupcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/version-up"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
@@ -31,6 +32,8 @@ func main() {
 
 	conf := cliconfig.New()
 
+	const flakeDirRel = "tools/nix"
+
 	cli, err := cli.New(
 		&conf.Commands.Root,
 		&conf,
@@ -45,8 +48,7 @@ func main() {
 		cli.WithStages("lint", "build", "test"),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithSignalContext(true),
-		cli.WithToolchainDispatcherNix(
-			"tools/nix",
+		cli.WithToolchainDispatcherNix(flakeDirRel,
 			func(c config.IConfig) *toolchain.DispatchArgs {
 				cc := common.Cast[*cliconfig.Config](c)
 
@@ -70,6 +72,7 @@ func main() {
 	configcmd.AddCmd(cli.RootCmd(), &conf)
 	exectarget.AddCmd(cli, cli.RootCmd(), &conf.Commands.ExecArgs)
 	execrunner.AddCmd(cli, cli.RootCmd(), &conf.Commands.DispatchArgs)
+	pccmd.AddCmd(cli, cli.RootCmd(), flakeDirRel)
 
 	registerRunners(cli, &conf)
 

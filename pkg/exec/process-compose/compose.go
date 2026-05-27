@@ -479,9 +479,13 @@ func getSocketPath(
 		drv, e := nixBuildx.BuildInstallable(
 			devShellInstallable + ".config.process.managers.process-compose.package",
 		)
+		if e != nil {
+			return e
+		}
+
 		pcPath = drv.Outputs.Out
 
-		return e
+		return nil
 	})
 
 	// Get socket path.
