@@ -1,5 +1,5 @@
 module quitsh/tests/component-a
 
-go 1.26
+go 1.25
 
 require github.com/agnivade/levenshtein v1.1.1

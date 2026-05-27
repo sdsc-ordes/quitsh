@@ -267,7 +267,7 @@ func parseConfigs(conf config.IConfig) (parsedConfigPath, parsedUserConfigPath s
 	s := pflag.NewFlagSet("default", pflag.ContinueOnError)
 	addPersistendFlags(s, &args)
 
-	s.ParseErrorsWhitelist.UnknownFlags = true
+	s.ParseErrorsAllowlist.UnknownFlags = true
 
 	err = s.Parse(os.Args)
 	if e.Is(err, pflag.ErrHelp) {

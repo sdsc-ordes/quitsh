@@ -246,7 +246,7 @@ func startPCMonitor(
 
 	waiter, pipe, err := pc.CheckPipe("process", "monitor", "-o", "json")
 	if err != nil {
-		return
+		return m, err
 	}
 
 	// The terminate function to correctly handle errors.
@@ -305,7 +305,7 @@ func startPCMonitor(
 		}
 	}()
 
-	return
+	return m, nil
 }
 
 // WaitTill checks if processes in the process compose are running.

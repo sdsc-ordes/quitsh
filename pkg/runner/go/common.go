@@ -93,7 +93,7 @@ func GetBuildFlags(
 	bTags = append(bTags, envType.String())
 
 	// Tags for generating.
-	gTags := append([]string{"generate"}, bTags...)
+	gTags := append([]string{goGenerate}, bTags...)
 
 	if len(bTags) != 0 {
 		tagArgs = append(tagArgs, "--tags", strings.Join(bTags, ","))

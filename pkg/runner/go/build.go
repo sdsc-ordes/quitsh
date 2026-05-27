@@ -11,6 +11,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/runner/config"
 )
 
+const goGenerate = "generate"
 const GoBuildRunnerID = "quitsh::build-go"
 
 type GoBuildRunner struct {
@@ -107,7 +108,7 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	)
 
 	log.Info("Run Go generate.")
-	cmd := append([]string{"generate"}, tagArgsGen...)
+	cmd := append([]string{goGenerate}, tagArgsGen...)
 	cmd = append(cmd, "./...")
 	err = goctx.Check(cmd...)
 	if err != nil {

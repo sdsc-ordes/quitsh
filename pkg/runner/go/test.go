@@ -90,7 +90,7 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	)
 
 	log.Info("Run Go generate.")
-	cmd := append([]string{"generate"}, tagArgsGen...)
+	cmd := append([]string{goGenerate}, tagArgsGen...)
 	cmd = append(cmd, "./...")
 	err = goctx.Check(cmd...)
 	if err != nil {

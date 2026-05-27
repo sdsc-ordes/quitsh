@@ -15,6 +15,8 @@ func RegisterBuild(
 	factory factory.IFactory,
 	registerKey bool,
 ) (err error) {
+	const defaultToolchain = "build-go"
+
 	// Register Go build runner.
 	log.Trace("Register runner.", "id", GoBuildRunnerID)
 	e := factory.Register(
@@ -24,7 +26,7 @@ func RegisterBuild(
 				return NewGoBuildRunner(config, buildSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalBuildConfig,
-			DefaultToolchain:      "build-go",
+			DefaultToolchain:      defaultToolchain,
 		})
 	err = errors.Combine(err, e)
 
@@ -41,6 +43,8 @@ func RegisterTest(
 	factory factory.IFactory,
 	registerKey bool,
 ) (err error) {
+	const defaultToolchain = "build-go"
+
 	// Register Go test/test-bin runner.
 	log.Trace("Register runner.", "id", GoTestRunnerID)
 	e := factory.Register(
@@ -50,7 +54,7 @@ func RegisterTest(
 				return NewGoTestRunner(config, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalTestConfig,
-			DefaultToolchain:      "build-go",
+			DefaultToolchain:      defaultToolchain,
 		})
 	err = errors.Combine(err, e)
 
@@ -67,7 +71,7 @@ func RegisterTest(
 				return NewGoTestBinRunner(config, testSettings)
 			},
 			RunnerConfigUnmarshal: UnmarshalTestBinConfig,
-			DefaultToolchain:      "build-go",
+			DefaultToolchain:      defaultToolchain,
 		})
 	err = errors.Combine(err, e)
 	e = factory.RegisterToKey(runner.NewRegisterKey("test", "go-bin"), GoTestBinRunnerID)
