@@ -94,7 +94,7 @@
                   };
                 };
                 completed = {
-                  exec = "${pkgs.coreutils}/bin/true";
+                  exec = "exec ${pkgs.coreutils}/bin/true";
                 };
               };
             })

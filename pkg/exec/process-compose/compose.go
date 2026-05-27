@@ -295,7 +295,7 @@ func startPCMonitor(
 		s := bufio.NewScanner(pipe)
 		for s.Scan() {
 			line := s.Bytes()
-			log.Infof("Got line '%s'", string(line))
+			log.Tracef("Parse event '%s'", string(line))
 
 			e := json.Unmarshal(line, &event)
 			if e != nil {
