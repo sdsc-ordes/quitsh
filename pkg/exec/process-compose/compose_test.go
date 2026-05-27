@@ -24,7 +24,7 @@ func TestProcessComposeDevenv(t *testing.T) {
 	err = fs.CopyFileOrDir("./test/flake.lock", path.Join(d, "flake.lock"), true)
 	require.NoError(t, err)
 
-	socketPathFile := path.Join(d, "socket-path")
+	socketPathFile := path.Join("./test", ".pc-socket-path")
 
 	pcCtx, err := Start(logger, d, d,
 		"mynamespace.shells.test",
@@ -56,7 +56,7 @@ func TestProcessComposeDevenv(t *testing.T) {
 	assert.FileExists(t, socketPathFile)
 }
 
-func TestProcessComposeDevenvTimeout(t *testing.T) {
+func TestProcessComposeTimeout(t *testing.T) {
 	t.Parallel()
 	d := t.TempDir()
 	logger := log.NewLogger("test")

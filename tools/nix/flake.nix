@@ -20,14 +20,15 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # The devenv module to create good development shells.
+    # The `nixpkgs-devenv` must aligned with the pinned version.
     devenv = {
-      url = "github:cachix/devenv";
+      url = "github:cachix/devenv?ref=v2.1.2";
       inputs.nixpkgs.follows = "nixpkgs-devenv";
     };
-    # We have to lock somehow the pkgs in `mkShell` here:
-    # https://github.com/cachix/devenv/issues/1797
-    # `nixpkgs` is used in the devShell modules.
-    nixpkgs-devenv.url = "github:cachix/devenv-nixpkgs/rolling";
+    # This is the rolling nixpkgs with what devenv was tested.
+    nixpkgs-devenv = {
+      url = "github:cachix/devenv-nixpkgs?ref=ec3063523dcd911aeadb50faa589f237cdab5853";
+    };
     devenv-root = {
       url = "file+file:///dev/null";
       flake = false;
