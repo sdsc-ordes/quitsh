@@ -3,6 +3,7 @@ package processcomposestart
 import (
 	"context"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ type (
 
 		waitFor             []string
 		waitForReady        []string
+		noFailOnCompleted   []string
 		attach              bool
 		timeoutWait         time.Duration
 		timeoutWaitInterval time.Duration
@@ -53,6 +55,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 				stArgs.attrPath,
 				stArgs.waitFor,
 				stArgs.waitForReady,
+				stArgs.noFailOnCompleted,
 				stArgs.socketPathFile,
 				stArgs.timeoutWait,
 				stArgs.timeoutWaitInterval,
@@ -73,6 +76,12 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitForReady,
 			"wait-for-ready", "r", nil, "Wait for these processes to be ready.")
+
+	startCmd.Flags().
+		StringArrayVar(&stArgs.noFailOnCompleted,
+			"no-fail-on-completed", nil,
+			"By default if a '--wait-for' or '--wait-for-ready' completes, the wait condition fails. "+
+				"Turn this off for certain processes.")
 
 	startCmd.Flags().
 		StringVarP(&stArgs.socketPathFile,
@@ -102,6 +111,7 @@ func startProcessCompose(
 	devenvShellAttrPath string,
 	waitForRunning []string,
 	waitForReady []string,
+	noFailOnCompleted []string,
 	socketPathFile string,
 	timeoutWait time.Duration,
 	timeoutWaitInterval time.Duration,
@@ -143,13 +153,22 @@ func startProcessCompose(
 
 	var conds []pc.ProcessCond
 	for i := range waitForRunning {
+		noFailOnCompleted := slices.Contains(noFailOnCompleted, waitForRunning[i])
 		conds = append(conds,
-			pc.ProcessCond{Name: waitForRunning[i], State: pc.ProcessRunning})
+			pc.ProcessCond{
+				Name:              waitForRunning[i],
+				State:             pc.ProcessRunning,
+				NoFailOnCompleted: noFailOnCompleted})
 	}
 
 	for i := range waitForReady {
+		noFailOnCompleted := slices.Contains(noFailOnCompleted, waitForRunning[i])
 		conds = append(conds,
-			pc.ProcessCond{Name: waitForReady[i], State: pc.ProcessReady})
+			pc.ProcessCond{
+				Name:              waitForReady[i],
+				State:             pc.ProcessReady,
+				NoFailOnCompleted: noFailOnCompleted},
+		)
 	}
 
 	if len(conds) != 0 {

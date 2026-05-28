@@ -41,6 +41,10 @@ type (
 	ProcessCond struct {
 		Name  string
 		State ProcessState
+
+		// Fail if the state becomes completed.
+		// Is `false` by default.
+		NoFailOnCompleted bool
 	}
 
 	StartOption func(*startOpts) error
@@ -370,10 +374,6 @@ func (pc *ProcessComposeCtx) WaitTill(
 			log.Error("WaitTill context closed. Conditions could not be fulfilled.")
 
 			return false, nil
-		// case <-mon.done:
-		// 	log.Info("Monitor done.")
-		//
-		// 	return false, nil
 		case event, ok := <-mon.eventCh:
 			if !ok {
 				log.Info("Event channel closed.")
@@ -381,7 +381,7 @@ func (pc *ProcessComposeCtx) WaitTill(
 				return false, nil
 			}
 
-			log.Info("Event received.", "event", event)
+			log.Debug("Event received.", "event", event)
 			p := &event.State
 
 			// All lowercase, to be safe.
@@ -414,15 +414,27 @@ func (pc *ProcessComposeCtx) WaitTill(
 				}
 
 				switch {
+				case !cond.NoFailOnCompleted && p.Status == "completed":
+					log.Warnf(
+						"Process condition: '%s': 'completed' which is a guard and must not happen ❌.",
+						p.Name,
+					)
+
+					return false, nil
 				case cond.State == ProcessRunning && p.Status == "running":
-					log.Infof("Process condition: '%s': 'running' ✅", p.Name)
+					log.Infof("Process condition: '%s': 'running' fulfilled ✅.", p.Name)
 					condsFulfilled += 1
 				case cond.State == ProcessReady && p.IsReady == "ready":
-					log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
+					log.Infof("Process condition: '%s': 'ready' fulfilled ✅.", p.Name)
 					condsFulfilled += 1
 				case cond.State == ProcessCompleted && p.Status == "completed":
-					log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
-					condsFulfilled += 1
+					// FIXME: Set that to completed once.
+					log.Error("Completed condition is not supported at the moment due to: " +
+						"https://github.com/cachix/devenv/issues/2879")
+
+					return false, nil
+					// log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
+					// condsFulfilled += 1
 				}
 			}
 
