@@ -162,7 +162,7 @@ func startProcessCompose(
 	}
 
 	for i := range waitForReady {
-		noFailOnCompleted := slices.Contains(noFailOnCompleted, waitForRunning[i])
+		noFailOnCompleted := slices.Contains(noFailOnCompleted, waitForReady[i])
 		conds = append(conds,
 			pc.ProcessCond{
 				Name:              waitForReady[i],
