@@ -41,6 +41,10 @@ type (
 	ProcessCond struct {
 		Name  string
 		State ProcessState
+
+		// Fail if the state becomes completed.
+		// Is `false` by default.
+		NoFailOnCompleted bool
 	}
 
 	StartOption func(*startOpts) error
@@ -228,7 +232,6 @@ func (pc *ProcessComposeCtx) Stop() error {
 }
 
 type monitor struct {
-	// done      <-chan struct{}
 	eventCh   <-chan pcEvent
 	terminate func() error
 }
@@ -259,7 +262,7 @@ func startPCMonitor(
 
 	// The terminate function to correctly handle errors.
 	m.terminate = func() error {
-		// Cancel the process. Cause errors are only set once by `cancel`!
+		// Cancel the process. Note: errors are only set once when `cancel` called!
 		normalTerminate := errors.New("normal terminate")
 		cancel(normalTerminate)
 
@@ -346,7 +349,7 @@ func (pc *ProcessComposeCtx) WaitTill(
 		return false, err
 	}
 
-	// Map to keep track of procs.
+	// Map to keep track of all procs.
 	condsFulfilled := 0
 	cache := make(map[string]pcState)
 
@@ -370,10 +373,6 @@ func (pc *ProcessComposeCtx) WaitTill(
 			log.Error("WaitTill context closed. Conditions could not be fulfilled.")
 
 			return false, nil
-		// case <-mon.done:
-		// 	log.Info("Monitor done.")
-		//
-		// 	return false, nil
 		case event, ok := <-mon.eventCh:
 			if !ok {
 				log.Info("Event channel closed.")
@@ -381,7 +380,7 @@ func (pc *ProcessComposeCtx) WaitTill(
 				return false, nil
 			}
 
-			log.Info("Event received.", "event", event)
+			log.Debug("Event received.", "event", event)
 			p := &event.State
 
 			// All lowercase, to be safe.
@@ -406,24 +405,9 @@ func (pc *ProcessComposeCtx) WaitTill(
 			}
 			cache[p.Name] = *p
 
-			// Eval conditions.
-			for i := range conds {
-				cond := &conds[i]
-				if cond.Name != p.Name {
-					continue
-				}
-
-				switch {
-				case cond.State == ProcessRunning && p.Status == "running":
-					log.Infof("Process condition: '%s': 'running' ✅", p.Name)
-					condsFulfilled += 1
-				case cond.State == ProcessReady && p.IsReady == "ready":
-					log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
-					condsFulfilled += 1
-				case cond.State == ProcessCompleted && p.Status == "completed":
-					log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
-					condsFulfilled += 1
-				}
+			abort := evalConditions(log, conds, p, &condsFulfilled)
+			if abort {
+				return false, nil
 			}
 
 			if condsFulfilled == len(conds) {
@@ -436,6 +420,47 @@ func (pc *ProcessComposeCtx) WaitTill(
 				condsFulfilled, len(conds))
 		}
 	}
+}
+
+func evalConditions(
+	log log.ILog,
+	conds []ProcessCond,
+	p *pcState,
+	condsFulfilled *int,
+) (abort bool) {
+	for i := range conds {
+		cond := &conds[i]
+		if cond.Name != p.Name {
+			continue
+		}
+
+		switch {
+		case !cond.NoFailOnCompleted && p.Status == "completed":
+			log.Warnf(
+				"Process condition: '%s': 'completed' which is a guard and must not happen ❌.",
+				p.Name,
+			)
+
+			return true
+		case cond.State == ProcessRunning && p.Status == "running":
+			log.Infof("Process condition: '%s': 'running' fulfilled ✅.", p.Name)
+			*condsFulfilled += 1
+		case cond.State == ProcessReady && p.IsReady == "ready":
+			log.Infof("Process condition: '%s': 'ready' fulfilled ✅.", p.Name)
+			*condsFulfilled += 1
+		case cond.State == ProcessCompleted && p.Status == "completed":
+			// FIXME: Set that to completed once.
+			log.Error("Completed condition is not supported at the moment due to: " +
+				"https://github.com/cachix/devenv/issues/2879")
+
+			return true
+			// Uncomment: for fixme above.
+			// log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
+			// condsFulfilled += 1
+		}
+	}
+
+	return false
 }
 
 func (pc *ProcessComposeCtx) waitForSocket() error {

@@ -47,12 +47,13 @@ func TestProcessCompose(t *testing.T) {
 		fulfilled, err := pcCtx.WaitTill(
 			ctx,
 			logger,
-			ProcessCond{Name: "httpbin", State: ProcessRunning},
-			ProcessCond{Name: "keycloak", State: ProcessReady},
+			ProcessCond{Name: "httpbin", State: ProcessRunning, NoFailOnCompleted: false},
+			ProcessCond{Name: "keycloak", State: ProcessReady, NoFailOnCompleted: false},
 
 			// FIXME: Set that to completed once https://github.com/cachix/devenv/issues/2879
 			// is fixed.
-			ProcessCond{Name: "completed", State: ProcessRunning},
+			// This should fail when the Bug is fixed (NoFailOnCompleted: false is correct).
+			ProcessCond{Name: "completed", State: ProcessRunning, NoFailOnCompleted: true},
 		)
 		require.NoError(t, err)
 		assert.True(t, fulfilled)
