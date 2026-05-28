@@ -17,6 +17,6 @@ func TestSkopeo(t *testing.T) {
 func TestSkopeoWithTLS(t *testing.T) {
 	ctx := NewCtx()
 	inspCtx := ctx.InspectCtx()
-	e := inspCtx.Check("docker://alpine:latest")
+	e := inspCtx.Check("--no-creds", "docker://alpine:latest")
 	require.NoError(t, e)
 }

@@ -307,7 +307,7 @@ func ExecuteRunner(
 		err := toolchainDispatcher.Run(rootDir, &dArgs, config)
 
 		if err != nil {
-			log.Warn("Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
+			log.ErrorE(err, "Toolchain dispatch failed.", "runner", runner.ID(), "target", targetID)
 
 			return err
 		}

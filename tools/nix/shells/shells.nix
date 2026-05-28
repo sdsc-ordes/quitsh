@@ -8,7 +8,7 @@
 let
 
   pkgsPinned = {
-    go = pkgs.go_1_25;
+    go = pkgs.go_1_26;
   };
 
   toolchains =

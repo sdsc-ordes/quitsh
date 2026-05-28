@@ -2,7 +2,7 @@
   lib,
   remarshal,
   runCommand,
-  buildGo125Module,
+  buildGo126Module,
   installShellFiles,
   testers,
   git,
@@ -21,14 +21,14 @@ let
     fileset = fs.difference files test;
   };
 
-  cli = buildGo125Module rec {
+  cli = buildGo126Module rec {
     pname = name;
     version = (yaml.read (rootDir + "/.component.yaml")).version;
     inherit src;
 
     modRoot = "./tools/cli";
 
-    vendorHash = "sha256-tqOmBQpFXBtIkTOO1ZhGP+ak0EsEqB5IWRinefr2CMc=";
+    vendorHash = "sha256-wvvCywQkRTHtKI7VJzpHDP00NVWSlj1C05PfDfdzKDM=";
     proxyVendor = true;
 
     nativeBuildInputs = [ installShellFiles ];

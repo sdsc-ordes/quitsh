@@ -360,5 +360,4 @@ func TestCLIProcessCompose(t *testing.T) {
 		)
 		require.NoError(t, err, "Could not stop process-compose.")
 	}()
-
 }

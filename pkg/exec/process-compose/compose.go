@@ -1,9 +1,11 @@
 package processcompose
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	stderr "errors"
 	"fmt"
 	"os"
 	"path"
@@ -127,8 +129,14 @@ func StartFromInstallable(
 	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
 		rootDir, devShellInstallable).BaseArgs(procCompExe))
 
+	pcB := exec.NewCmdCtxBuilder().BaseCmd(procCompExe)
+	version, err := pcB.Build().Get("version")
+	if err != nil {
+		return nil, err
+	}
+
 	pc = &ProcessComposeCtx{
-		CmdContext: *build(exec.NewCmdCtxBuilder().BaseCmd(procCompExe)),
+		CmdContext: *build(pcB),
 		log:        log,
 		socket:     socketPath,
 		tempDir:    dir,
@@ -136,6 +144,7 @@ func StartFromInstallable(
 	}
 
 	log.Info("Settings for process-compose.",
+		"version", version,
 		"rootDir", rootDir,
 		"installable", devShellInstallable,
 		"procCompExe", procCompExe,
@@ -218,13 +227,115 @@ func (pc *ProcessComposeCtx) Stop() error {
 	return pc.Check("down")
 }
 
-// WaitTill checks if processes in the process compose is running.
+type monitor struct {
+	// done      <-chan struct{}
+	eventCh   <-chan pcEvent
+	terminate func() error
+}
+
+func startPCMonitor(
+	log log.ILog,
+	pc *exec.CmdContext,
+) (m monitor, err error) {
+	eventCh := make(chan pcEvent, 10) //nolint:mnd
+	m.eventCh = eventCh
+
+	var c context.Context
+	var cancel context.CancelCauseFunc
+	var waiter exec.Waiter
+
+	// Add a cancelation.
+	pc = pc.ToBuilder().ContextWrap(
+		func(p context.Context) context.Context {
+			c, cancel = context.WithCancelCause(p) //nolint: fatcontext // false-positive
+
+			return c
+		}).Build()
+
+	waiter, pipe, err := pc.CheckPipe("process", "monitor", "-o", "json")
+	if err != nil {
+		return m, errors.AddContext(err, "failed to start pipe")
+	}
+
+	// The terminate function to correctly handle errors.
+	m.terminate = func() error {
+		// Cancel the process. Cause errors are only set once by `cancel`!
+		normalTerminate := errors.New("normal terminate")
+		cancel(normalTerminate)
+
+		pipe.Close()
+
+		e := waiter.Wait()
+		cerr := c.Err()
+		cause := context.Cause(c)
+		switch {
+		case stderr.Is(cause, normalTerminate):
+			return nil
+		case cause != nil:
+			// A problem is to report.
+			return cause
+		case cerr != nil:
+			return nil //nolint:nilerr // The context was apparently cancelled so nothing to report.
+		}
+
+		// ...otherwise report why process monitor failed.
+		return e
+	}
+
+	// Read output in separate Go routine.
+	go func() {
+		defer func() {
+			pipe.Close()
+			close(eventCh)
+			log.Info("Monitor reader for 'process-compose' closed.")
+		}()
+
+		var count int
+		var event pcEvent
+		s := bufio.NewScanner(pipe)
+		for s.Scan() {
+			line := s.Bytes()
+			log.Tracef("Parse event '%s'", string(line))
+
+			e := json.Unmarshal(line, &event)
+			if e != nil {
+				log.ErrorE(e, "Could not serialize process-compose monitor event: '%v', abort.",
+					string(line))
+
+				cancel(errors.AddContext(e,
+					"could not serialize process-compose monitor event"))
+
+				return
+			}
+
+			// Send event.
+			// Note: if `ch` might be full we dont block since first case.
+			select {
+			case <-c.Done():
+				log.Infof("Monitor context cancelled.")
+
+				return
+			case eventCh <- event:
+				count++
+			}
+		}
+
+		if e := s.Err(); e != nil {
+			cancel(errors.AddContext(e, "event scanner failed"))
+		}
+
+		log.Infof("Monitor reader finished, processed '%v' events.", count)
+	}()
+
+	return m, nil
+}
+
+// WaitTill checks if processes in the process compose are running.
 //
-//nolint:gocognit,funlen // The goroutine polling is fairily simple to understand.
+//nolint:gocognit
 func (pc *ProcessComposeCtx) WaitTill(
 	ctx context.Context,
 	log log.ILog,
-	checkInterval time.Duration,
 	conds ...ProcessCond) (fulfilled bool, err error) {
 	if len(conds) == 0 {
 		return true, nil
@@ -235,86 +346,83 @@ func (pc *ProcessComposeCtx) WaitTill(
 		return false, err
 	}
 
-	type ProcInfo struct {
-		Status  string `json:"status"`
-		IsReady string `json:"is_ready"` //nolint:tagliatelle // external input
-		Name    string `json:"name"`
-	}
+	// Map to keep track of procs.
+	condsFulfilled := 0
+	cache := make(map[string]pcState)
 
-	// Map to keep track of logged statues of procs.
-	reported := make(map[string]ProcInfo)
+	mon, err := startPCMonitor(log, &pc.CmdContext)
+	if err != nil {
+		return false, err
+	}
+	defer func() {
+		log.Info("Terminating 'process-compose' monitor.")
+		if e := mon.terminate(); e != nil {
+			err = errors.Combine(
+				errors.AddContext(e, "process monitor terminated with problems"),
+				err,
+			)
+		}
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
+			log.Error("WaitTill context closed. Conditions could not be fulfilled.")
+
 			return false, nil
-		default:
-			if !fs.Exists(pc.Socket()) {
-				log.Warnf("Socket file '%s' does not yet exist, waiting for it.",
-					pc.Socket())
+		// case <-mon.done:
+		// 	log.Info("Monitor done.")
+		//
+		// 	return false, nil
+		case event, ok := <-mon.eventCh:
+			if !ok {
+				log.Info("Event channel closed.")
 
-				break
+				return false, nil
 			}
 
-			var js string
-			js, err = pc.Get("list", "-o", "json")
-			if err != nil {
-				return false, err
+			log.Info("Event received.", "event", event)
+			p := &event.State
+
+			// All lowercase, to be safe.
+			p.Status = strings.ToLower(p.Status)
+			p.IsReady = strings.ToLower(p.IsReady)
+
+			if cache[p.Name].Status != p.Status {
+				log.Infof(
+					"Process status change: '%s': '%s' -> '%s'.",
+					p.Name,
+					cache[p.Name].Status,
+					p.Status,
+				)
 			}
-
-			var procs []ProcInfo
-
-			err = json.Unmarshal([]byte(js), &procs)
-			if err != nil {
-				return false,
-					errors.AddContext(err,
-						"Could not unmarshall output from process-compose.\n'%s'",
-						js)
+			if cache[p.Name].IsReady != p.IsReady {
+				log.Infof(
+					"Process readiness change: '%s': '%s' -> '%s'.",
+					p.Name,
+					cache[p.Name].IsReady,
+					p.IsReady,
+				)
 			}
+			cache[p.Name] = *p
 
-			condsFulfilled := 0
-
-			for j := range procs {
-				p := &procs[j]
-				// All lowercase, to be safe.
-				p.Status = strings.ToLower(p.Status)
-				p.IsReady = strings.ToLower(p.IsReady)
-
-				if reported[p.Name].Status != p.Status {
-					log.Infof(
-						"Process status change: '%s': '%s' -> '%s'.",
-						p.Name,
-						reported[p.Name].Status,
-						p.Status,
-					)
+			// Eval conditions.
+			for i := range conds {
+				cond := &conds[i]
+				if cond.Name != p.Name {
+					continue
 				}
-				if reported[p.Name].IsReady != p.IsReady {
-					log.Infof(
-						"Process readiness change: '%s': '%s' -> '%s'.",
-						p.Name,
-						reported[p.Name].IsReady,
-						p.IsReady,
-					)
-				}
-				reported[p.Name] = *p
 
-				for i := range conds {
-					cond := &conds[i]
-					if cond.Name != p.Name {
-						continue
-					}
-
-					switch {
-					case cond.State == ProcessRunning && p.Status == "running":
-						log.Infof("Process condition: '%s': 'running' ✅", p.Name)
-						condsFulfilled += 1
-					case cond.State == ProcessReady && p.IsReady == "ready":
-						log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
-						condsFulfilled += 1
-					case cond.State == ProcessCompleted && p.Status == "completed":
-						log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
-						condsFulfilled += 1
-					}
+				switch {
+				case cond.State == ProcessRunning && p.Status == "running":
+					log.Infof("Process condition: '%s': 'running' ✅", p.Name)
+					condsFulfilled += 1
+				case cond.State == ProcessReady && p.IsReady == "ready":
+					log.Infof("Process condition: '%s': 'ready' ✅", p.Name)
+					condsFulfilled += 1
+				case cond.State == ProcessCompleted && p.Status == "completed":
+					log.Infof("Process condition: '%s': 'completed' ✅", p.Name)
+					condsFulfilled += 1
 				}
 			}
 
@@ -324,14 +432,8 @@ func (pc *ProcessComposeCtx) WaitTill(
 				return true, nil
 			}
 
-			log.Warnf("Not all conditions fulfilled: '%v/%v'", condsFulfilled, len(conds))
-		}
-
-		// Sleep for or until context is cancelled or check interval reached.
-		select {
-		case <-ctx.Done():
-			return false, nil
-		case <-time.After(checkInterval):
+			log.Warnf("Not all conditions fulfilled: '%v/%v'",
+				condsFulfilled, len(conds))
 		}
 	}
 }
@@ -357,6 +459,7 @@ func getSocketPath(
 	rootDir string,
 ) (procCompExe string, socketPath string, err error) {
 	nixx := nix.NewEvalCtx(rootDir)
+	nixBuildx := nix.NewBuildCtx(rootDir)
 
 	var manager string
 	var pcPath string
@@ -371,15 +474,18 @@ func getSocketPath(
 		return e
 	})
 
-	// Get process-compose path.
+	// Build process-compose path.
 	g.Go(func() error {
-		val, e := nixx.Get(
-			"--raw",
-			devShellInstallable+".config.process.managers.process-compose.package.outPath",
+		drv, e := nixBuildx.BuildInstallable(
+			devShellInstallable + ".config.process.managers.process-compose.package",
 		)
-		pcPath = val
+		if e != nil {
+			return e
+		}
 
-		return e
+		pcPath = drv.Outputs.Out
+
+		return nil
 	})
 
 	// Get socket path.

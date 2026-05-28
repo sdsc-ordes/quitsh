@@ -76,6 +76,18 @@ type (
 	}
 )
 
+// clone clones the command context.
+// Note: It leaves the `ctx` the same.
+func (c *CmdContext) clone() CmdContext {
+	r := *c
+	r.stdin = nil
+
+	r.baseArgs = common.CopySlice(c.baseArgs)
+	r.env = common.CopySlice(c.env)
+
+	return r
+}
+
 // Cwd returns the working directory.
 func (c *CmdContext) Cwd() string {
 	return c.cwd
@@ -103,6 +115,12 @@ func (c *CmdContext) WithStdin(r io.Reader) *CmdContext {
 	return c
 }
 
+// ToBuilder returns a new builder from the command context.
+// Note: `c` gets copied.
+func (c *CmdContext) ToBuilder() CmdContextBuilder {
+	return NewFromCmdCtx(c)
+}
+
 // GetSplit executes a command and splits the output by newlines.
 func (c *CmdContext) GetSplit(args ...string) ([]string, error) {
 	return c.GetSplitWithEC(c.exitCodeHandler, args...)
@@ -128,7 +146,7 @@ func (c *CmdContext) GetWithEC(handleExit ExitCodeHandler, args ...string) (stri
 		return "", err
 	}
 
-	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
+	cmd := exec.CommandContext(c.getContext(), baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -158,7 +176,7 @@ func (c *CmdContext) GetStdErrWithEC(
 		return "", "", err
 	}
 
-	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
+	cmd := exec.CommandContext(c.getContext(), baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -205,7 +223,7 @@ func (c *CmdContext) GetCombinedWithEC(handleExit ExitCodeHandler, args ...strin
 		return "", err
 	}
 
-	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
+	cmd := exec.CommandContext(c.getContext(), baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -236,7 +254,7 @@ func (c *CmdContext) CheckWithEC(handleExit ExitCodeHandler, args ...string) err
 		return err
 	}
 
-	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
+	cmd := exec.CommandContext(c.getContext(), baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -269,7 +287,7 @@ func (c *CmdContext) CheckPipe(args ...string) (waiter Waiter, pipe io.ReadClose
 		return
 	}
 
-	cmd := exec.CommandContext(c.ctx, baseCmd, args...)
+	cmd := exec.CommandContext(c.getContext(), baseCmd, args...)
 	cmd.Dir = c.cwd
 	cmd.Env = c.env
 
@@ -345,6 +363,16 @@ func formatError(cmd *exec.Cmd, stderr string, exitCode int, enableEnvPrint bool
 		stderr,
 		"  |  ",
 	)
+}
+
+func (c *CmdContext) getContext() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	} else if GlobalContext != nil {
+		return GlobalContext
+	}
+
+	return context.Background()
 }
 
 func (c *CmdContext) getCommand(args []string) (baseCmd string, argsOut []string, err error) {
