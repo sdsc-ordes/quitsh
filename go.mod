@@ -11,7 +11,6 @@ require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/containers/image/v5 v5.35.0
 	github.com/creasty/defaults v1.8.0
-	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-yaml v1.19.2
