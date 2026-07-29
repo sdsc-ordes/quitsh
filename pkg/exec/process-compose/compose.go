@@ -25,13 +25,13 @@ const ProcessReady ProcessState = 1
 const ProcessCompleted ProcessState = 2
 
 const ProcessComposeOverDevenv ProcessComposeImpl = "devenv"
-const ProcessComposeOverServicesFlake ProcessComposeImpl = "services-flake"
+const ProcessComposeOverServicesFlake ProcessComposeImpl = "process-compose-flake"
 
 // ProcessComposeCtx represents a `process-compose` context.
 type (
 	// ProcessComposeImpl represents the implementation
 	// if the process-compopse is defined in a `devenv` NixShell or
-	// over `services-flake`.
+	// over `process-compose-flake`.
 	ProcessComposeImpl string
 
 	ProcessComposeCtx struct {
@@ -89,7 +89,7 @@ func Start(
 
 // StartFromInstallable starts the process compose from a Nix
 // `installable` (e.g. `./tools/nix#custodian.shells.test-dbs`
-// which must be a `devenv` shell or a `services-flake` derivation).
+// which must be a `devenv` shell or a `process-compose-flake` derivation).
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
 func StartFromInstallable(
@@ -176,7 +176,7 @@ func settingsFromServicesFlake(
 	log log.ILog,
 	rootDir, installable string,
 ) (*ProcessComposeCtx, *exec.CmdContext, error) {
-	log.Infof("Getting settings for 'services-flake' implementation.")
+	log.Infof("Getting settings for 'process-compose-flake' implementation.")
 
 	// Compute deterministic temp directory base on `procCompExe`.
 	dir := path.Join(os.TempDir(), "process-compose",

@@ -20,8 +20,9 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
 	startCmd := &cobra.Command{
-		Use:     "exec [devenv-attr-path or devenv-installable] [args-to-proc-compose]",
-		Short:   "Exec commands on process-compose on the correct instance.",
+		Use: "exec [attr-path or installable] [args-to-proc-compose]",
+		Short: "Exec process-compose definition from a 'devenv.sh' Nix shell or " +
+			"a 'process-compose-flake' derivation.",
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
 			stArgs.AttrPath = args[0]

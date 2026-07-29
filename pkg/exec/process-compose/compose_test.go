@@ -108,7 +108,7 @@ func TestProcessComposeServicesFlake(t *testing.T) {
 		socketPathFile := path.Join("./test", ".pc-socket-path")
 
 		pcCtx, err := Start(logger, d, d,
-			"mynamespace.test-services-flake",
+			"mynamespace.test-process-compose-flake",
 			ProcessComposeOverServicesFlake,
 			WithSocketPathFile(socketPathFile),
 		)

@@ -138,8 +138,8 @@
         in
         {
           mynamespace.test-devenv = makeShell pkgs;
-          mynamespace.test-services-flake = servicesMod.config.outputs.package;
-          mynamespace.test-services-flake-config = servicesMod.config;
+          mynamespace.test-process-compose-flake = servicesMod.config.outputs.package;
+          mynamespace.test-process-compose-flake-config = servicesMod.config;
         }
       );
     };

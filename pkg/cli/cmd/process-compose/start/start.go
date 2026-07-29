@@ -46,8 +46,9 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
 	startCmd := &cobra.Command{
-		Use:     "start [devenv-attr-path or devenv-installable]",
-		Short:   "Start a process-compose definition from a 'devenv.sh' Nix shell.",
+		Use: "start [attr-path or installable]",
+		Short: "Start a process-compose definition from a 'devenv.sh' Nix shell or " +
+			"a 'process-compose-flake' derivation.",
 		Long:    longDesc,
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
@@ -109,7 +110,7 @@ func DefineBasicArgs(cmd *cobra.Command, baseArgs *BasicArgs, defaultFlakeDir st
 		StringVarP(&baseArgs.Impl,
 			"impl", "i", string(pc.ProcessComposeOverServicesFlake),
 			"Use `devenv` if the attribute is a `devenv` Nix shell "+
-				"or a `services-flake` if it is a `services-flake`-derivation.")
+				"or a `process-compose-flake` if it is a `process-compose-flake`-derivation.")
 }
 
 // startProcessCompose starts the process-compose services from `flake.nix` in `flakeDir`

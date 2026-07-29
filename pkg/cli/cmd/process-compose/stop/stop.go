@@ -24,7 +24,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
 	stopCmd := &cobra.Command{
-		Use:     "stop [attr-path to 'devenv' NixShell or 'services-flake' derivation]",
+		Use:     "stop [attr-path to 'devenv' NixShell or 'process-compose-flake' derivation]",
 		Short:   "Stop a process-compose definition from a 'devenv.sh' Nix shell.",
 		Long:    longDesc,
 		PreRunE: cobra.MinimumNArgs(1),

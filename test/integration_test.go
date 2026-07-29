@@ -370,7 +370,7 @@ func TestCLIProcessCompose(t *testing.T) {
 		test(t, "devenv", "httpbin")
 	})
 
-	t.Run("services-flake", func(t *testing.T) {
-		test(t, "services-flake", "mailhog")
+	t.Run("process-compose-flake", func(t *testing.T) {
+		test(t, "process-compose-flake", "mailhog")
 	})
 }
