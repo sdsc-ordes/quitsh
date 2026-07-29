@@ -126,9 +126,14 @@ func StartFromInstallable(
 	// Write the socket path to the file
 	if o.socketPathFile != "" {
 		log.Infof("Write socket path file '%s'.", o.socketPathFile)
+		err = os.MkdirAll(path.Dir(o.socketPathFile), fs.DefaultPermissionsDir)
+		if err != nil {
+			return nil, errors.AddContext(err, "Could not create directory '%v'", o.socketPathFile)
+		}
+
 		err = os.WriteFile(o.socketPathFile, []byte(pc.Socket()), fs.DefaultPermissionsFile)
 		if err != nil {
-			return pc, errors.AddContext(
+			return nil, errors.AddContext(
 				err,
 				"Could not write socket path to file '%s'.",
 				o.socketPathFile,
@@ -256,7 +261,7 @@ func settingsFromDevenv(
 	// Compute deterministic temp directory base on `installable`.
 	dir := path.Join(os.TempDir(), "process-compose",
 		"process-compose-"+fmt.Sprintf("%x",
-			sha256.Sum256([]byte(installable)))[:6])
+			sha256.Sum256([]byte(procCompExe)))[:6])
 
 	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
 	if err != nil {
