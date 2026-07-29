@@ -211,10 +211,7 @@ func settingsFromServicesFlake(
 		},
 	)
 
-	version, err := pc.Get("version")
-	if err != nil {
-		return nil, nil, err
-	}
+	version := "nix"
 
 	log.Info("Settings for process-compose.",
 		"version", version,
