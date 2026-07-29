@@ -70,64 +70,72 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 
 	fs.AssertDirs(comp.OutBuildBinDir())
 
-	// Set the output path and disable GOWORK:
-	// We build in each component without looking
-	// at `go.work` fs.
-	var binDir string
-	if r.settings.Coverage() {
-		binDir = comp.OutCoverageBinDir()
-	} else {
-		binDir = comp.OutBuildBinDir()
+	if len(r.config.Submodules) == 0 {
+		r.config.Submodules = append(r.config.Submodules, ".")
 	}
 
-	goctx := gox.NewCtxBuilder().
-		Cwd(comp.Root()).
-		Env("GOBIN="+binDir,
-			"GOWORK=off",
-			"GOTOOLCHAIN=local").
-		Build()
+	for _, submodule := range r.config.Submodules {
+		// Set the output path and disable GOWORK:
+		// We build in each component without looking
+		// at `go.work` fs.
+		var binDir string
+		if r.settings.Coverage() {
+			binDir = comp.OutCoverageBinDir(submodule)
+		} else {
+			binDir = comp.OutBuildBinDir(submodule)
+		}
 
-	modInfo, err := gox.GetModuleInfo(comp.Root())
-	if err != nil {
-		return err
-	}
+		goctx := gox.NewCtxBuilder().
+			Cwd(comp.Root()).
+			Env("GOBIN="+binDir,
+				"GOWORK=off",
+				"GOTOOLCHAIN=local").
+			Build()
 
-	// Build everything into `outputDir`.
-	flags, _, tagArgsGen := GetBuildFlags(
-		log,
-		comp.Root(),
-		r.settings.BuildType(),
-		r.settings.EnvironmentType(),
-		r.settings.Coverage(),
-		false,
-		modInfo,
-		comp.Version(),
-		r.config.VersionModule,
-		r.config.BuildTags,
-		false,
-	)
+		moduleRoot := path.Join(comp.Root(), submodule)
 
-	log.Info("Run Go generate.")
-	cmd := append([]string{goGenerate}, tagArgsGen...)
-	cmd = append(cmd, "./...")
-	err = goctx.Check(cmd...)
-	if err != nil {
-		log.ErrorE(err, "Go generate failed.")
+		modInfo, err := gox.GetModuleInfo(moduleRoot)
+		if err != nil {
+			return err
+		}
 
-		return err
-	}
+		// Build everything into `outputDir`.
+		flags, _, genArgs := GetBuildFlags(
+			log,
+			moduleRoot,
+			r.settings.BuildType(),
+			r.settings.EnvironmentType(),
+			r.settings.Coverage(),
+			false,
+			modInfo,
+			comp.Version(),
+			r.config.VersionModule,
+			r.config.BuildTags,
+			false,
+		)
 
-	log.Info("Run Go install.")
+		log.Info("Run Go generate.")
+		cmd := append([]string{goGenerate}, genArgs...)
+		cmd = append(cmd, "./...")
+		err = goctx.Check(cmd...)
+		if err != nil {
+			log.ErrorE(err, "Go generate failed.")
 
-	cmd = append([]string{"install"}, flags...)
-	cmd = append(cmd, r.settings.Args()...)
-	cmd = append(cmd, path.Join(comp.Root(), "..."))
-	err = goctx.Check(cmd...)
+			return err
+		}
 
-	if err != nil {
-		log.ErrorE(err, "Go install failed.")
+		log.Info("Run Go install.")
 
-		return err
+		cmd = append([]string{"install"}, flags...)
+		cmd = append(cmd, r.settings.Args()...)
+		cmd = append(cmd, path.Join(moduleRoot, "..."))
+		err = goctx.Check(cmd...)
+
+		if err != nil {
+			log.ErrorE(err, "Go install failed.")
+
+			return err
+		}
 	}
 
 	return nil

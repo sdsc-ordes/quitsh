@@ -15,7 +15,7 @@ import (
 
 func GetBuildFlags(
 	log log.ILog,
-	compDir string,
+	moduleRoot string,
 	buildType cm.BuildType,
 	envType cm.EnvironmentType,
 	coverage bool,
@@ -25,8 +25,9 @@ func GetBuildFlags(
 	versionModule string,
 	buildTags []string,
 	isTest bool,
-) (flags []string, tagArgs []string, tagArgsGen []string) {
-	flags = []string{"-C", compDir}
+) (flags []string, tagArgs []string, flagsGen []string) {
+	flags = []string{"-C", moduleRoot}
+	flagsGen = []string{"-C", moduleRoot}
 
 	// Tags for building.
 	bTags := append([]string{}, buildTags...)
@@ -97,7 +98,7 @@ func GetBuildFlags(
 
 	if len(bTags) != 0 {
 		tagArgs = append(tagArgs, "--tags", strings.Join(bTags, ","))
-		tagArgsGen = append(tagArgsGen, "--tags", strings.Join(gTags, ","))
+		flagsGen = append(flagsGen, "--tags", strings.Join(gTags, ","))
 
 		flags = append(flags, tagArgs...)
 	}
@@ -112,5 +113,5 @@ func GetBuildFlags(
 
 	log.Info("Build flags.", "flags", flags)
 
-	return flags, tagArgs, tagArgsGen
+	return flags, tagArgs, flagsGen
 }
