@@ -70,24 +70,28 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 
 	fs.AssertDirs(comp.OutBuildBinDir())
 
-	// Set the output path and disable GOWORK:
-	// We build in each component without looking
-	// at `go.work` fs.
-	var binDir string
-	if r.settings.Coverage() {
-		binDir = comp.OutCoverageBinDir()
-	} else {
-		binDir = comp.OutBuildBinDir()
+	if len(r.config.Submodules) == 0 {
+		r.config.Submodules = append(r.config.Submodules, ".")
 	}
 
-	goctx := gox.NewCtxBuilder().
-		Cwd(comp.Root()).
-		Env("GOBIN="+binDir,
-			"GOWORK=off",
-			"GOTOOLCHAIN=local").
-		Build()
-
 	for _, submodule := range r.config.Submodules {
+		// Set the output path and disable GOWORK:
+		// We build in each component without looking
+		// at `go.work` fs.
+		var binDir string
+		if r.settings.Coverage() {
+			binDir = comp.OutCoverageBinDir(submodule)
+		} else {
+			binDir = comp.OutBuildBinDir(submodule)
+		}
+
+		goctx := gox.NewCtxBuilder().
+			Cwd(comp.Root()).
+			Env("GOBIN="+binDir,
+				"GOWORK=off",
+				"GOTOOLCHAIN=local").
+			Build()
+
 		moduleRoot := path.Join(comp.Root(), submodule)
 
 		modInfo, err := gox.GetModuleInfo(moduleRoot)
