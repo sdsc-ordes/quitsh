@@ -121,6 +121,8 @@ func DefineBasicArgs(cmd *cobra.Command, baseArgs *BasicArgs, defaultFlakeDir st
 // startProcessCompose starts the process-compose services from `flake.nix` in `flakeDir`
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
+//
+//nolint:funlen
 func startProcessCompose(
 	rootDir string,
 	flakeDir string,

@@ -92,8 +92,6 @@ func Start(
 // which must be a `devenv` shell or a `services-flake` derivation).
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
-//
-//nolint:funlen
 func StartFromInstallable(
 	log log.ILog,
 	rootDir string,
@@ -200,7 +198,7 @@ func settingsFromServicesFlake(
 		"--unix-socket", socketPath,
 		"--keep-project",
 		"--disable-dotenv",
-		"--ordered-shutdown",
+		"--ordered-shutdown", //nolint:goconst // ok here.
 		"--log-file", logFile,
 		"--no-server=false",
 		"-D",
