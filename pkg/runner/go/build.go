@@ -87,47 +87,51 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 			"GOTOOLCHAIN=local").
 		Build()
 
-	modInfo, err := gox.GetModuleInfo(comp.Root())
-	if err != nil {
-		return err
-	}
+	for _, submodule := range r.config.Submodules {
+		moduleRoot := path.Join(comp.Root(), submodule)
 
-	// Build everything into `outputDir`.
-	flags, _, tagArgsGen := GetBuildFlags(
-		log,
-		comp.Root(),
-		r.settings.BuildType(),
-		r.settings.EnvironmentType(),
-		r.settings.Coverage(),
-		false,
-		modInfo,
-		comp.Version(),
-		r.config.VersionModule,
-		r.config.BuildTags,
-		false,
-	)
+		modInfo, err := gox.GetModuleInfo(moduleRoot)
+		if err != nil {
+			return err
+		}
 
-	log.Info("Run Go generate.")
-	cmd := append([]string{goGenerate}, tagArgsGen...)
-	cmd = append(cmd, "./...")
-	err = goctx.Check(cmd...)
-	if err != nil {
-		log.ErrorE(err, "Go generate failed.")
+		// Build everything into `outputDir`.
+		flags, _, genArgs := GetBuildFlags(
+			log,
+			moduleRoot,
+			r.settings.BuildType(),
+			r.settings.EnvironmentType(),
+			r.settings.Coverage(),
+			false,
+			modInfo,
+			comp.Version(),
+			r.config.VersionModule,
+			r.config.BuildTags,
+			false,
+		)
 
-		return err
-	}
+		log.Info("Run Go generate.")
+		cmd := append([]string{goGenerate}, genArgs...)
+		cmd = append(cmd, "./...")
+		err = goctx.Check(cmd...)
+		if err != nil {
+			log.ErrorE(err, "Go generate failed.")
 
-	log.Info("Run Go install.")
+			return err
+		}
 
-	cmd = append([]string{"install"}, flags...)
-	cmd = append(cmd, r.settings.Args()...)
-	cmd = append(cmd, path.Join(comp.Root(), "..."))
-	err = goctx.Check(cmd...)
+		log.Info("Run Go install.")
 
-	if err != nil {
-		log.ErrorE(err, "Go install failed.")
+		cmd = append([]string{"install"}, flags...)
+		cmd = append(cmd, r.settings.Args()...)
+		cmd = append(cmd, path.Join(moduleRoot, "..."))
+		err = goctx.Check(cmd...)
 
-		return err
+		if err != nil {
+			log.ErrorE(err, "Go install failed.")
+
+			return err
+		}
 	}
 
 	return nil

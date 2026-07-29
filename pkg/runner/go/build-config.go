@@ -10,6 +10,10 @@ import (
 type RunnerConfigBuild struct {
 	VersionModule string `yaml:"versionModule" default:"pkg/build"`
 
+	// Relative paths to sub modules to run `go test -C <compPath>/<path> <compPath>/<path>/...`
+	// If specified add `.` to include the component as well.
+	Submodules []string `yaml:"submodules" default:"[]"`
+
 	// Additional build tags.
 	BuildTags []string `yaml:"buildTags" default:"[]"`
 }
@@ -18,7 +22,7 @@ func (c *RunnerConfigBuild) Validate() error {
 	return common.Validator().Struct(c)
 }
 
-// The unmarshaller for the BuildConfig.
+// UnmarshalBuildConfig is the unmarshaller for the BuildConfig.
 func UnmarshalBuildConfig(raw step.AuxConfigRaw) (step.AuxConfig, error) {
 	config := &RunnerConfigBuild{}
 	err := defaults.Set(config)

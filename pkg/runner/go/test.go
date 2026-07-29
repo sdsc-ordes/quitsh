@@ -50,6 +50,10 @@ func generateCoverageReport(log log.ILog, comp *component.Component) error {
 		// See Issue: https://gitlab.com/data-custodian/custodian/-/issues/196
 	if err != nil {
 		log.ErrorE(err, "Go coverage conversion failed.")
+		log.Warn(
+			"If you use the `submodules` runner config, make sure to have a 'go.work' file " +
+				"also to list all submodules to make the HTML conversion resolve paths.",
+		)
 	}
 
 	return err
@@ -70,61 +74,67 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	covDataDir := comp.OutCoverageDataDir()
 	fs.AssertDirs(comp.OutBuildBinDir(), covDataDir)
 
-	modInfo, err := gox.GetModuleInfo(comp.Root())
-	if err != nil {
-		return err
-	}
-
-	flags, _, tagArgsGen := GetBuildFlags(
-		log,
-		comp.Root(),
-		r.settings.BuildType(),
-		cm.EnvironmentDev,
-		true,
-		r.settings.ShowTestLog(),
-		modInfo,
-		comp.Version(),
-		"",
-		r.config.BuildTags,
-		true,
-	)
-
-	log.Info("Run Go generate.")
-	cmd := append([]string{goGenerate}, tagArgsGen...)
-	cmd = append(cmd, "./...")
-	err = goctx.Check(cmd...)
-	if err != nil {
-		log.ErrorE(err, "Go generate failed.")
-
-		return err
-	}
-
 	//FIXME: Somehow we have a cache write/exec race problem with the
 	//       `go tool covdata` binary.
 	//       Ref: https://github.com/golang/go/issues/78777
 	//       Run dummy command to make the tool cached...
 	log.Info("Cache 'go tool covdata'. (workaround).")
-	_, err = goctx.Get("tool", "covdata", "pkglist", "-i", ".")
+	_, err := goctx.Get("tool", "covdata", "pkglist", "-i", ".")
 	if err != nil {
 		return err
 	}
 
-	// TODO: Run `go test` over `grc --config root_dir/tools/config/grc/...` to colorize.
-	//       Issue: https://gitlab.com/data-custodian/custodian/-/issues/194
-	log.Info("Run Go test.")
-	cmd = append([]string{"test"}, flags...)
-	cmd = append(cmd, r.config.Args...)
-	cmd = append(cmd, r.settings.Args()...)
-	cmd = append(cmd, path.Join(comp.Root(), "..."))
-	cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)
-	cmd = append(cmd, r.config.TestArgs...)
-	cmd = append(cmd, r.settings.TestArgs()...)
-	err = goctx.Check(cmd...)
+	if len(r.config.Submodules) == 0 {
+		r.config.Submodules = append(r.config.Submodules, ".")
+	}
 
-	if err != nil {
-		log.ErrorE(err, "Go test failed.")
+	for _, submodule := range r.config.Submodules {
+		moduleRoot := path.Join(comp.Root(), submodule)
 
-		return err
+		modInfo, e := gox.GetModuleInfo(moduleRoot)
+		if e != nil {
+			return e
+		}
+
+		flags, _, genArgs := GetBuildFlags(
+			log,
+			moduleRoot,
+			r.settings.BuildType(),
+			cm.EnvironmentDev,
+			true,
+			r.settings.ShowTestLog(),
+			modInfo,
+			comp.Version(),
+			"",
+			r.config.BuildTags,
+			true,
+		)
+
+		log.Infof("Run Go generate for '%v'.", submodule)
+		cmd := append([]string{goGenerate}, genArgs...)
+		cmd = append(cmd, "./...")
+		e = goctx.Check(cmd...)
+		if e != nil {
+			log.ErrorE(e, "Go generate failed.")
+
+			return e
+		}
+
+		log.Info("Run Go test.")
+		cmd = append([]string{"test"}, flags...)
+		cmd = append(cmd, r.config.Args...)
+		cmd = append(cmd, r.settings.Args()...)
+		cmd = append(cmd, path.Join(moduleRoot, "..."))
+		cmd = append(cmd, "-args", "-test.gocoverdir="+covDataDir)
+		cmd = append(cmd, r.config.TestArgs...)
+		cmd = append(cmd, r.settings.TestArgs()...)
+		e = goctx.Check(cmd...)
+
+		if e != nil {
+			log.ErrorE(e, "Go test failed.")
+
+			return e
+		}
 	}
 
 	err = generateCoverageReport(log, comp)
