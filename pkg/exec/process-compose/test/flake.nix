@@ -137,9 +137,9 @@
           };
         in
         {
-          mynamespace.shells.test-devenv = makeShell pkgs;
-          mynamespace.shells.test-services-flake = servicesMod.config.outputs.package;
-          mynamespace.shells.test-services-flake-config = servicesMod.config;
+          mynamespace.test-devenv = makeShell pkgs;
+          mynamespace.test-services-flake = servicesMod.config.outputs.package;
+          mynamespace.test-services-flake-config = servicesMod.config;
         }
       );
     };

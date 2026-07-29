@@ -27,7 +27,7 @@ func TestProcessCompose(t *testing.T) {
 		socketPathFile := path.Join("./test", ".pc-socket-path")
 
 		pcCtx, err := Start(logger, d, d,
-			"mynamespace.shells.test-devenv",
+			"mynamespace.test-devenv",
 			ProcessComposeOverDevenv,
 			WithSocketPathFile(socketPathFile),
 		)
@@ -70,7 +70,7 @@ func TestProcessCompose(t *testing.T) {
 		require.NoError(t, err)
 
 		pcCtx, err := Start(logger,
-			d, d, "mynamespace.shells.test-devenv",
+			d, d, "mynamespace.test-devenv",
 			ProcessComposeOverDevenv,
 			WithMustBeStarted(false))
 		require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestProcessComposeServicesFlake(t *testing.T) {
 		socketPathFile := path.Join("./test", ".pc-socket-path")
 
 		pcCtx, err := Start(logger, d, d,
-			"mynamespace.shells.test-services-flake",
+			"mynamespace.test-services-flake",
 			ProcessComposeOverServicesFlake,
 			WithSocketPathFile(socketPathFile),
 		)

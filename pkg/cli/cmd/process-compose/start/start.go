@@ -16,8 +16,8 @@ import (
 )
 
 const longDesc = `Start a process-compose definition from a 'devenv.sh' Nix shell
-specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installable
-(e.g. './tools/nix#mynamespace.shells.test-dbs')
+specified by an attribute path (e.g. 'mynamespace.test-dbs') or installable
+(e.g. './tools/nix#mynamespace.test-dbs')
 in a 'flake.nix' file.`
 
 const timeoutWait = 100 * time.Second
@@ -34,12 +34,11 @@ type (
 		BasicArgs
 		socketPathFile string
 
-		waitFor             []string
-		waitForReady        []string
-		noFailOnCompleted   []string
-		attach              bool
-		timeoutWait         time.Duration
-		timeoutWaitInterval time.Duration
+		waitFor           []string
+		waitForReady      []string
+		noFailOnCompleted []string
+		attach            bool
+		timeoutWait       time.Duration
 	}
 )
 
@@ -64,7 +63,6 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 				stArgs.noFailOnCompleted,
 				stArgs.socketPathFile,
 				stArgs.timeoutWait,
-				stArgs.timeoutWaitInterval,
 				stArgs.attach)
 
 			return err
@@ -99,10 +97,6 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		DurationVar(&stArgs.timeoutWait,
 			"timeout", timeoutWait, "The max. timeout (e.g. `100s`) for waiting on processes.")
 
-	startCmd.Flags().
-		DurationVar(&stArgs.timeoutWaitInterval,
-			"timeout-interval", timeoutWaitInterval, "The max. timeout interval (e.g. `100ms`) for polling processes.")
-
 	parent.AddCommand(startCmd)
 }
 
@@ -133,7 +127,6 @@ func startProcessCompose(
 	noFailOnCompleted []string,
 	socketPathFile string,
 	timeoutWait time.Duration,
-	timeoutWaitInterval time.Duration,
 	attach bool,
 ) (
 	pcCtx *pc.ProcessComposeCtx,
@@ -160,6 +153,14 @@ func startProcessCompose(
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
+	defer func() {
+		if err != nil {
+			log.Warn("Stopping due to errors.")
+			e := pcCtx.Stop()
+
+			log.ErrorE(e, "Could not stop process-compose.")
+		}
+	}()
 
 	if socketPathFile != "" {
 		log.Infof("Write socket path file '%s'.", socketPathFile)
@@ -200,8 +201,6 @@ func startProcessCompose(
 			"interval", timeoutWaitInterval)
 	}
 
-	ctx, cancel = context.WithTimeout(ctx, timeoutWaitInterval)
-	defer cancel()
 	fulfilled, err := pcCtx.WaitTill(ctx, log.Global(), conds...)
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "failed to wait for processes")

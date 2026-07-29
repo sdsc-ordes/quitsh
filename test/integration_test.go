@@ -315,49 +315,62 @@ func TestCLIExecTarget2Arg(t *testing.T) {
 }
 
 func TestCLIProcessCompose(t *testing.T) {
-	_, rootDir, err := git.NewCtxAtRoot(".")
-	require.NoError(t, err)
+	test := func(t *testing.T, impl string, waitFor string) {
+		_, rootDir, err := git.NewCtxAtRoot(".")
+		require.NoError(t, err)
 
-	cwd := path.Join(rootDir, "pkg/exec/process-compose/test")
-	cli := setup(t).Cwd(cwd).BaseArgs("--root-dir", cwd).Build()
+		cwd := path.Join(rootDir, "pkg/exec/process-compose/test")
+		cli := setup(t).Cwd(cwd).BaseArgs("--root-dir", cwd).Build()
 
-	_, stderr, err := cli.GetStdErr(
-		"--root-dir", ".",
-		"--log-level",
-		"debug",
-		"process-compose",
-		"start",
-		"--flake-dir", ".",
-		"--wait-for", "httpbin",
-		"mynamespace.shells.test",
-	)
-	require.NoError(t, err, "Stderr:\n"+stderr)
-	assert.Contains(t, stderr, "Inspect processes with")
-	assert.Contains(t, stderr, "Stop processes with")
-
-	stdout, _, err := cli.GetStdErr(
-		"--root-dir", ".",
-		"--log-level",
-		"debug",
-		"process-compose",
-		"exec",
-		"--flake-dir", ".",
-		"mynamespace.shells.test",
-		"list",
-	)
-	require.NoError(t, err, "Process compose list failed")
-	assert.Contains(t, stdout, "httpbin")
-
-	defer func() {
-		_, _, err := cli.GetStdErr(
+		_, stderr, err := cli.GetStdErr(
 			"--root-dir", ".",
 			"--log-level",
 			"debug",
 			"process-compose",
-			"stop",
+			"start",
 			"--flake-dir", ".",
-			"mynamespace.shells.test",
+			"--impl", impl,
+			"--wait-for", waitFor,
+			"mynamespace.test-"+impl,
 		)
-		require.NoError(t, err, "Could not stop process-compose.")
-	}()
+		require.NoError(t, err, "Stderr:\n"+stderr)
+		assert.Contains(t, stderr, "Inspect processes with")
+		assert.Contains(t, stderr, "Stop processes with")
+
+		stdout, _, err := cli.GetStdErr(
+			"--root-dir", ".",
+			"--log-level",
+			"debug",
+			"process-compose",
+			"exec",
+			"--flake-dir", ".",
+			"--impl", impl,
+			"mynamespace.test-"+impl,
+			"list",
+		)
+		require.NoError(t, err, "Process compose list failed")
+		assert.Contains(t, stdout, waitFor)
+
+		defer func() {
+			_, _, err := cli.GetStdErr(
+				"--root-dir", ".",
+				"--log-level",
+				"debug",
+				"process-compose",
+				"stop",
+				"--impl", impl,
+				"--flake-dir", ".",
+				"mynamespace.test-"+impl,
+			)
+			require.NoError(t, err, "Could not stop process-compose.")
+		}()
+	}
+
+	t.Run("devenv", func(t *testing.T) {
+		test(t, "devenv", "httpbin")
+	})
+
+	t.Run("services-flake", func(t *testing.T) {
+		test(t, "services-flake", "mailhog")
+	})
 }

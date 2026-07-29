@@ -12,8 +12,8 @@ import (
 )
 
 const longDesc = `Stop a process-compose definition from a 'devenv.sh' Nix shell
-specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installable
-(e.g. './tools/nix#mynamespace.shells.test-dbs')
+specified by an attribute path (e.g. 'mynamespace.test-dbs') or installable
+(e.g. './tools/nix#mynamespace.test-dbs')
 in a 'flake.nix' file.`
 
 type startArgs struct {

@@ -73,7 +73,7 @@ type (
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
 // Note: You also call [StartFromInstallable] and directly pass an
 // installable, e.g. a flake output attribute path like
-// `./a/b/c#mynamespace.shells.test-dbs`.
+// `./a/b/c#mynamespace.test-dbs`.
 func Start(
 	log log.ILog,
 	rootDir string,
@@ -180,7 +180,7 @@ func settingsFromServicesFlake(
 
 	// Compute deterministic temp directory base on `procCompExe`.
 	dir := path.Join(os.TempDir(), "process-compose",
-		"process-compose"+fmt.Sprintf("%x",
+		"process-compose-"+fmt.Sprintf("%x",
 			sha256.Sum256([]byte(installable)))[:6])
 
 	err := os.MkdirAll(dir, fs.DefaultPermissionsDir)
@@ -259,7 +259,7 @@ func settingsFromDevenv(
 
 	// Compute deterministic temp directory base on `installable`.
 	dir := path.Join(os.TempDir(), "process-compose",
-		"process-compose"+fmt.Sprintf("%x",
+		"process-compose-"+fmt.Sprintf("%x",
 			sha256.Sum256([]byte(installable)))[:6])
 
 	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
