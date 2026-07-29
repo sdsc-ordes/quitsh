@@ -54,6 +54,10 @@ let
 
           quitsh.languages.go.enable = true;
           quitsh.toolchains = [ "ci" ];
+
+          # Disable all process-compose stuff.
+          # Set to native manager to not have PC_ env. variables.
+          process.manager.implementation = "native";
         }
       ]
       ++ build-go;

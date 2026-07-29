@@ -24,11 +24,22 @@ const ProcessRunning ProcessState = 0
 const ProcessReady ProcessState = 1
 const ProcessCompleted ProcessState = 2
 
+const ProcessComposeOverDevenv ProcessComposeImpl = "devenv"
+const ProcessComposeOverServicesFlake ProcessComposeImpl = "process-compose-flake"
+
 // ProcessComposeCtx represents a `process-compose` context.
 type (
+	// ProcessComposeImpl represents the implementation
+	// if the process-compopse is defined in a `devenv` NixShell or
+	// over `process-compose-flake`.
+	ProcessComposeImpl string
+
 	ProcessComposeCtx struct {
 		exec.CmdContext
-		socket string
+		version string
+		socket  string
+
+		startCmd []string
 
 		tempDir string
 		logFile string
@@ -62,99 +73,55 @@ type (
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
 // Note: You also call [StartFromInstallable] and directly pass an
 // installable, e.g. a flake output attribute path like
-// `./a/b/c#mynamespace.shells.test-dbs`.
+// `./a/b/c#mynamespace.test-dbs`.
 func Start(
 	log log.ILog,
 	rootDir string,
 	flakeDir string,
-	devShellAttrPath string,
+	attrPath string,
+	impl ProcessComposeImpl,
 	opts ...StartOption,
 ) (pc *ProcessComposeCtx, err error) {
-	devShellAttrPath = nix.FlakeInstallable(flakeDir, devShellAttrPath)
+	attrPath = nix.FlakeInstallable(flakeDir, attrPath)
 
-	return StartFromInstallable(log, rootDir, devShellAttrPath, opts...)
+	return StartFromInstallable(log, rootDir, attrPath, impl, opts...)
 }
 
 // StartFromInstallable starts the process compose from a Nix
-// `devShellInstallable` (e.g. `./tools/nix#custodian.shells.test-dbs`
-// which must be a `devenv` shell).
+// `installable` (e.g. `./tools/nix#custodian.shells.test-dbs`
+// which must be a `devenv` shell or a `process-compose-flake` derivation).
 // The `rootDir` is the working directory and
 // where the `.devenv/state/pwd` file is for `nonPureEval == false`.
-//
-//nolint:funlen
 func StartFromInstallable(
 	log log.ILog,
 	rootDir string,
-	devShellInstallable string,
+	installable string,
+	impl ProcessComposeImpl,
 	opts ...StartOption,
 ) (pc *ProcessComposeCtx, err error) {
 	var o startOpts
 	err = o.Apply(opts...)
 	if err != nil {
-		return pc, err
-	}
-
-	procCompExe, socketPath, err := getSocketPath(devShellInstallable, rootDir)
-	if err != nil {
-		return pc, err
-	}
-
-	err = os.MkdirAll(path.Dir(socketPath), fs.DefaultPermissionsDir)
-	if err != nil {
-		return pc, err
-	}
-
-	procCompConfig, err := buildProcComposeConfigFile(devShellInstallable, rootDir)
-	if err != nil {
-		return pc, err
-	}
-
-	// Compute deterministic temp directory base on `procCompExe`.
-	dir := path.Join(os.TempDir(),
-		fmt.Sprintf("process-compose-%x",
-			sha256.Sum256([]byte(procCompConfig))))
-	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
-	if err != nil {
-		return pc, errors.AddContext(
-			err,
-			"could not create process-compose temp dir (logfile etc.).",
-		)
-	}
-	logFile := path.Join(dir, "process-compose.log")
-
-	// We need to launch the process-compose over a
-	// devShell to start it properly.
-	build := func(b exec.CmdContextBuilder) *exec.CmdContext {
-		return b.
-			Cwd(rootDir).
-			BaseArgs("--unix-socket", socketPath).
-			Build()
-	}
-	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
-		rootDir, devShellInstallable).BaseArgs(procCompExe))
-
-	pcB := exec.NewCmdCtxBuilder().BaseCmd(procCompExe)
-	version, err := pcB.Build().Get("version")
-	if err != nil {
 		return nil, err
 	}
 
-	pc = &ProcessComposeCtx{
-		CmdContext: *build(pcB),
-		log:        log,
-		socket:     socketPath,
-		tempDir:    dir,
-		logFile:    logFile,
+	var pcCtxDev *exec.CmdContext
+
+	switch impl {
+	case ProcessComposeOverDevenv:
+		pc, pcCtxDev, err = settingsFromDevenv(log, rootDir, installable)
+	case ProcessComposeOverServicesFlake:
+		pc, pcCtxDev, err = settingsFromServicesFlake(log, rootDir, installable)
+	default:
+		return nil, errors.New(
+			"Implementation '%v' for process-compose start is not supported.",
+			impl,
+		)
 	}
 
-	log.Info("Settings for process-compose.",
-		"version", version,
-		"rootDir", rootDir,
-		"installable", devShellInstallable,
-		"procCompExe", procCompExe,
-		"config", procCompConfig,
-		"socketPath", socketPath,
-		"logFile", logFile)
+	if err != nil {
+		return nil, errors.AddContext(err, "Could not create process-compose ctx.")
+	}
 
 	// Write the socket path to the file
 	if o.socketPathFile != "" {
@@ -172,42 +139,182 @@ func StartFromInstallable(
 	// Start the process compose.
 	// Attach if the socket path does not exist
 	// (the script already does it)
-	if fs.Exists(socketPath) {
+	if fs.Exists(pc.Socket()) {
 		log.Warnf("Socket '%s' is already existing. "+
-			"Assume process-compose is started.", socketPath)
+			"Assume process-compose is started.", pc.Socket())
 
 		return pc, nil
 	} else {
 		if o.mustBeStarted {
 			return pc, errors.New("The process-compose instance must be started already but "+
-				"socket '%s' is not existing.", socketPath)
+				"socket '%s' is not existing.", pc.Socket())
 		}
 		log.Info("Start process-compose.")
 
-		err = pcCtxDev.Check(
-			"--config", procCompConfig,
-			"--keep-project",
-			"--disable-dotenv",
-			"--log-file", logFile,
-			"--ordered-shutdown",
-			"-D",
-			"up")
+		err = pcCtxDev.Check(pc.startCmd...)
 		if err != nil {
-			return pc, errors.AddContext(err, "Could not start process-compose with '%s'.", procCompConfig)
+			return pc, errors.AddContext(err, "Could not start process-compose with start command '%v'.", pc.startCmd)
 		}
 	}
 
 	log.Info(
-		"Started process-compose for devenv shell.",
-		"shell",
-		devShellInstallable,
+		"Started process-compose.",
+		"impl",
+		impl,
+		"installable",
+		installable,
 		"socket",
-		socketPath,
+		pc.Socket(),
 		"logFile",
-		logFile,
+		pc.LogFile(),
 	)
 
 	return pc, nil
+}
+
+func settingsFromServicesFlake(
+	log log.ILog,
+	rootDir, installable string,
+) (*ProcessComposeCtx, *exec.CmdContext, error) {
+	log.Infof("Getting settings for 'process-compose-flake' implementation.")
+
+	// Compute deterministic temp directory base on `procCompExe`.
+	dir := path.Join(os.TempDir(), "process-compose",
+		"process-compose-"+fmt.Sprintf("%x",
+			sha256.Sum256([]byte(installable)))[:6])
+
+	err := os.MkdirAll(dir, fs.DefaultPermissionsDir)
+	if err != nil {
+		return nil, nil, errors.AddContext(
+			err,
+			"could not create process-compose temp dir (logfile etc.).",
+		)
+	}
+	logFile := path.Join(dir, "process-compose.log")
+
+	socketPath := path.Join(dir, "pc.sock")
+
+	startCmd := []string{
+		"--keep-project",
+		"--disable-dotenv",
+		"--ordered-shutdown", //nolint:goconst // ok here.
+		"--log-file", logFile,
+		"--no-server=false",
+		"-D",
+		"up"}
+
+	pc := nix.NewRunCtx(
+		rootDir,
+		func(b exec.CmdContextBuilder) exec.CmdContextBuilder {
+			return b.Cwd(rootDir).BaseArgs(installable, "--",
+				"--unix-socket", socketPath)
+		},
+	)
+
+	version, err := pc.Get("version")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	log.Info("Settings for process-compose.",
+		"version", version,
+		"rootDir", rootDir,
+		"installable", installable,
+		"socketPath", socketPath,
+		"logFile", logFile)
+
+	pcCtx := &ProcessComposeCtx{
+		CmdContext: *pc.CmdContext,
+		version:    version,
+		log:        log,
+		socket:     socketPath,
+		startCmd:   startCmd,
+		tempDir:    dir,
+		logFile:    logFile,
+	}
+
+	return pcCtx, &pcCtx.CmdContext, nil
+}
+
+func settingsFromDevenv(
+	log log.ILog,
+	rootDir, installable string,
+) (*ProcessComposeCtx, *exec.CmdContext, error) {
+	log.Infof("Getting settings for 'devenv' implementation.")
+	procCompExe, socketPath, err := getSocketPath(installable, rootDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = os.MkdirAll(path.Dir(socketPath), fs.DefaultPermissionsDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	procCompConfig, err := buildProcComposeConfigFile(installable, rootDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Compute deterministic temp directory base on `installable`.
+	dir := path.Join(os.TempDir(), "process-compose",
+		"process-compose-"+fmt.Sprintf("%x",
+			sha256.Sum256([]byte(installable)))[:6])
+
+	err = os.MkdirAll(dir, fs.DefaultPermissionsDir)
+	if err != nil {
+		return nil, nil, errors.AddContext(
+			err,
+			"could not create process-compose temp dir (logfile etc.).",
+		)
+	}
+	logFile := path.Join(dir, "process-compose.log")
+
+	// We need to launch the process-compose over a
+	// devShell to start it properly.
+	build := func(b exec.CmdContextBuilder) *exec.CmdContext {
+		return b.
+			Cwd(rootDir).
+			BaseArgs("--unix-socket", socketPath).
+			Build()
+	}
+	pcCtxDev := build(nix.NewDevShellCtxBuilderI(
+		rootDir, installable).BaseArgs(procCompExe))
+
+	pcB := exec.NewCmdCtxBuilder().BaseCmd(procCompExe)
+	version, err := pcB.Build().Get("version")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	log.Info("Settings for process-compose.",
+		"version", version,
+		"rootDir", rootDir,
+		"installable", installable,
+		"procCompExe", procCompExe,
+		"config", procCompConfig,
+		"socketPath", socketPath,
+		"logFile", logFile)
+
+	startCmd := []string{
+		"--config", procCompConfig,
+		"--keep-project",
+		"--disable-dotenv",
+		"--ordered-shutdown",
+		"--log-file", logFile,
+		"--ordered-shutdown",
+		"-D",
+		"up"}
+
+	return &ProcessComposeCtx{
+		CmdContext: *build(pcB),
+		version:    version,
+		log:        log,
+		socket:     socketPath,
+		startCmd:   startCmd,
+		tempDir:    dir,
+		logFile:    logFile,
+	}, pcCtxDev, nil
 }
 
 // Socket returns the socket used.
