@@ -195,7 +195,6 @@ func settingsFromServicesFlake(
 	socketPath := path.Join(dir, "pc.sock")
 
 	startCmd := []string{
-		"--unix-socket", socketPath,
 		"--keep-project",
 		"--disable-dotenv",
 		"--ordered-shutdown", //nolint:goconst // ok here.
