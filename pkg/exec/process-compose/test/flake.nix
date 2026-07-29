@@ -23,6 +23,9 @@
       url = "file+file:///dev/null";
       flake = false;
     };
+
+    process-compose-flake.url = "github:Platonic-Systems/process-compose-flake";
+    services-flake.url = "github:juspay/services-flake";
   };
 
   outputs =
@@ -53,7 +56,14 @@
             pkgs = loadNixpgs system;
             lib = pkgs.lib;
           in
-          func { inherit lib pkgs system; }
+          func {
+            inherit
+              inputs
+              lib
+              pkgs
+              system
+              ;
+          }
         );
 
       # Define a devShell for testing with mongodb service.
@@ -106,14 +116,30 @@
       devShells = forAllSystems (
         { pkgs, ... }:
         {
-          test = makeShell pkgs;
+          test-devenv = makeShell pkgs;
         }
       );
 
       legacyPackages = forAllSystems (
         { pkgs, ... }:
+        let
+          servicesMod = (import inputs.process-compose-flake.lib { inherit pkgs; }).evalModules {
+            modules = [
+              inputs.services-flake.processComposeModules.default
+              {
+                services.mailhog."mailhog" = {
+                  enable = true;
+                  smtp.port = 9999;
+                  ui.port = 9998;
+                };
+              }
+            ];
+          };
+        in
         {
-          mynamespace.shells.test = makeShell pkgs;
+          mynamespace.shells.test-devenv = makeShell pkgs;
+          mynamespace.shells.test-services-flake = servicesMod.config.outputs.package;
+          mynamespace.shells.test-services-flake-config = servicesMod.config;
         }
       );
     };

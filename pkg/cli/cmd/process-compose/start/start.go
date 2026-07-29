@@ -24,9 +24,14 @@ const timeoutWait = 100 * time.Second
 const timeoutWaitInterval = 100 * time.Millisecond
 
 type (
+	BasicArgs struct {
+		Impl     string
+		AttrPath string
+		FlakeDir string
+	}
+
 	startArgs struct {
-		attrPath       string
-		flakeDir       string
+		BasicArgs
 		socketPathFile string
 
 		waitFor             []string
@@ -47,12 +52,13 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		Long:    longDesc,
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
-			stArgs.attrPath = args[0]
+			stArgs.AttrPath = args[0]
 
 			_, err := startProcessCompose(
 				cl.RootDir(),
-				stArgs.flakeDir,
-				stArgs.attrPath,
+				stArgs.FlakeDir,
+				stArgs.AttrPath,
+				pc.ProcessComposeImpl(stArgs.Impl),
 				stArgs.waitFor,
 				stArgs.waitForReady,
 				stArgs.noFailOnCompleted,
@@ -65,9 +71,7 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		},
 	}
 
-	startCmd.Flags().
-		StringVarP(&stArgs.flakeDir,
-			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+	DefineBasicArgs(startCmd, &stArgs.BasicArgs, defaultFlakeDir)
 
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitFor,
@@ -102,13 +106,26 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	parent.AddCommand(startCmd)
 }
 
+func DefineBasicArgs(cmd *cobra.Command, baseArgs *BasicArgs, defaultFlakeDir string) {
+	cmd.Flags().
+		StringVarP(&baseArgs.FlakeDir,
+			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+
+	cmd.Flags().
+		StringVarP(&baseArgs.Impl,
+			"impl", "i", string(pc.ProcessComposeOverServicesFlake),
+			"Use `devenv` if the attribute is a `devenv` Nix shell "+
+				"or a `services-flake` if it is a `services-flake`-derivation.")
+}
+
 // startProcessCompose starts the process-compose services from `flake.nix` in `flakeDir`
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
 func startProcessCompose(
 	rootDir string,
 	flakeDir string,
-	devenvShellAttrPath string,
+	attrPath string,
+	impl pc.ProcessComposeImpl,
 	waitForRunning []string,
 	waitForReady []string,
 	noFailOnCompleted []string,
@@ -120,11 +137,12 @@ func startProcessCompose(
 	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
-	if strings.Contains(devenvShellAttrPath, "#") {
+	if strings.Contains(attrPath, "#") {
 		pcCtx, err = pc.StartFromInstallable(
 			log.Global(),
 			rootDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(false),
 		)
 	} else {
@@ -132,7 +150,8 @@ func startProcessCompose(
 			log.Global(),
 			rootDir,
 			flakeDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(false),
 		)
 	}

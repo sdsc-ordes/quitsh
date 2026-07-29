@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
+	processcomposestart "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose/start"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	pc "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -16,51 +17,53 @@ specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installab
 in a 'flake.nix' file.`
 
 type startArgs struct {
-	attrPath string
-	flakeDir string
+	processcomposestart.BasicArgs
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
-	startCmd := &cobra.Command{
-		Use:     "stop [devenv-attr-path or devenv-installable]",
+	stopCmd := &cobra.Command{
+		Use:     "stop [attr-path to 'devenv' NixShell or 'services-flake' derivation]",
 		Short:   "Stop a process-compose definition from a 'devenv.sh' Nix shell.",
 		Long:    longDesc,
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
-			stArgs.attrPath = args[0]
+			stArgs.AttrPath = args[0]
 
 			_, err := StopService(
 				cl.RootDir(),
-				stArgs.flakeDir,
-				stArgs.attrPath)
+				stArgs.FlakeDir,
+				stArgs.AttrPath,
+				pc.ProcessComposeImpl(stArgs.Impl),
+			)
 
 			return err
 		},
 	}
 
-	startCmd.Flags().
-		StringVarP(&stArgs.flakeDir,
-			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+	processcomposestart.DefineBasicArgs(stopCmd, &stArgs.BasicArgs, defaultFlakeDir)
 
-	parent.AddCommand(startCmd)
+	parent.AddCommand(stopCmd)
 }
 
 // StopService stops the process-compose services from `flake.nix` in `flakeDir`
-// defined in the installable `devenvShellInstallable`.
+// defined in the attribute `attrPath`.
 func StopService(
 	rootDir string,
 	flakeDir string,
-	devenvShellAttrPath string) (
+	attrPath string,
+	impl pc.ProcessComposeImpl,
+) (
 	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
-	if strings.Contains(devenvShellAttrPath, "#") {
+	if strings.Contains(attrPath, "#") {
 		pcCtx, err = pc.StartFromInstallable(
 			log.Global(),
 			rootDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(true),
 		)
 	} else {
@@ -68,7 +71,8 @@ func StopService(
 			log.Global(),
 			rootDir,
 			flakeDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(true))
 	}
 
