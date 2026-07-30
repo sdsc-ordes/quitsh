@@ -2,7 +2,7 @@
   description = "component-a-test";
 
   nixConfig = {
-    extra--substituters = [
+    extra-substituters = [
       "https://nix-community.cachix.org"
     ];
     extra-trusted-public-keys = [
