@@ -8,12 +8,17 @@ import (
 )
 
 type RunnerTestConfig struct {
-	// Additional build tags.
-	BuildTags []string `yaml:"buildTags" default:"[]"`
-
 	// Relative paths to sub modules to run `go test -C <compPath>/<path> <compPath>/<path>/...`
 	// If specified add `.` to include the component as well.
 	Submodules []string `yaml:"submodules" default:"[]"`
+
+	// GOWORK settings, default is disabled.
+	GoWork string `yaml:"goWork" default:"off"`
+	// GOTOOLCHAIN settings, default is local.
+	GoToolchain string `yaml:"goToolchain" default:"local"`
+
+	// Additional build tags.
+	BuildTags []string `yaml:"buildTags" default:"[]"`
 
 	// Additional arguments forwarded to the test tool (`go test`).
 	Args []string `yaml:"args"`

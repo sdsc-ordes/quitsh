@@ -51,7 +51,8 @@ func buildBinary(
 		Cwd(comp.Root()).
 		Env(os.Environ()...).
 		Env("GOBIN="+outputDir,
-			"GOWORK=off").
+			"GOWORK="+runnerConf.GoWork,
+			"GOTOOLCHAIN="+runnerConf.GoToolchain).
 		Build()
 
 	flags, _, tagArgsGen := GetBuildFlags(
@@ -100,8 +101,8 @@ func testBinary(
 	runnerConf *RunnerConfigTestBin,
 ) error {
 	envs := []string{
-		"GOWORK=off",
-		"GOTOOLCHAIN=local",
+		"GOWORK=" + runnerConf.GoWork,
+		"GOTOOLCHAIN=" + runnerConf.GoToolchain,
 		"QUITSH_BIN_DIR=" + comp.OutCoverageBinDir(),
 		"QUITSH_COVERAGE_DIR=" + comp.OutCoverageDataDir()}
 	goctx := gox.NewCtxBuilder().

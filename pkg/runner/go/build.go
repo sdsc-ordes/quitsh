@@ -88,8 +88,8 @@ func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 		goctx := gox.NewCtxBuilder().
 			Cwd(comp.Root()).
 			Env("GOBIN="+binDir,
-				"GOWORK=off",
-				"GOTOOLCHAIN=local").
+				"GOWORK="+r.config.GoWork,
+				"GOTOOLCHAIN="+r.config.GoToolchain).
 			Build()
 
 		moduleRoot := path.Join(comp.Root(), submodule)

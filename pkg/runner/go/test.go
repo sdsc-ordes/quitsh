@@ -67,8 +67,8 @@ func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	log.Info("Starting Go test for component.", "component", config.Name)
 
 	goctx := gox.NewCtxBuilder().Cwd(comp.Root()).
-		Env("GOWORK=off",
-			"GOTOOLCHAIN=local").
+		Env("GOWORK="+r.config.GoWork,
+			"GOTOOLCHAIN="+r.config.GoToolchain).
 		Build()
 
 	covDataDir := comp.OutCoverageDataDir()

@@ -14,6 +14,11 @@ type RunnerConfigBuild struct {
 	// If specified add `.` to include the component as well.
 	Submodules []string `yaml:"submodules" default:"[]"`
 
+	// GOWORK settings, default is disabled.
+	GoWork string `yaml:"goWork" default:"off"`
+	// GOTOOLCHAIN settings, default is local.
+	GoToolchain string `yaml:"goToolchain" default:"local"`
+
 	// Additional build tags.
 	BuildTags []string `yaml:"buildTags" default:"[]"`
 }
