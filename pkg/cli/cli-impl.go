@@ -78,7 +78,7 @@ func (c *cliApp) Run() error {
 		}
 	}
 
-	e := c.rootCmd.Execute()
+	e := c.rootCmd.ExecuteContext(c.Ctx())
 	if e != nil {
 		log.ErrorE(errorsfilter.FilterAlreadyReported(e), "Errors occurred.")
 	}
