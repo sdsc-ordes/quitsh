@@ -16,7 +16,7 @@ import (
 	nixtoolchain "github.com/sdsc-ordes/quitsh/pkg/toolchain/nix"
 )
 
-// Setup sets up the development environment for custodian.
+// Setup sets up the development environment.
 func Setup() error {
 	gitctx, rootDir, err := git.NewCtxAtRoot(".")
 	if err != nil {

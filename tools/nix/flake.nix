@@ -2,7 +2,7 @@
   description = "quitsh";
 
   nixConfig = {
-    extra-trusted-substituters = [
+    extra-substituters = [
       # Nix community's cache server
       "https://nix-community.cachix.org"
       "https://devenv.cachix.org"
@@ -11,8 +11,6 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
     ];
-
-    allow-import-from-derivation = "true";
   };
 
   inputs = {
@@ -40,32 +38,42 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Snowfall provides a structured way of creating a flake output.
-    # Documentation: https://snowfall.org/guides/lib/quickstart/
-    snowfall-lib = {
-      url = "github:snowfallorg/lib";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # Importing flake-parts modules recursively.
+    import-tree = {
+      url = "github:vic/import-tree";
+    };
+
+    # Using `nix-systems` flake specification.
+    systems = {
+      url = "path:./flake/systems.nix";
+      flake = false;
+    };
+
+    # Structuring the flake outputs with a NixOS modules.
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
     };
   };
 
+  # We use flake-parts to assemble all flake outputs.
+  # This gives nicer modularity. All `.parts` files are
+  # `flake-parts` module files.
   outputs =
     inputs:
     let
-      root-dir = ../..;
+      lib = inputs.nixpkgs.lib;
     in
-    inputs.snowfall-lib.mkFlake {
-      inherit inputs;
-
-      # The `src` must be the root of the flake.
-      src = "${root-dir}";
-
-      snowfall = {
-        root = "${root-dir}" + "/tools/nix";
-        namespace = "quitsh";
-        meta = {
-          name = "quitsh";
-          title = "quitsh";
-        };
-      };
-    };
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
+      lib.pipe inputs.import-tree [
+        # NOTE: Uncomment the below to inspect what modules are loaded.
+        (i: i.map (x: lib.info "modos: Importing: '${x}'" x))
+        (i: i.filter (lib.hasInfix ".parts."))
+        (
+          i:
+          i [
+            ./.
+          ]
+        )
+      ]
+    );
 }

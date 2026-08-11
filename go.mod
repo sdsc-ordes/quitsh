@@ -3,6 +3,7 @@ module github.com/sdsc-ordes/quitsh
 go 1.25.0
 
 require (
+	carvel.dev/imgpkg v0.46.1
 	deedles.dev/xiter v0.2.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/bmatcuk/doublestar/v4 v4.8.1
@@ -20,6 +21,7 @@ require (
 	github.com/huandu/go-clone v1.7.2
 	github.com/muesli/termenv v0.16.0
 	github.com/noneback/go-taskflow v1.1.0
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/otiai10/copy v1.14.1
 	github.com/r3labs/diff v1.1.0
 	github.com/spf13/cobra v1.10.2
@@ -46,6 +48,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/google/go-containerregistry v0.20.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
@@ -57,7 +60,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/otiai10/mint v1.6.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -75,4 +77,5 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )

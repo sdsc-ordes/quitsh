@@ -122,10 +122,21 @@ The `pkg` folder offers utilities for common development needs, such as:
   logging.
 - Error Handling: [`pkg/error`](pkg/error) facilitates contextual error
   management.
-- Dependency Graphs: Tools for managing and resolving dependency graphs across
-  targets.
-- Some Go `test` runners (here as an example) for running Go tests (its used
-  internally to test `quitsh` it-self).
+- Dependency Graphs: [`pkg/dag`](pkg/dag) facilitates resolving dependency
+  graphs across targets.
+
+**Runners**: [`pkg/runners`](pkg/runners) contains some general runner which can
+be used out of the box.
+
+- `pkg/go`: Runner to lint/test/build with the Go toolchain.
+- `pkg/nix`: Runner for building Nix images and uploading with `skopeo`.
+- `pkg/containerfile`: Runner for building `Containerfiles` with `buildah` and
+  uploading with `skopeo`.
+- `pkg/coverage`: Runner to deal with coverage over `codecov`.
+- `pkg/gitdiffrunner`: Runner to lint for Git changes in certain paths.
+- `pkg/exec`: Runner to run arbitrary commands (use that carefully, its an
+  escape-hatch).
+- `pkg/symlink`: Runner to lint for defect symlinkgs in a repository.
 
 #### Performance
 

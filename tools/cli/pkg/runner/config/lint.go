@@ -1,15 +1,10 @@
 package config
 
-type LintSettings struct {
-	// Additional arguments forwarded to the test tool.
-	Args []string `yaml:"args"`
-}
+import "github.com/sdsc-ordes/quitsh/pkg/runner/config"
+
+type LintSettings = config.LintSettings
 
 // NewLintSettings constructs a new build setting.
-func NewLintSettings(
-	args []string,
-) LintSettings {
-	return LintSettings{
-		Args: args,
-	}
+func NewLintSettings() LintSettings {
+	return LintSettings{}
 }
