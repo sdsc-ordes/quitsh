@@ -6,7 +6,6 @@ import (
 	"os"
 
 	cliconfig "quitsh-cli/pkg/config"
-	cliGoRunner "quitsh-cli/pkg/runner/go"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	configcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config"
@@ -50,7 +49,7 @@ func main() {
 			query.WithFindOptions(
 				fs.WithWalkDirFilterPatterns(nil,
 					[]string{"**/test/repo/**"}, true))),
-		cli.WithStages(stage.Lint, stage.Build, stage.Test),
+		cli.WithStages(stage.AllStages()...),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithSignalContext(true),
 		cli.WithToolchainDispatcherNix(flakeDirRel,
@@ -92,11 +91,9 @@ func main() {
 func registerRunners(cl cli.ICLI, args *cliconfig.Config) {
 	err := gorunner.RegisterBuild(args.Build.WrapToIBuildSettings(), cl.RunnerFactory(), true)
 	log.PanicE(err, "Could not register runner.")
-
 	err = gorunner.RegisterTest(args.Test.WrapToITestSettings(), cl.RunnerFactory(), true)
 	log.PanicE(err, "Could not register runner.")
-
-	err = cliGoRunner.Register(&args.Lint, cl.RunnerFactory())
+	err = gorunner.RegisterLint(&args.Lint, cl.RunnerFactory(), true)
 	log.PanicE(err, "Could not register runner.")
 
 	err = symlinkrunner.Register(&args.Lint, cl.RunnerFactory())

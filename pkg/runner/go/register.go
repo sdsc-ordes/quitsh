@@ -18,7 +18,6 @@ func RegisterBuild(
 ) (err error) {
 	const defaultToolchain = "build-go"
 
-	// Register Go build runner.
 	log.Trace("Register runner.", "id", GoBuildRunnerID)
 	e := factory.Register(
 		GoBuildRunnerID,
@@ -46,7 +45,6 @@ func RegisterTest(
 ) (err error) {
 	const defaultToolchain = "build-go"
 
-	// Register Go test/test-bin runner.
 	log.Trace("Register runner.", "id", GoTestRunnerID)
 	e := factory.Register(
 		GoTestRunnerID,
@@ -77,6 +75,33 @@ func RegisterTest(
 	err = errors.Combine(err, e)
 	e = factory.RegisterToKey(runner.NewRegisterKey(stage.Test, "go-bin"), GoTestBinRunnerID)
 	err = errors.Combine(err, e)
+
+	return err
+}
+
+func RegisterLint(
+	lintSettings *config.LintSettings,
+	factory factory.IFactory,
+	registerKey bool,
+) (err error) {
+	const defaultToolchain = "lint-go"
+
+	log.Trace("Register runner.", "id", GoLintRunnerID)
+	e := factory.Register(
+		GoLintRunnerID,
+		runner.RunnerData{
+			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
+				return NewGoLintRunner(config, lintSettings)
+			},
+			RunnerConfigUnmarshal: UnmarshalLintConfig,
+			DefaultToolchain:      defaultToolchain,
+		})
+	err = errors.Combine(err, e)
+
+	if registerKey {
+		e = factory.RegisterToKey(runner.NewRegisterKey(stage.Lint, "go"), GoLintRunnerID)
+		err = errors.Combine(err, e)
+	}
 
 	return err
 }

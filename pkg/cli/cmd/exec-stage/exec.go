@@ -59,7 +59,7 @@ func AddCmdAlias(
 	stage stage.Stage,
 	execArgs *dag.ExecArgs,
 	opt ...Option,
-) {
+) *cobra.Command {
 	var o opts
 	o.Apply(opt...)
 
@@ -85,6 +85,8 @@ func AddCmdAlias(
 	}
 
 	parent.AddCommand(cmd)
+
+	return cmd
 }
 
 // ExecuteStage executes all targets found with `compArgs` which belong to stage `stage`.
