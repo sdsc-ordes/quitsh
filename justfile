@@ -30,7 +30,7 @@ test *args:
 
 # Use our own `cli` tool (built by Nix, its a `quitsh` framework)
 # to lint this component.
-lint:
+lint *args:
     just go-cli exec-target quitsh::lint "$@"
 
 # Format all files.

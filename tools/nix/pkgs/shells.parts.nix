@@ -65,6 +65,7 @@
                 pkgs.openssh # For tests.
               ];
 
+              quitsh.config = "tools/configs/quitsh/config-ci.yaml";
               quitsh.languages.go.enable = true;
               quitsh.toolchains = [ "ci" ];
 
@@ -79,23 +80,26 @@
             ci
             ++ lint-go
             ++ [
-              {
-                quitsh.toolchains = [ "general" ];
+              (
+                { lib, ... }:
+                {
+                  quitsh.toolchains = [ "general" ];
 
-                quitsh.config = "tools/configs/quitsh/config.yaml";
-                quitsh.configUser = "tools/configs/quitsh/config.user.yaml";
+                  quitsh.config = lib.mkForce "tools/configs/quitsh/config.yaml";
+                  quitsh.configUser = "tools/configs/quitsh/config.user.yaml";
 
-                quitsh.languages.go.enable = true;
+                  quitsh.languages.go.enable = true;
 
-                packages = [
-                  self'.packages.bootstrap
+                  packages = [
+                    self'.packages.bootstrap
 
-                  pkgs.golangci-lint-langserver
-                  pkgs.typos-lsp
+                    pkgs.golangci-lint-langserver
+                    pkgs.typos-lsp
 
-                  pkgs.hyperfine
-                ];
-              }
+                    pkgs.hyperfine
+                  ];
+                }
+              )
 
             ];
 

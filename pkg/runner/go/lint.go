@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"go/build/constraint"
 	"os"
-	"path"
 	"slices"
 
 	"github.com/sdsc-ordes/quitsh/pkg/common"
@@ -38,16 +37,14 @@ func NewGoLintRunner(config any, settings *config.LintSettings) (runner.IRunner,
 	}, nil
 }
 
-func getGoLangCILintFlags(rootDir string, fix bool, configPath string) (flags []string) {
+func getGoLangCILintFlags(fix bool, configPath string) (flags []string) {
 	flags = append(flags,
 		"--config", configPath,
 		"--allow-parallel-runners",
 		"--max-issues-per-linter", "0",
 		"--max-same-issues", "0",
 		"--timeout", "20m0s",
-		"--verbose",
-		"--config",
-		path.Join(rootDir, ".golangci.yaml"))
+		"--verbose")
 
 	if fix {
 		flags = append(flags, "--fix")
@@ -194,7 +191,7 @@ func runGoLangCILint(
 			}).
 		Build()
 
-	flags := getGoLangCILintFlags(rootDir, sett.Fix, config.Config)
+	flags := getGoLangCILintFlags(sett.Fix, config.Config)
 	cmd := append([]string{"run"}, flags...)
 	cmd = append(cmd, config.Args...)
 	cmd = append(cmd, "./...")
