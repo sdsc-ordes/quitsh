@@ -34,14 +34,13 @@ type Config struct {
 	Build cconfig.BuildSettings `yaml:"build"`
 
 	// The lint settings which get copied and injected into the runners:
-	// - `custodian::lint-go`
 	Lint cconfig.LintSettings `yaml:"lint"`
 
 	// The test settings which get copied and injected into the runners:
 	Test cconfig.TestSettings `yaml:"test"`
 }
 
-// New returns custodians arguments with default values.
+// New returns arguments with default values.
 func New() (args Config) {
 	err := defaults.Set(&args)
 	log.PanicE(err, "could not default initialize config")

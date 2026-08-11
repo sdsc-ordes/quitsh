@@ -82,7 +82,7 @@ func main() {
 	cli, err := cli.New(
 		&args.Commands.Root,
 		&args,
-		cli.WithName("custodian-test"),
+		cli.WithName("quitsh-integration-test"),
 		// Ignore component-b by not searching in this directory.
 		cli.WithCompFindOptions(
 			query.WithFindOptions(

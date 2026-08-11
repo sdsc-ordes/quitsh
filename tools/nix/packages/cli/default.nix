@@ -68,7 +68,7 @@ let
 
     meta = with lib; {
       description = "The quitsh's own CLI tool to build itself.";
-      homepage = "https://data-custodian.gitlab.io/custodian";
+      homepage = "https://github.com/sdsc-ordes/quitsh";
       license = licenses.agpl3Plus;
       maintainers = [ "gabyx" ];
       mainProgram = name;

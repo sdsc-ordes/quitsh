@@ -14,12 +14,11 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/exec"
 	"github.com/sdsc-ordes/quitsh/pkg/exec/git"
 	gox "github.com/sdsc-ordes/quitsh/pkg/exec/go"
-	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	"github.com/sdsc-ordes/quitsh/pkg/runner"
 )
 
-const GoLintRunnerID = "custodian::lint-go"
+const GoLintRunnerID = "cli::lint-go"
 
 type GoLintRunner struct {
 	runnerConfig *RunnerConfigLint
@@ -66,9 +65,6 @@ func (r *GoLintRunner) Run(ctx runner.IContext) error {
 	e := runGoLangCILint(ctx.Log(), comp, ctx.Root())
 	err = errors.Combine(e, err)
 
-	e = runNoWrongIncludes(ctx.Log(), comp)
-	err = errors.Combine(e, err)
-
 	return err
 }
 
@@ -100,70 +96,6 @@ func runGoModTidy(log log.ILog, comp *component.Component) error {
 	}
 
 	return nil
-}
-
-func runNoWrongIncludes(log log.ILog, comp *component.Component) error {
-	log.Info("Starting `no-wrong-includes`.", "component", comp.Config().Name)
-
-	var noIncAs []string
-
-	grep := exec.NewCmdCtxBuilder().
-		BaseCmd("grep").
-		BaseArgs(
-			"-r",
-			"-H",
-			"--perl-regexp",
-			"--exclude-dir", fs.OutputDir,
-			"--exclude-dir='.git'",
-			"--include", "*.go", "--include", "go.mod",
-			"-I", // no binary fs.
-		).
-
-		// BaseArgs("--hidden", "-n", "--glob", "*.go", "--glob", "go.mod").
-		ExitCodeHandler(func(e *exec.CmdError) error {
-			switch {
-			case e == nil:
-				log.Error("Inacceptable includes detected, see above")
-
-				return errors.New("inacceptable includes detected")
-			case e.ExitCode() == 1:
-				return nil
-			default:
-				return e
-			}
-		}).
-		Build()
-
-	// Strings are concatenated to
-	// to circumvent detection in this file.
-	switch comp.Config().Name {
-	case "quitshv2":
-		// Must not include anything from components, must be self-containing.
-		noIncAs = append(noIncAs, "custodian"+"/components")
-	case "lib-common":
-		// Must not include anything else, must be self-containing.
-		noIncAs = append(
-			noIncAs,
-			"custodian"+"/components/(?!lib-common)",
-			"custodian"+"/tools/quitshv2",
-		)
-	default:
-		// all other components must not include `quitshv2`
-		// TODO: This test needs to become better to basically disallow
-		// importing other components (maybe negative lookahead).
-		noIncAs = append(
-			noIncAs,
-			"custodian"+"/tools/quitshv2",
-		)
-	}
-
-	var err error
-	for _, inc := range noIncAs {
-		e := grep.Check(inc, comp.Root())
-		err = errors.Combine(e, err)
-	}
-
-	return err
 }
 
 func runGoLangCILint(log log.ILog, comp *component.Component, rootDir string) error {
