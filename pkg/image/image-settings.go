@@ -10,8 +10,6 @@ import (
 type ImageSettings struct {
 	Build ImageSettingsBuild `yaml:"build"`
 	Push  ImageSettingsPush  `yaml:"push"`
-
-	Args []string `yaml:"args"` // Additional arguments forwarded to the tool.
 }
 
 type ImageSettingsBuild struct {

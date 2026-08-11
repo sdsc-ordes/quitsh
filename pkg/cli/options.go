@@ -91,7 +91,7 @@ func WithDescription(desc string) Option {
 	}
 }
 
-// WithStageTypes sets the stage types you want to use over all the project.
+// WithStages sets the stage types you want to use over all the project.
 // Each stage also comes with a priority, so you have to order them here
 // accordingly how they would appear in execution order.
 // This is used internally to guard wrong configuration

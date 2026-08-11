@@ -1,6 +1,7 @@
 package gorunner
 
 import (
+	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/component/step"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -31,7 +32,7 @@ func RegisterBuild(
 	err = errors.Combine(err, e)
 
 	if registerKey {
-		e = factory.RegisterToKey(runner.NewRegisterKey("build", "go"), GoBuildRunnerID)
+		e = factory.RegisterToKey(runner.NewRegisterKey(stage.Build, "go"), GoBuildRunnerID)
 		err = errors.Combine(err, e)
 	}
 
@@ -59,7 +60,7 @@ func RegisterTest(
 	err = errors.Combine(err, e)
 
 	if registerKey {
-		e = factory.RegisterToKey(runner.NewRegisterKey("test", "go"), GoTestRunnerID)
+		e = factory.RegisterToKey(runner.NewRegisterKey(stage.Test, "go"), GoTestRunnerID)
 		err = errors.Combine(err, e)
 	}
 
@@ -74,7 +75,7 @@ func RegisterTest(
 			DefaultToolchain:      defaultToolchain,
 		})
 	err = errors.Combine(err, e)
-	e = factory.RegisterToKey(runner.NewRegisterKey("test", "go-bin"), GoTestBinRunnerID)
+	e = factory.RegisterToKey(runner.NewRegisterKey(stage.Test, "go-bin"), GoTestBinRunnerID)
 	err = errors.Combine(err, e)
 
 	return err

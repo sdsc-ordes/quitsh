@@ -1,0 +1,37 @@
+scan:
+  # Same as '--scanners'
+  scanners:
+    - vuln
+    # - secret
+
+  skip-dirs:
+    - "**/.devenv"
+    - "**/.direnv"
+    - "**/.git"
+    - "**/tools/cli"
+    - "**/component-a"
+
+vulnerability:
+  # Same as '--ignore-status'
+  ignore-status: []
+
+  # Same as '--ignore-unfixed'
+  ignore-unfixed: false
+
+  # Same as '--vuln-severity-source'
+  severity-source:
+    - auto
+
+  # Same as '--skip-vex-repo-update'
+  skip-vex-repo-update: false
+
+  # Same as '--vex'
+  vex: []
+
+# Same as '--severity'
+severity:
+  # - UNKNOWN
+  # - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL

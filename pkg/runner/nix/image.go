@@ -33,27 +33,12 @@ type (
 		options  *opts
 	}
 
-	ImagePackageName = func(compName string, imageType image.Type) string
-
 	ImageInstallable func(
 		flakePath string,
 		componentName string,
 		imageType image.Type,
 	) (installable, pkgName string)
-
-	Option func(*opts)
-
-	opts struct {
-		installable ImageInstallable
-		packageName ImagePackageName
-	}
 )
-
-// ImagePackageNameDefault return the components image package name for
-// the image type.
-func ImagePackageNameDefault(compName string, imageType image.Type) string {
-	return fmt.Sprintf("%s-%s", compName, imageType.String())
-}
 
 // ImageInstallableDefault returns a installable to the components image for `nix build`.
 func ImageInstallableDefault(
@@ -70,51 +55,22 @@ func ImageInstallableDefault(
 	return nix.FlakeInstallable(flakePath, pkgName), pkgName
 }
 
-func (c *opts) Apply(options ...Option) {
-	for _, f := range options {
-		f(c)
-	}
-
-	if c.installable == nil {
-		c.installable = ImageInstallableDefault
-	}
-
-	if c.packageName == nil {
-		c.packageName = ImagePackageNameDefault
-	}
-}
-
-func WithInstallable(f ImageInstallable) Option {
-	return func(o *opts) {
-		o.installable = f
-	}
-}
-
-func NewImagePackageName(f ImagePackageName) Option {
-	return func(o *opts) {
-		o.packageName = f
-	}
-}
-
 // NewNixImageRunner constructs a new NixImageRunner with its own config.
 func NewNixImageRunner(
 	flakeDirRel string,
 	conf step.AuxConfig,
 	imgSetts *config.ImageSettings,
 	nixSetts *config.NixSettings,
-	options ...Option,
+	options *opts,
 ) (runner.IRunner, error) {
 	debug.Assert(conf != nil, "config is nil")
-
-	var o opts
-	o.Apply(options...)
 
 	return &NixImageRunner{
 		flakeDirRel: flakeDirRel,
 		config:      common.Cast[*RunnerConfigImage](conf),
 		imgSetts:    imgSetts,
 		nixSetts:    nixSetts,
-		options:     &o,
+		options:     options,
 	}, nil
 }
 
@@ -182,7 +138,7 @@ func (r *NixImageRunner) Run(ctx runner.IContext) error {
 
 		pkgs = append(
 			pkgs,
-			&image.ImagePackage{ //nolint:exhaustruct
+			&image.ImagePackage{
 				Component:      config.Name,
 				Version:        comp.Version().String(),
 				Name:           imagePkgName,
@@ -191,6 +147,8 @@ func (r *NixImageRunner) Run(ctx runner.IContext) error {
 				NixInstallable: nixInstallable,
 				ImageFile:      comp.OutImageDir(imagePkgName),
 				ImageRefs:      []image.ImageRefField{{Ref: imageRef}},
+				ContainerFile:  "",
+				ImageDigest:    "",
 			},
 		)
 	}

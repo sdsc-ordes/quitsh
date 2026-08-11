@@ -30,6 +30,9 @@ type Config struct {
 	// All command arguments of our `quitsh` instance.
 	Commands CommandArgs `yaml:"commands"`
 
+	// The Nix settings.
+	Nix cconfig.NixSettings `yaml:"nix"`
+
 	// The build settings which get copied and injected into the runners:
 	Build cconfig.BuildSettings `yaml:"build"`
 

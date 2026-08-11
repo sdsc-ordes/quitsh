@@ -155,7 +155,7 @@ func fixHash(cli cli.ICLI, failIfChanges bool, flakeDirRel string) error {
 
 // TODO: Make it less long.
 //
-//nolint:gocognit // FIXME: Make shorter.
+//nolint:gocognit,funlen // FIXME: Make shorter.
 func fixHashes(
 	gitx git.Context,
 	rootDir string,

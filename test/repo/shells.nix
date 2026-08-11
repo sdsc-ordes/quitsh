@@ -27,5 +27,17 @@
       }
     ];
   };
+
+  lint-trivy = inputs.quitsh.lib.mkShell {
+    inherit inputs pkgs;
+    modules = [
+      {
+        quitsh.toolchains = [ "lint-trivy" ];
+        packages = [
+          pkgs.trivy
+        ];
+      }
+    ];
+  };
   # =============================================
 }

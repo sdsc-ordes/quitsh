@@ -1,8 +1,9 @@
 package config
 
-import "github.com/sdsc-ordes/quitsh/pkg/runner/config"
-
-type LintSettings = config.LintSettings
+type LintSettings struct {
+	// Try to fix linting errors.
+	Fix bool `yaml:"fix"`
+}
 
 // NewLintSettings constructs a new build setting.
 func NewLintSettings() LintSettings {

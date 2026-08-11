@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// AddCmd adds the `ci` subcommands to `root`.
-func AddCmd(cl cli.ICLI, nixSetts *config.NixSettings) {
+// AddCmd adds the `nix` subcommands to `rootCmd`.
+func AddCmd(cl cli.ICLI, rootCmd *cobra.Command, nixSetts *config.NixSettings) {
 	nixCmd := &cobra.Command{
 		Use:   "nix",
 		Short: "Helper commands for Nix. ",
@@ -28,5 +28,5 @@ func AddCmd(cl cli.ICLI, nixSetts *config.NixSettings) {
 	cache.AddDownloadCmd(cl, nixCmd, nixSetts)
 	cache.AddUploadCmd(cl, nixCmd, nixSetts)
 
-	cl.RootCmd().AddCommand(nixCmd)
+	rootCmd.AddCommand(nixCmd)
 }

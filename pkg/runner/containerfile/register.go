@@ -1,4 +1,4 @@
-package nixrunner
+package containerfilerunner
 
 import (
 	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
@@ -15,7 +15,6 @@ type (
 	Option func(*opts)
 
 	opts struct {
-		installable ImageInstallable
 		packageName image.ImagePackageNameF
 		stage       stage.Stage
 	}
@@ -26,24 +25,8 @@ func (c *opts) Apply(options ...Option) {
 		f(c)
 	}
 
-	if c.installable == nil {
-		c.installable = ImageInstallableDefault
-	}
-
 	if c.packageName == nil {
 		c.packageName = image.ImagePackageNameDefault
-	}
-}
-
-func WithImageInstallable(f ImageInstallable) Option {
-	return func(o *opts) {
-		o.installable = f
-	}
-}
-
-func WithStage(s stage.Stage) Option {
-	return func(o *opts) {
-		o.stage = s
 	}
 }
 
@@ -53,35 +36,37 @@ func WithImagePackageName(f image.ImagePackageNameF) Option {
 	}
 }
 
+func WithStage(s stage.Stage) Option {
+	return func(o *opts) {
+		o.stage = s
+	}
+}
+
 // Register registers the runners in the factory.
 func Register(
 	imageSettings *config.ImageSettings,
-	nixSettings *config.NixSettings,
 	factory factory.IFactory,
 	options ...Option,
 ) (err error) {
-	log.Trace("Register runner.", "id", NixImageRunnerID)
+	log.Trace("Register runner.", "id", ContainerfileRunnerID)
 
 	var o opts
 	o.Apply(options...)
 
 	e := factory.Register(
-		NixImageRunnerID,
+		ContainerfileRunnerID,
 		runner.RunnerData{
 			Creator: func(config step.AuxConfig) (runner.IRunner, error) {
-				return NewNixImageRunner(
-					nixSettings.FlakeDirRel,
-					config,
-					imageSettings,
-					nixSettings,
-					&o,
-				)
+				return NewContainerfileBuildRunner(config, imageSettings, &o)
 			},
 			RunnerConfigUnmarshal: UnmarshalImageConfig,
-			DefaultToolchain:      "image-nix",
+			DefaultToolchain:      "image-containerfile",
 		})
 	err = errors.Combine(err, e)
-	e = factory.RegisterToKey(runner.NewRegisterKey(o.stage, "nix"), NixImageRunnerID)
+	e = factory.RegisterToKey(
+		runner.NewRegisterKey(o.stage, "containerfile"),
+		ContainerfileRunnerID,
+	)
 	err = errors.Combine(err, e)
 
 	return
