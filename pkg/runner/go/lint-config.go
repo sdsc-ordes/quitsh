@@ -17,7 +17,7 @@ type (
 	}
 
 	GolangCILint struct {
-		Config string   `yaml:"config" default:"tools/config/golangci-lint/golangci.yaml"`
+		Config string   `yaml:"config" default:"tools/configs/golangci-lint/golangci.yaml"`
 		Args   []string `yaml:"args"`
 	}
 

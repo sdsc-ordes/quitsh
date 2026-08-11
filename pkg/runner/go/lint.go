@@ -62,7 +62,7 @@ func (r *GoLintRunner) Run(ctx runner.IContext) error {
 
 	err := runGoModTidy(ctx.Log(), comp)
 
-	e := runGoLangCILint(ctx.Log(), r.settings, &r.runnerConfig.GolangCILint, comp, ctx.Root())
+	e := runGoLangCILint(ctx.Log(), r.settings, &r.runnerConfig.GolangCILint, comp)
 	err = errors.Combine(e, err)
 
 	if r.runnerConfig.CheckBuildConstraints.Enable {
@@ -169,8 +169,7 @@ func runGoLangCILint(
 	log log.ILog,
 	sett *config.LintSettings,
 	config *GolangCILint,
-	comp *component.Component,
-	rootDir string) error {
+	comp *component.Component) error {
 	log.Info("Starting `golangcilint` for component.", "component", comp.Config().Name)
 
 	lintctx := exec.NewCmdCtxBuilder().
