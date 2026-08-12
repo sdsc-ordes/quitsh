@@ -28,6 +28,10 @@ func (c *opts) Apply(options ...Option) {
 	if c.packageName == nil {
 		c.packageName = image.ImagePackageNameDefault
 	}
+
+	if c.stage == "" {
+		c.stage = stage.Image
+	}
 }
 
 func WithImagePackageName(f image.ImagePackageNameF) Option {
