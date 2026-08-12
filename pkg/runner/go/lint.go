@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"go/build/constraint"
 	"os"
+	"path"
 	"slices"
 
 	"github.com/sdsc-ordes/quitsh/pkg/common"
@@ -37,7 +38,7 @@ func NewGoLintRunner(config any, settings *config.LintSettings) (runner.IRunner,
 	}, nil
 }
 
-func getGoLangCILintFlags(fix bool, configPath string) (flags []string) {
+func getGoLangCILintFlags(configPath string, fix bool) (flags []string) {
 	flags = append(flags,
 		"--config", configPath,
 		"--allow-parallel-runners",
@@ -62,7 +63,7 @@ func (r *GoLintRunner) Run(ctx runner.IContext) error {
 
 	err := runGoModTidy(ctx.Log(), comp)
 
-	e := runGoLangCILint(ctx.Log(), r.settings, &r.runnerConfig.GolangCILint, comp)
+	e := runGoLangCILint(ctx.Log(), r.settings, &r.runnerConfig.GolangCILint, comp, ctx.Root())
 	err = errors.Combine(e, err)
 
 	if r.runnerConfig.CheckBuildConstraints.Enable {
@@ -169,7 +170,9 @@ func runGoLangCILint(
 	log log.ILog,
 	sett *config.LintSettings,
 	config *GolangCILint,
-	comp *component.Component) error {
+	comp *component.Component,
+	rootDir string,
+) error {
 	log.Info("Starting `golangcilint` for component.", "component", comp.Config().Name)
 
 	lintctx := exec.NewCmdCtxBuilder().
@@ -190,7 +193,12 @@ func runGoLangCILint(
 			}).
 		Build()
 
-	flags := getGoLangCILintFlags(sett.Fix, config.Config)
+	configFile := path.Join(comp.Root(), config.Config)
+	if !fs.Exists(configFile) {
+		configFile = path.Join(rootDir, config.RootConfig)
+	}
+
+	flags := getGoLangCILintFlags(configFile, sett.Fix)
 	cmd := append([]string{"run"}, flags...)
 	cmd = append(cmd, config.Args...)
 	cmd = append(cmd, "./...")

@@ -17,8 +17,14 @@ type (
 	}
 
 	GolangCILint struct {
-		Config string   `yaml:"config" default:"tools/configs/golangci-lint/golangci.yaml"`
-		Args   []string `yaml:"args"`
+		// Relative path to the config file from the root directory.
+		RootConfig string `yaml:"rootConfig" default:"tools/configs/golangci-lint/golangci.yaml"`
+
+		// Relative path to the config file inside the component, if not existing.
+		// `RootConfig` is used.
+		Config string `yaml:"config" default:".golangci.yaml"`
+
+		Args []string `yaml:"args"`
 	}
 
 	BuiltConstraintRule struct {
