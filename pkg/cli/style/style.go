@@ -17,21 +17,8 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 )
 
-// NOTE: We use our own renderer here (and not the global one `lipgloss.NewStyle`
-// which the logger implicitly uses):
-// the logger renders to `os.Stderr`, whereas cobra renders the help to
-// `os.Stdout`. Different sinks -> different color profiles
-// (e.g. `quitsh --help | less` must stay uncolored while the log stays colored).
-//
-// WARNING: Only use fixed colors (`lipgloss.Color`) below, never
-// `lipgloss.AdaptiveColor`: adaptive colors make the renderer query the
-// terminal's background color, which is the synchronous terminal operation
-// `pkg/log`'s `init` guards with a file lock. We must not trigger that here
-// again on another sink.
-var renderer = newRenderer() //nolint:gochecknoglobals // Intended, same as the logger.
-
 func newRenderer() *lipgloss.Renderer {
-	r := lipgloss.NewRenderer(os.Stdout)
+	r := lipgloss.NewRenderer(os.Stderr)
 
 	if ci.IsRunning() && log.ForceColorInCI {
 		// Same forcing as in `pkg/log`, otherwise CI logs have no colors.
@@ -61,6 +48,8 @@ type styles struct {
 // All subcommands inherit them: cobra looks the templates up the command tree
 // (see `Command.getHelpTemplateFunc`), so this only needs to happen on the root.
 func Apply(rootCmd *cobra.Command) {
+	var renderer = newRenderer()
+
 	// Section headings, e.g. `Usage:`, `Flags:`.
 	style := styles{
 		heading: renderer.NewStyle().Foreground(lipgloss.Color(ColorHeading)).Bold(true),

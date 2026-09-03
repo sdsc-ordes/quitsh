@@ -1,17 +1,15 @@
 package log
 
 import (
-	"fmt"
 	"os"
-	"path"
 	"sync"
 	"time"
 
-	chlog "github.com/charmbracelet/log"
-	"github.com/gofrs/flock"
-	"github.com/muesli/termenv"
+	chlog "charm.land/log/v2"
 
-	"github.com/charmbracelet/lipgloss"
+	lipgloss "charm.land/lipgloss/v2"
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/term"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
@@ -19,7 +17,7 @@ var ForceColorInCI = true //nolint:gochecknoglobals // Intended, to be disabled 
 const TraceLevel = chlog.DebugLevel - 10
 
 const ColorTrace = "#a4a4a4"
-const ColorDebug = "#bdbdbd"
+const ColorDebug = "#00e6ff"
 const ColorInfo = "#00c41a"
 const ColorWarn = "#ff7400"
 const ColorError = "#ff0000"
@@ -35,21 +33,6 @@ var (
 
 //nolint:gochecknoinits // intended
 func init() {
-	// NOTE: We need to do this as multiple subprocesses are started and
-	// the logger tries to acquire the terminal state through terminal capabilities
-	// which is a synchronous operation.
-	// We could try to configure the logger differently, but its a bit unsafe
-	// as we need to be sure to control the underlying library correctly.
-	// (lipgloss.Renderer)
-	lockFile := path.Join(os.TempDir(), "quitsh-logger-init.lock")
-	lock := flock.New(lockFile)
-	err := lock.Lock()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not acquire lock '%s', delete that file.", lockFile)
-		panic("error could not acquire logger init lock")
-	}
-	defer lock.Close()
-
 	initOnce.Do(func() {
 		// This block of code is guaranteed to run exactly once.
 		// We perform a basic, default initialization here.
@@ -93,22 +76,25 @@ func initLog(level string) (logger, error) {
 		return logger{}, err
 	}
 
-	styles := getStyles()
+	styles := getStyles(os.Stderr)
 	l.SetStyles(styles)
 
 	if ciRunning() && ForceColorInCI {
 		// We force here the color profile for CI.
-		l.SetColorProfile(termenv.ANSI256)
+		l.SetColorProfile(colorprofile.ANSI256)
 	}
 
 	return logger{l: l}, nil
 }
 
-func getStyles() *chlog.Styles {
+func getStyles(out term.File) *chlog.Styles {
+	hasDarkBG := lipgloss.HasDarkBackground(os.Stdin, out)
+	lightDark := lipgloss.LightDark(hasDarkBG)
+
 	styles := chlog.DefaultStyles()
 
 	styles.Message = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#1b4796", Dark: "#58A6FF"})
+		Foreground(lightDark(lipgloss.Color("#1b4796"), lipgloss.Color("#58A6FF")))
 
 	styles.Levels[TraceLevel] = lipgloss.NewStyle().
 		SetString("TRACE").
@@ -141,13 +127,13 @@ func getStyles() *chlog.Styles {
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Prefix = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#007399", Dark: "#44b5c3"}).
+		Foreground(lightDark(lipgloss.Color("#007399"), lipgloss.Color("#44b5c3"))).
 		Italic(true)
 
 	styles.Caller = lipgloss.NewStyle().Italic(true)
 
 	styles.Key = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#007399", Dark: "#44b5c3"}).
+		Foreground(lightDark(lipgloss.Color("#007399"), lipgloss.Color("#44b5c3"))).
 		Bold(true)
 
 	styles.Keys["err"] = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000"))
