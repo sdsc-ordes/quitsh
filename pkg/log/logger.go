@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	chlog "github.com/charmbracelet/log"
+	chlog "charm.land/log/v2"
 )
 
 type logger struct {

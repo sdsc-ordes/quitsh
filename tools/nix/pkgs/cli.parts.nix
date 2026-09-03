@@ -9,7 +9,7 @@
 
         rootDir = ../../..;
         modRoot = "./tools/cli";
-        vendorHash = "sha256-S/UNPZB55zYJoxZ6Noqs6R2ntFnGOMmpZ2hGD+8rbWw=";
+        vendorHash = "sha256-SLlo47cxD+nzV7VbYBQHFsOpdqJV2xIXi1/iA8IwoF8=";
 
         versionModulePath = "github.com/sdsc-ordes/quitsh/pkg/build.buildVersion";
 

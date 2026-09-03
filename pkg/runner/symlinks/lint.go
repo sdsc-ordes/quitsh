@@ -54,7 +54,6 @@ func (r *SymlinkLintRunner) Run(ctx runner.IContext) error {
 
 		if e != nil {
 			link, e2 := os.Readlink(files[i])
-			log.Warnf("", files[i], link)
 			err = errors.Combine(err, e, e2,
 				errors.New("⛑️  symlink file '%v' is broken (points to: '%v')", files[i], link))
 		} else if !fs.Exists(f) {
