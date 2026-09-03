@@ -39,7 +39,9 @@ const getOutputHash = `
         fodAttrPath = "goModules";
         hash = drv.goModules.outputHash;
     }
-    else if (builtins.hasAttr "cargoDeps" drv) then
+    else if (
+        builtins.hasAttr "cargoDeps" drv &&
+        builtins.hasAttr "vendorStaging" drv.cargoDeps) then
     {
         fodAttrPath = "cargoDeps.vendorStaging";
         hash = drv.cargoDeps.vendorStaging.outputHash;
