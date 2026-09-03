@@ -11,6 +11,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/build"
 	"github.com/sdsc-ordes/quitsh/pkg/ci"
 	printcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config/print"
+	"github.com/sdsc-ordes/quitsh/pkg/cli/style"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
@@ -178,6 +179,9 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 		},
 	}
 
+	// Render the help/usage output with the logger's color palette.
+	style.Apply(rootCmd)
+
 	addPersistendFlags(rootCmd.PersistentFlags(), rootArgs)
 
 	rootCmd.PersistentFlags().
@@ -344,8 +348,9 @@ func initConfig(
 func runRoot(rootCmd *cobra.Command, setts *Settings, version bool) error {
 	if version {
 		fmt.Printf( //nolint:forbidigo // Allowed as no log yet.
-			"%s version %v\n",
-			setts.Name, setts.Version,
+			"%s version %s\n",
+			setts.Name,
+			setts.Version.String(),
 		)
 
 		return nil

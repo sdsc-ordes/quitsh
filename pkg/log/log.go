@@ -18,6 +18,12 @@ import (
 var ForceColorInCI = true //nolint:gochecknoglobals // Intended, to be disabled if really needed.
 const TraceLevel = chlog.DebugLevel - 10
 
+const ColorTrace = "#a4a4a4"
+const ColorDebug = "#bdbdbd"
+const ColorInfo = "#00c41a"
+const ColorWarn = "#ff7400"
+const ColorError = "#ff0000"
+
 // Our global default logger. Yes singletons are code-smell,
 // but we allow it for the logging functionality.
 //
@@ -107,31 +113,31 @@ func getStyles() *chlog.Styles {
 	styles.Levels[TraceLevel] = lipgloss.NewStyle().
 		SetString("TRACE").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#a4a4a4")).
+		Background(lipgloss.Color(ColorTrace)).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.DebugLevel] = lipgloss.NewStyle().
 		SetString("DEBUG").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#00e6ff")).
+		Background(lipgloss.Color(ColorDebug)).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.InfoLevel] = lipgloss.NewStyle().
 		SetString("INFO").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#00c41a")).
+		Background(lipgloss.Color(ColorInfo)).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.WarnLevel] = lipgloss.NewStyle().
 		SetString("WARN").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#ff7400")).
+		Background(lipgloss.Color(ColorWarn)).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Levels[chlog.ErrorLevel] = lipgloss.NewStyle().
 		SetString("ERROR").
 		Padding(0, 1, 0, 1).
-		Background(lipgloss.Color("#ff0000")).
+		Background(lipgloss.Color(ColorError)).
 		Foreground(lipgloss.Color("0")).Bold(true)
 
 	styles.Prefix = lipgloss.NewStyle().
