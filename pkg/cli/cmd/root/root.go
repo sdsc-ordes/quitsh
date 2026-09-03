@@ -179,7 +179,7 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 		},
 	}
 
-	// Render the help/usage output with the logger's color palette.
+	// Render the help/usage with some style.
 	style.Apply(rootCmd)
 
 	addPersistendFlags(rootCmd.PersistentFlags(), rootArgs)
