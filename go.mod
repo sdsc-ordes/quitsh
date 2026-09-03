@@ -12,12 +12,12 @@ require (
 	github.com/charlievieth/fastwalk v1.0.10
 	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/charmbracelet/x/term v0.2.2
 	github.com/containers/image/v5 v5.35.0
 	github.com/creasty/defaults v1.8.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-yaml v1.19.2
-	github.com/gofrs/flock v0.12.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.7.0
 	github.com/huandu/go-clone v1.7.2
@@ -42,7 +42,6 @@ require (
 	github.com/charmbracelet/ultraviolet v0.0.0-20251205161215-1948445e3318 // indirect
 	github.com/charmbracelet/x/ansi v0.11.8 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
-	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
@@ -83,6 +82,7 @@ require (
 	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa // indirect
 	golang.org/x/text v0.37.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
