@@ -199,11 +199,11 @@ func New(setts *Settings, rootArgs *Args, config config.IConfig) (
 func addPersistendFlags(flags *pflag.FlagSet, args *Args) {
 	flags.
 		StringVar(&args.Config, "config", args.Config,
-			"The global configuration file. If set to '-' then stdin is read."+
+			"The global configuration file. If set to '-' then stdin is read. "+
 				"Env. variable 'QUITSH_CONFIG' presets this.")
 	flags.
 		StringVar(&args.ConfigUser, "config-user", args.ConfigUser,
-			"The global user configuration file (overlay), can not exist."+
+			"The global user configuration file (overlay), can not exist. "+
 				"Env. variable 'QUITSH_CONFIG_USER' presets this.")
 	flags.
 		StringArrayVarP(
@@ -271,6 +271,8 @@ func parseConfigs(conf config.IConfig) (parsedConfigPath, parsedUserConfigPath s
 	s := pflag.NewFlagSet("default", pflag.ContinueOnError)
 	addPersistendFlags(s, &args)
 
+	// Ignore printing any stuff onto stdout here.
+	s.Usage = func() {}
 	s.ParseErrorsAllowlist.UnknownFlags = true
 
 	err = s.Parse(os.Args)

@@ -4,7 +4,10 @@ package style
 // (cobra v1.10.2, `command.go`) with the `style*` template functions threaded
 // through. Keep them in sync when bumping cobra.
 
-const helpTemplate = usageTemplate
+const helpTemplate = `{{styleHeading "Command: "}}
+  {{with (or .Long .Short) | styleCmd }}{{. | trimTrailingWhitespaces}}
+
+{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
 
 //nolint:lll // Template whitespace is significant, lines cannot be wrapped.
 const usageTemplate = `{{styleHeading "Usage:"}}{{if .Runnable}}
@@ -17,7 +20,7 @@ const usageTemplate = `{{styleHeading "Usage:"}}{{if .Runnable}}
 {{styleHeading "Examples:"}}
 {{styleExample .Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
 
-{{styleHeading "Available Commands:"}}{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+{{styleHeading "Available Sub-Commands:"}}{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
   {{styleCmdPad .Name .NamePadding}} {{styleDesc .Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
 
 {{styleHeading .Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}

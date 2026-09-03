@@ -93,7 +93,7 @@ func Apply(rootCmd *cobra.Command) {
 	})
 
 	rootCmd.SetHelpTemplate(helpTemplate)
-	// rootCmd.SetUsageTemplate(usageTemplate)
+	rootCmd.SetUsageTemplate(usageTemplate)
 }
 
 // styleCmdPad renders a command name padded to `padding` visible columns.
