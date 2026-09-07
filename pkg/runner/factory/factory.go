@@ -184,6 +184,12 @@ func (fac *factory) Register(
 
 // RegisterToKey implements [IFactory].
 func (fac *factory) RegisterToKey(key runner.RegisterKey, id runner.RegisterID) error {
+	if !key.Valid() {
+		return errors.New("you cannot register an empty key '%v' for runner id '%s'", key, id)
+	} else if id == "" {
+		return errors.New("you cannot register a key '%v' for empty runner id", key)
+	}
+
 	_, exists := fac.byKeys[key]
 	if exists {
 		return errors.New("you cannot register another same key '%v' for runner id '%v'", key, id)

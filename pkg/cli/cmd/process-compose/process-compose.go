@@ -14,7 +14,7 @@ import (
 func AddCmd(cl cli.ICLI, parent *cobra.Command, flakeDirDefault string) *cobra.Command {
 	configCmd := &cobra.Command{
 		Use:   "process-compose",
-		Short: "Start/stop process-compose services defined in Nix 'devenv.sh' shells.",
+		Short: "Start/stop process-compose services defined in Nix 'devenv.sh' shells or 'service-flakes'.",
 		RunE: func(_cmd *cobra.Command, _args []string) error {
 			return errors.New("no subcommand given")
 		},

@@ -8,7 +8,7 @@ import (
 // RegisterID is the unique id the runner is registered on.
 type RegisterID = string
 
-// RegisterKey is key the runner is registered additionally per stage.
+// RegisterKey is an alias for [RegisterKey] to registered a runner additionally per stage.
 type RegisterKey struct {
 	stage stage.Stage
 	name  string
@@ -16,6 +16,10 @@ type RegisterKey struct {
 
 func NewRegisterKey(stage stage.Stage, runnerName string) RegisterKey {
 	return RegisterKey{stage, runnerName}
+}
+
+func (r *RegisterKey) Valid() bool {
+	return r.stage != "" && r.name != ""
 }
 
 func (r *RegisterKey) Stage() stage.Stage {

@@ -6,21 +6,25 @@ import (
 	"os"
 
 	cliconfig "quitsh-cli/pkg/config"
-	cliGoRunner "quitsh-cli/pkg/runner/go"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
 	configcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/config"
 	execrunner "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-runner"
 	exectarget "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/exec-target"
+	formatcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/format"
 	listcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/list"
+	nixcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/nix"
 	pccmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose"
 	versionupcmd "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/version-up"
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/query"
+	"github.com/sdsc-ordes/quitsh/pkg/component/stage"
 	"github.com/sdsc-ordes/quitsh/pkg/config"
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
 	gorunner "github.com/sdsc-ordes/quitsh/pkg/runner/go"
+	symlinkrunner "github.com/sdsc-ordes/quitsh/pkg/runner/symlinks"
+	trivyrunner "github.com/sdsc-ordes/quitsh/pkg/runner/trivy"
 	"github.com/sdsc-ordes/quitsh/pkg/toolchain"
 )
 
@@ -45,7 +49,7 @@ func main() {
 			query.WithFindOptions(
 				fs.WithWalkDirFilterPatterns(nil,
 					[]string{"**/test/repo/**"}, true))),
-		cli.WithStages("lint", "build", "test"),
+		cli.WithStages(stage.AllStages()...),
 		cli.WithTargetToStageMapperDefault(),
 		cli.WithSignalContext(true),
 		cli.WithToolchainDispatcherNix(flakeDirRel,
@@ -71,8 +75,12 @@ func main() {
 	listcmd.AddCmd(cli, cli.RootCmd())
 	configcmd.AddCmd(cli.RootCmd(), &conf)
 	exectarget.AddCmd(cli, cli.RootCmd(), &conf.Commands.ExecArgs)
+	exectarget.AddCmd(cli, cli.RootCmd(), &conf.Commands.ExecArgs)
 	execrunner.AddCmd(cli, cli.RootCmd(), &conf.Commands.DispatchArgs)
 	pccmd.AddCmd(cli, cli.RootCmd(), flakeDirRel)
+
+	formatcmd.AddCmd(cli.RootCmd(), &conf.Nix)
+	nixcmd.AddCmd(cli, cli.RootCmd(), &conf.Nix)
 
 	registerRunners(cli, &conf)
 
@@ -82,17 +90,15 @@ func main() {
 
 func registerRunners(cl cli.ICLI, args *cliconfig.Config) {
 	err := gorunner.RegisterBuild(args.Build.WrapToIBuildSettings(), cl.RunnerFactory(), true)
-	if err != nil {
-		log.PanicE(err, "Could not register runner.")
-	}
-
+	log.PanicE(err, "Could not register runner.")
 	err = gorunner.RegisterTest(args.Test.WrapToITestSettings(), cl.RunnerFactory(), true)
-	if err != nil {
-		log.PanicE(err, "Could not register runner.")
-	}
+	log.PanicE(err, "Could not register runner.")
+	err = gorunner.RegisterLint(&args.Lint, cl.RunnerFactory(), true)
+	log.PanicE(err, "Could not register runner.")
 
-	err = cliGoRunner.Register(&args.Lint, cl.RunnerFactory())
-	if err != nil {
-		log.PanicE(err, "Could not register runner.")
-	}
+	err = symlinkrunner.Register(&args.Lint, cl.RunnerFactory())
+	log.PanicE(err, "Could not register runner.")
+
+	err = trivyrunner.Register(&args.Lint, cl.RunnerFactory())
+	log.PanicE(err, "Could not register runner.")
 }

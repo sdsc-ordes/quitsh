@@ -33,13 +33,15 @@ type Stages []StagePrio
 
 type TargetNameToStageMapper func(targetName string) (Stage, error)
 
-// Construct default stage.
+// NewDefaults default stages.
 func NewDefaults() Stages {
 	return Stages{
-		{"lint", 0},
-		{"build", 1},
-		{"test", 2},
-		{"deploy", 3},
+		{Lint, 0},
+		{Build, 1},
+		{Test, 2},
+		{Image, 3},
+		{Deploy, 4},
+		{Aux, 100},
 	}
 }
 

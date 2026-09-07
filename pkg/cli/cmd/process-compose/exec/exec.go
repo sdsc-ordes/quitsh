@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sdsc-ordes/quitsh/pkg/cli"
+	processcomposestart "github.com/sdsc-ordes/quitsh/pkg/cli/cmd/process-compose/start"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	pc "github.com/sdsc-ordes/quitsh/pkg/exec/process-compose"
 	"github.com/sdsc-ordes/quitsh/pkg/log"
@@ -11,21 +12,20 @@ import (
 )
 
 type startArgs struct {
+	processcomposestart.BasicArgs
 	args []string
-
-	attrPath string
-	flakeDir string
 }
 
 func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
 	startCmd := &cobra.Command{
-		Use:     "exec [devenv-attr-path or devenv-installable] [args-to-proc-compose]",
-		Short:   "Exec commands on process-compose on the correct instance.",
+		Use: "exec [attr-path or installable] [args-to-proc-compose]",
+		Short: "Exec process-compose definition from a 'devenv.sh' Nix shell or " +
+			"a 'process-compose-flake' derivation.",
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
-			stArgs.attrPath = args[0]
+			stArgs.AttrPath = args[0]
 			if len(args) > 1 {
 				stArgs.args = args[1:]
 			}
@@ -33,45 +33,48 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 			_, err := RunExec(
 				log.Global(),
 				cl.RootDir(),
-				stArgs.flakeDir,
-				stArgs.attrPath,
-				stArgs.args)
+				stArgs.FlakeDir,
+				stArgs.AttrPath,
+				pc.ProcessComposeImpl(stArgs.Impl),
+				stArgs.args,
+			)
 
 			return err
 		},
 	}
 
-	startCmd.Flags().
-		StringVarP(&stArgs.flakeDir,
-			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+	processcomposestart.DefineBasicArgs(startCmd, &stArgs.BasicArgs, defaultFlakeDir)
 
 	parent.AddCommand(startCmd)
 }
 
 // RunExec runs process-compose commands on the instance
-// defined in `devenvShellAttrPath`.
+// defined in `attrPath`.
 func RunExec(
 	log log.ILog,
 	rootDir string,
 	flakeDir string,
-	devenvShellAttrPath string,
+	attrPath string,
+	impl pc.ProcessComposeImpl,
 	args []string,
 ) (
 	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
-	if strings.Contains(devenvShellAttrPath, "#") {
+	if strings.Contains(attrPath, "#") {
 		pcCtx, err = pc.StartFromInstallable(
 			log,
 			rootDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(true))
 	} else {
 		pcCtx, err = pc.Start(
 			log,
 			rootDir,
 			flakeDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(true))
 	}
 

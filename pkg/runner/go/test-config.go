@@ -8,6 +8,15 @@ import (
 )
 
 type RunnerTestConfig struct {
+	// Relative paths to sub modules to run `go test -C <compPath>/<path> <compPath>/<path>/...`
+	// If specified add `.` to include the component as well.
+	Submodules []string `yaml:"submodules" default:"[]"`
+
+	// GOWORK settings, default is disabled.
+	GoWork string `yaml:"goWork" default:"off"`
+	// GOTOOLCHAIN settings, default is local.
+	GoToolchain string `yaml:"goToolchain" default:"local"`
+
 	// Additional build tags.
 	BuildTags []string `yaml:"buildTags" default:"[]"`
 
@@ -22,7 +31,7 @@ func (c *RunnerTestConfig) Validate() error {
 	return common.Validator().Struct(c)
 }
 
-// The unmarshaller for the BuildConfig.
+// UnmarshalTestConfig is the unmarshaller for the BuildConfig.
 func UnmarshalTestConfig(raw step.AuxConfigRaw) (step.AuxConfig, error) {
 	config := &RunnerTestConfig{}
 	err := defaults.Set(config)

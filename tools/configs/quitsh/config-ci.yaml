@@ -1,0 +1,5 @@
+commands:
+  root:
+    logLevel: debug
+test:
+  showTestLog: true

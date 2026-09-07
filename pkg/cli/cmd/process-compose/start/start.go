@@ -16,25 +16,29 @@ import (
 )
 
 const longDesc = `Start a process-compose definition from a 'devenv.sh' Nix shell
-specified by an attribute path (e.g. 'mynamespace.shells.test-dbs') or installable
-(e.g. './tools/nix#mynamespace.shells.test-dbs')
+specified by an attribute path (e.g. 'mynamespace.test-dbs') or installable
+(e.g. './tools/nix#mynamespace.test-dbs')
 in a 'flake.nix' file.`
 
 const timeoutWait = 100 * time.Second
 const timeoutWaitInterval = 100 * time.Millisecond
 
 type (
+	BasicArgs struct {
+		Impl     string
+		AttrPath string
+		FlakeDir string
+	}
+
 	startArgs struct {
-		attrPath       string
-		flakeDir       string
+		BasicArgs
 		socketPathFile string
 
-		waitFor             []string
-		waitForReady        []string
-		noFailOnCompleted   []string
-		attach              bool
-		timeoutWait         time.Duration
-		timeoutWaitInterval time.Duration
+		waitFor           []string
+		waitForReady      []string
+		noFailOnCompleted []string
+		attach            bool
+		timeoutWait       time.Duration
 	}
 )
 
@@ -42,32 +46,31 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 	var stArgs startArgs
 
 	startCmd := &cobra.Command{
-		Use:     "start [devenv-attr-path or devenv-installable]",
-		Short:   "Start a process-compose definition from a 'devenv.sh' Nix shell.",
+		Use: "start [attr-path or installable]",
+		Short: "Start a process-compose definition from a 'devenv.sh' Nix shell or " +
+			"a 'process-compose-flake' derivation.",
 		Long:    longDesc,
 		PreRunE: cobra.MinimumNArgs(1),
 		RunE: func(_cmd *cobra.Command, args []string) error {
-			stArgs.attrPath = args[0]
+			stArgs.AttrPath = args[0]
 
 			_, err := startProcessCompose(
 				cl.RootDir(),
-				stArgs.flakeDir,
-				stArgs.attrPath,
+				stArgs.FlakeDir,
+				stArgs.AttrPath,
+				pc.ProcessComposeImpl(stArgs.Impl),
 				stArgs.waitFor,
 				stArgs.waitForReady,
 				stArgs.noFailOnCompleted,
 				stArgs.socketPathFile,
 				stArgs.timeoutWait,
-				stArgs.timeoutWaitInterval,
 				stArgs.attach)
 
 			return err
 		},
 	}
 
-	startCmd.Flags().
-		StringVarP(&stArgs.flakeDir,
-			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+	DefineBasicArgs(startCmd, &stArgs.BasicArgs, defaultFlakeDir)
 
 	startCmd.Flags().
 		StringArrayVarP(&stArgs.waitFor,
@@ -95,36 +98,47 @@ func AddCmd(cl cli.ICLI, parent *cobra.Command, defaultFlakeDir string) {
 		DurationVar(&stArgs.timeoutWait,
 			"timeout", timeoutWait, "The max. timeout (e.g. `100s`) for waiting on processes.")
 
-	startCmd.Flags().
-		DurationVar(&stArgs.timeoutWaitInterval,
-			"timeout-interval", timeoutWaitInterval, "The max. timeout interval (e.g. `100ms`) for polling processes.")
-
 	parent.AddCommand(startCmd)
+}
+
+func DefineBasicArgs(cmd *cobra.Command, baseArgs *BasicArgs, defaultFlakeDir string) {
+	cmd.Flags().
+		StringVarP(&baseArgs.FlakeDir,
+			"flake-dir", "f", defaultFlakeDir, "The flake directory which contains a 'flake.nix' file.")
+
+	cmd.Flags().
+		StringVarP(&baseArgs.Impl,
+			"impl", "i", string(pc.ProcessComposeOverServicesFlake),
+			"Use `devenv` if the attribute is a `devenv` Nix shell "+
+				"or a `process-compose-flake` if it is a `process-compose-flake`-derivation.")
 }
 
 // startProcessCompose starts the process-compose services from `flake.nix` in `flakeDir`
 // defined in the installable `devenvShellInstallable`.
 // You can wait for the processes names to be running with `waitFor`.
+//
+//nolint:funlen
 func startProcessCompose(
 	rootDir string,
 	flakeDir string,
-	devenvShellAttrPath string,
+	attrPath string,
+	impl pc.ProcessComposeImpl,
 	waitForRunning []string,
 	waitForReady []string,
 	noFailOnCompleted []string,
 	socketPathFile string,
 	timeoutWait time.Duration,
-	timeoutWaitInterval time.Duration,
 	attach bool,
 ) (
 	pcCtx *pc.ProcessComposeCtx,
 	err error,
 ) {
-	if strings.Contains(devenvShellAttrPath, "#") {
+	if strings.Contains(attrPath, "#") {
 		pcCtx, err = pc.StartFromInstallable(
 			log.Global(),
 			rootDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(false),
 		)
 	} else {
@@ -132,13 +146,22 @@ func startProcessCompose(
 			log.Global(),
 			rootDir,
 			flakeDir,
-			devenvShellAttrPath,
+			attrPath,
+			impl,
 			pc.WithMustBeStarted(false),
 		)
 	}
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "could not start process-compose")
 	}
+	defer func() {
+		if err != nil {
+			log.Warn("Stopping due to errors.")
+			e := pcCtx.Stop()
+
+			log.ErrorE(e, "Could not stop process-compose.")
+		}
+	}()
 
 	if socketPathFile != "" {
 		log.Infof("Write socket path file '%s'.", socketPathFile)
@@ -179,8 +202,6 @@ func startProcessCompose(
 			"interval", timeoutWaitInterval)
 	}
 
-	ctx, cancel = context.WithTimeout(ctx, timeoutWaitInterval)
-	defer cancel()
 	fulfilled, err := pcCtx.WaitTill(ctx, log.Global(), conds...)
 	if err != nil {
 		return pcCtx, errors.AddContext(err, "failed to wait for processes")

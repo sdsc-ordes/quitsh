@@ -8,6 +8,11 @@ import (
 )
 
 type RunnerConfigTestBin struct {
+	// GOWORK settings, default is disabled.
+	GoWork string `yaml:"goWork" default:"off"`
+	// GOTOOLCHAIN settings, default is local.
+	GoToolchain string `yaml:"goToolchain" default:"local"`
+
 	VersionModule string `yaml:"versionModule" default:"pkg/build"`
 
 	// Additional arguments for building the executable.
