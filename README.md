@@ -22,7 +22,9 @@
 
 ---
 
-> [!CAUTION] This is a **detached fork** of the original repository in
+> [!CAUTION]
+>
+> This is a **detached fork** of the original repository in
 > [`quitsh`](https://github.com/gabyx/quitsh).
 
 > [!CAUTION]
