@@ -22,6 +22,9 @@
 
 ---
 
+> [!CAUTION] This is a **detached fork** of the original repository in
+> [`quitsh`](https://github.com/gabyx/quitsh).
+
 > [!CAUTION]
 >
 > This repository is in `beta`. The design space of this tool is still explored
