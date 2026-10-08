@@ -53,14 +53,17 @@ func New() (args Config) {
 	return
 }
 
-// Clone implements [config.IConfig] interface.
+// Interface implementation guard.
+var _ config.IConfig = (*Config)(nil)
+
+// Clone implements [config.IConfig].
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 
 	return v
 }
 
-// Validate implements [config.IConfig] interface.
+// Validate implements [config.IConfig].
 func (c *Config) Validate() error {
 	return validator.New().StructExcept(c, "Commands")
 }

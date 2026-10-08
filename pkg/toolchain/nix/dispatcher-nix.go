@@ -69,6 +69,10 @@ func storeConfig(config config.IConfig) (file string, cleanup func(), err error)
 	return file, cleanup, nil
 }
 
+// Interface implementation guard.
+var _ toolchain.IDispatcher = (*NixDispatcher)(nil)
+
+// Run implements [toolchain.IDispatcher].
 func (d *NixDispatcher) Run(
 	rootDir string,
 	dArgs *toolchain.DispatchArgs,

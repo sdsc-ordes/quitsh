@@ -1,11 +1,13 @@
 package image
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 
 	"github.com/containers/image/v5/docker/reference"
+	"github.com/goccy/go-yaml"
 )
 
 type ImageRef reference.Reference
@@ -58,7 +60,10 @@ type imageRef struct {
 	Digest string
 }
 
-// String returns the image string.
+// Interface implementation guard.
+var _ fmt.Stringer = (*imageRef)(nil)
+
+// String implements [fmt.Stringer].
 func (i *imageRef) String() string {
 	var sb strings.Builder
 	sb.WriteString(i.Name)
@@ -77,12 +82,18 @@ type ImageRefField struct {
 	Ref ImageRef `yaml:",inline"`
 }
 
+// Interface implementation guard.
+var _ fmt.Stringer = (*ImageRefField)(nil)
+
 // String returns the image reference.
 func (r *ImageRefField) String() string {
 	return r.Ref.String()
 }
 
-// UnmarshalYAML unmarshals the image ref.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*ImageRefField)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (r *ImageRefField) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	err := unmarshal(&s)
@@ -95,7 +106,10 @@ func (r *ImageRefField) UnmarshalYAML(unmarshal func(any) error) error {
 	return err
 }
 
-// MarshalYAML marshals the image ref. to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*ImageRefField)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 func (r ImageRefField) MarshalYAML() (any, error) {
 	return r.Ref.String(), nil
 }

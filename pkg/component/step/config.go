@@ -1,6 +1,7 @@
 package step
 
 import (
+	"github.com/goccy/go-yaml"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 	"github.com/sdsc-ordes/quitsh/pkg/tags"
 )
@@ -64,6 +65,10 @@ func (c *Config) Init(idx Index) (err error) {
 	return
 }
 
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*AuxConfigRaw)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (s *AuxConfigRaw) UnmarshalYAML(unmarshal func(any) error) error {
 	// Save the unmarshal function for later use.
 	s.Unmarshal = unmarshal

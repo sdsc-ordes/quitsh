@@ -74,10 +74,15 @@ func NewNixImageRunner(
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*NixImageRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*NixImageRunner) ID() runner.RegisterID {
 	return NixImageRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *NixImageRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"fmt"
+
+	"github.com/goccy/go-yaml"
 )
 
 type PipelineType int
@@ -34,7 +36,10 @@ func GetAllPipelineTypes() []PipelineType {
 	return []PipelineType{BranchPipeline, MergeRequestPipeline, TagPipeline}
 }
 
-// Implement the pflags Value interface.
+// Interface implementation guard.
+var _ fmt.Stringer = (*PipelineType)(nil)
+
+// String implements [fmt.Stringer] .
 func (v PipelineType) String() string {
 	switch v {
 	case BranchPipeline:
@@ -48,7 +53,10 @@ func (v PipelineType) String() string {
 	panic("Not implemented.")
 }
 
-// UnmarshalYAML unmarshals from YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*PipelineType)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (v *PipelineType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	var s string
 	err = unmarshal(&s)
@@ -61,7 +69,10 @@ func (v *PipelineType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	return
 }
 
-// MarshalYAML marshals to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*PipelineType)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 func (v PipelineType) MarshalYAML() (any, error) {
 	return v.String(), nil
 }

@@ -31,7 +31,10 @@ func NewPipelineSettingsLoaderGitlab(attrs PipelineAttributes) PipelineSettingsL
 	return &gitlabSettingsLoader{attrs}
 }
 
-// LoadFromEnv loads the settings from the environment.
+// Interface implementation guard.
+var _ PipelineSettingsLoader = (*gitlabSettingsLoader)(nil)
+
+// LoadFromEnv implements [PipelineSettingsLoader].
 //
 //nolint:nestif // this is ok.
 func (p *gitlabSettingsLoader) LoadFromEnv(

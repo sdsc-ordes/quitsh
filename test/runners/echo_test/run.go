@@ -26,10 +26,15 @@ func NewEchoRunner(config any, settings *setts.BuildSettings) (runner.IRunner, e
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*EchoRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*EchoRunner) ID() runner.RegisterID {
 	return EchoRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *EchoRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 

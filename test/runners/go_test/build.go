@@ -32,10 +32,15 @@ func NewGoBuildRunner(config any, settings *setts.BuildSettings) (runner.IRunner
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GoBuildRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*GoBuildRunner) ID() runner.RegisterID {
 	return GoBuildRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *GoBuildRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

@@ -1,6 +1,7 @@
 package component
 
 import (
+	"fmt"
 	"path"
 
 	fs "github.com/sdsc-ordes/quitsh/pkg/filesystem"
@@ -81,7 +82,10 @@ func (c *Component) Root() string {
 	return c.root
 }
 
-// String returns a string representation of the component.
+// Interface implementation guard.
+var _ fmt.Stringer = (*Component)(nil)
+
+// String implements [fmt.Stringer] .
 func (c *Component) String() string {
 	return c.Name()
 }

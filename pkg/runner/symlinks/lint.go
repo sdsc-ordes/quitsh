@@ -31,10 +31,15 @@ func NewSymlinkLintRunner(config any, settings *config.LintSettings) (runner.IRu
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*SymlinkLintRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (r *SymlinkLintRunner) ID() runner.RegisterID {
 	return SymlinkLintRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *SymlinkLintRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	gitx := ctx.Git()

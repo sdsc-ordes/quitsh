@@ -1,6 +1,9 @@
 package target
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const NamespaceSeparator = "::"
 
@@ -27,7 +30,10 @@ func (i *ID) Namespace() (n string, exists bool) {
 	return "", false
 }
 
-// String returns the string of the ID.
+// Interface implementation guard.
+var _ fmt.Stringer = (*ID)(nil)
+
+// String implements [fmt.Stringer].
 func (i *ID) String() string {
 	return (string)(*i)
 }

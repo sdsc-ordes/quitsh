@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/creasty/defaults"
+)
+
 type (
 	NixSettings struct {
 		FlakeDirRel string `yaml:"flakeDirRel" default:"tools/nix"`
@@ -38,6 +42,9 @@ type (
 		PrivateKeyPath string `yaml:"privateKeyPath" validate:"required_if=Enable true privateKeyEnv ''"`
 	}
 )
+
+// Interface implementation guard.
+var _ defaults.Setter = (*NixSettings)(nil)
 
 // SetDefaults implements [defaults.Setter].
 func (c *NixSettings) SetDefaults() {

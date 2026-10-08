@@ -5,6 +5,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/common"
 	"github.com/sdsc-ordes/quitsh/pkg/component/input"
 	"github.com/sdsc-ordes/quitsh/pkg/component/target"
+	"github.com/sdsc-ordes/quitsh/pkg/config"
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 )
 
@@ -22,7 +23,10 @@ type Config struct {
 	DotGeneral any `yaml:".general,omitempty"`
 }
 
-// Init implements the [config.Initer] interface.
+// Interface implementation guard.
+var _ config.Initer = (*Config)(nil)
+
+// Init implements [config.Initer].
 func (c *Config) Init() (err error) {
 	err = common.Validator().Struct(c)
 

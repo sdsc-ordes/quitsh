@@ -38,10 +38,15 @@ func NewCodecovRunner(config any, settings config.ITestSettings) (runner.IRunner
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*CoverageUpload)(nil)
+
+// ID implements [runner.IRunner].
 func (r *CoverageUpload) ID() runner.RegisterID {
 	return CoverageUploadRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *CoverageUpload) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 

@@ -3,6 +3,10 @@ package image
 import (
 	"errors"
 	"fmt"
+
+	"github.com/goccy/go-yaml"
+	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/spf13/pflag"
 )
 
 type Type int
@@ -51,7 +55,10 @@ func GetAllImageTypes() []Type {
 	return []Type{ImageService, ImageDBMigration, ImageBundle, ImageData}
 }
 
-// String implements the interface [pflags.Value].
+// Interface implementation guard.
+var _ pflag.Value = (*Type)(nil)
+
+// String implements [pflag.Value].
 func (v Type) String() string {
 	switch v {
 	case ImageService:
@@ -67,19 +74,22 @@ func (v Type) String() string {
 	panic("Not implemented.")
 }
 
-// Set implements the interface [pflags.Value].
+// Set implements [pflag.Value].
 func (v *Type) Set(s string) (err error) {
 	*v, err = NewType(s)
 
 	return
 }
 
-// Type implements the interface [pflags.Value].
+// Type implements [pflag.Value].
 func (v *Type) Type() string {
 	return v.String()
 }
 
-// UnmarshalYAML unmarshals from YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*Type)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (v *Type) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	var s string
 	err = unmarshal(&s)
@@ -92,13 +102,19 @@ func (v *Type) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	return
 }
 
-// MarshalYAML marshals to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*Type)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 // Note: needs to be value-receiver to be called!
 func (v Type) MarshalYAML() (any, error) {
 	return v.String(), nil
 }
 
-// UnmarshalMapstruct implements the [config.UnmarshalMapstruct] interface.
+// Interface implementation guard.
+var _ config.UnmarshalerMapstruct = (*Type)(nil)
+
+// UnmarshalMapstruct implements [config.UnmarshalerMapstruct].
 func (v *Type) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {

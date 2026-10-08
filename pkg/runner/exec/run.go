@@ -27,10 +27,15 @@ func NewExecRunner(config any, settings config.IBuildSettings) (runner.IRunner, 
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*ExecRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*ExecRunner) ID() runner.RegisterID {
 	return ExecRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *ExecRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

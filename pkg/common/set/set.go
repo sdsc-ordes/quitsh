@@ -89,7 +89,7 @@ func (s *Unordered[T]) Insert(e T) bool {
 	return false
 }
 
-// Removes an element `e` from the set and returns
+// Remove removes an element `e` from the set and returns
 // `true` if it was removed.
 func (s *Unordered[T]) Remove(e T) bool {
 	if s.set == nil {
@@ -121,7 +121,10 @@ func (s *Unordered[T]) Len() int {
 	return len(s.set)
 }
 
-// String returns the conversion to a string.
+// Interface implementation guard.
+var _ fmt.Stringer = (*Unordered[string])(nil)
+
+// String implements [fmt.Stringer].
 func (s *Unordered[T]) String() string {
 	return fmt.Sprintf("%v", s.set)
 }

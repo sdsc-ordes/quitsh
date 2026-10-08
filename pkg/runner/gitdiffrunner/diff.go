@@ -31,10 +31,15 @@ func NewGitDiffRunner(config any, nixSetts *config.NixSettings) (runner.IRunner,
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GitDiffRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*GitDiffRunner) ID() runner.RegisterID {
 	return GitDiffRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *GitDiffRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

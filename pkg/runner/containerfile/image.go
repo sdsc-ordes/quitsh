@@ -42,10 +42,15 @@ func NewContainerfileBuildRunner(
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*ContainerfileBuildRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*ContainerfileBuildRunner) ID() runner.RegisterID {
 	return ContainerfileRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *ContainerfileBuildRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

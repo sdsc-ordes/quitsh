@@ -53,16 +53,25 @@ type Config struct {
 	ValWithEnv string `yaml:"valWithEnv"`
 }
 
+// Interface implementation guard.
+var _ config.IConfig = (*Config)(nil)
+
+// Clone implements [config.IConfig].
 func (c *Config) Clone() config.IConfig {
 	v, _ := clone.Clone(c).(*Config)
 
 	return v
 }
 
+// Validate implements [config.IConfig].
 func (c *Config) Validate() error {
 	return nil
 }
 
+// Interface implementation guard.
+var _ config.EnvExpander = (*Config)(nil)
+
+// ExpandEnv implements [config.EnvExpander].
 func (c *Config) ExpandEnv() error {
 	c.ValWithEnv = os.ExpandEnv(c.ValWithEnv)
 	log.Infof("Replaced ValWithEnv: '%v'", c.ValWithEnv)

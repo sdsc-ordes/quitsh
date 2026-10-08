@@ -54,10 +54,15 @@ func getGoLangCILintFlags(configPath string, fix bool) (flags []string) {
 	return
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GoLintRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (r *GoLintRunner) ID() runner.RegisterID {
 	return GoLintRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *GoLintRunner) Run(ctx runner.IContext) error {
 	comp := ctx.Component()
 

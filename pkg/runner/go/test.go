@@ -29,6 +29,10 @@ func NewGoTestRunner(config any, settings config.ITestSettings) (runner.IRunner,
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GoTestRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (r *GoTestRunner) ID() runner.RegisterID {
 	return GoTestRunnerID
 }
@@ -59,6 +63,7 @@ func generateCoverageReport(log log.ILog, comp *component.Component) error {
 	return err
 }
 
+// Run implements [runner.IRunner].
 func (r *GoTestRunner) Run(ctx runner.IContext) error {
 	comp := ctx.Component()
 	log := ctx.Log()

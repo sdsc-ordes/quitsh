@@ -3,6 +3,10 @@ package common
 import (
 	"errors"
 	"fmt"
+
+	"github.com/goccy/go-yaml"
+	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/spf13/pflag"
 )
 
 type EnvironmentType int
@@ -58,7 +62,10 @@ func GetEnvTypesHelp() string {
 	)
 }
 
-// String implement the pflags Value interface.
+// Interface implementation guard.
+var _ pflag.Value = (*EnvironmentType)(nil)
+
+// String implements [pflag.Value].
 func (v EnvironmentType) String() string {
 	switch v {
 	case EnvironmentDev:
@@ -89,19 +96,22 @@ func (v EnvironmentType) ShortString() string {
 	panic(fmt.Sprintf("EnvironmentType not implemented. %v", int(v)))
 }
 
-// Set implement the pflags Value interface.
+// Set implements [pflag.Value].
 func (v *EnvironmentType) Set(s string) (err error) {
 	*v, err = NewEnvironmentType(s)
 
 	return
 }
 
-// Type implement the pflags Value interface.
+// Type implements [pflag.Value].
 func (v *EnvironmentType) Type() string {
 	return "string"
 }
 
-// UnmarshalYAML implements the unmarshalling of this data type.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*EnvironmentType)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (v *EnvironmentType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	var s string
 
@@ -115,13 +125,19 @@ func (v *EnvironmentType) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	return
 }
 
-// MarshalYAML marshals to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*EnvironmentType)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 // Note: needs to be value-receiver to be called!
 func (v EnvironmentType) MarshalYAML() (any, error) {
 	return v.String(), nil
 }
 
-// Implement the [config.UnmarshalMapstruct] interface.
+// Interface implementation guard.
+var _ config.UnmarshalerMapstruct = (*EnvironmentType)(nil)
+
+// UnmarshalMapstruct implements [config.UnmarshalerMapstruct].
 func (v *EnvironmentType) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {

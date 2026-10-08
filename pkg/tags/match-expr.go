@@ -1,9 +1,12 @@
 package tags
 
 import (
+	"fmt"
 	"go/build/constraint"
 	"slices"
 	"strings"
+
+	"github.com/goccy/go-yaml"
 )
 
 type (
@@ -36,6 +39,9 @@ func NewExpr(expr string) (ex Expr, err error) {
 	return
 }
 
+// Interface implementation guard.
+var _ fmt.Stringer = (*Expr)(nil)
+
 // String returns the expression.
 func (e *Expr) String() string {
 	return e.expr
@@ -52,7 +58,10 @@ func (e *Expr) Matches(tags []Tag) bool {
 	})
 }
 
-// UnmarshalYAML unmarshals from YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*Tag)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (v *Tag) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	err = unmarshal(&v.s)
 	if err != nil {
@@ -62,13 +71,19 @@ func (v *Tag) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	return
 }
 
-// MarshalYAML marshals to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*Tag)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 // NOTE: needs to be value-receiver to be called!
 func (v Tag) MarshalYAML() (any, error) {
 	return v.s, nil
 }
 
-// UnmarshalYAML unmarshals from YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceUnmarshaler = (*Expr)(nil)
+
+// UnmarshalYAML implements [yaml.InterfaceUnmarshaler].
 func (v *Expr) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	err = unmarshal(&v.expr)
 	if err != nil {
@@ -83,7 +98,10 @@ func (v *Expr) UnmarshalYAML(unmarshal func(any) error) (err error) {
 	return
 }
 
-// MarshalYAML marshals to YAML.
+// Interface implementation guard.
+var _ yaml.InterfaceMarshaler = (*Expr)(nil)
+
+// MarshalYAML implements [yaml.InterfaceMarshaler].
 // NOTE: needs to be value-receiver to be called!
 func (v Expr) MarshalYAML() (any, error) {
 	return v.expr, nil

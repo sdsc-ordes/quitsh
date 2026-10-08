@@ -38,16 +38,25 @@ type wrapITestSettings struct {
 	ref *TestSettings
 }
 
+// Interface implementation guard.
+var _ config.ITestSettings = (*wrapITestSettings)(nil)
+
+// BuildType implements [config.ITestSettings].
 func (c *wrapITestSettings) BuildType() common.BuildType {
 	return c.ref.BuildType
 }
+
+// ShowTestLog implements [config.ITestSettings].
 func (c *wrapITestSettings) ShowTestLog() bool {
 	return c.ref.ShowTestLog
 }
+
+// Args implements [config.ITestSettings].
 func (c *wrapITestSettings) Args() []string {
 	return c.ref.Args
 }
 
+// TestArgs implements [config.ITestSettings].
 func (c *wrapITestSettings) TestArgs() []string {
 	return c.ref.TestArgs
 }

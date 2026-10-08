@@ -22,22 +22,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Interface implementation guard.
+var _ ICLI = (*cliApp)(nil)
+
+// Config implements [ICLI].
 func (c *cliApp) Config() config.IConfig {
 	return c.config
 }
 
+// Ctx implements [ICLI].
 func (c *cliApp) Ctx() context.Context {
 	return c.context
 }
 
+// ToolchainDispatcher implements [ICLI].
 func (c *cliApp) ToolchainDispatcher() toolchain.IDispatcher {
 	return c.toolchainDispatcher
 }
 
+// RunnerFactory implements [ICLI].
 func (c *cliApp) RunnerFactory() factory.IFactory {
 	return c.factory
 }
 
+// RootDir implements [ICLI].
 func (c *cliApp) RootDir() string {
 	root, err := c.resolveRootDir()
 	if err != nil {
@@ -47,18 +55,22 @@ func (c *cliApp) RootDir() string {
 	return root
 }
 
+// RootCmd implements [ICLI].
 func (c *cliApp) RootCmd() *cobra.Command {
 	return c.rootCmd
 }
 
+// RootArgs implements [ICLI].
 func (c *cliApp) RootArgs() *rootcmd.Args {
 	return c.rootArgs
 }
 
+// Stages implements [ICLI].
 func (c *cliApp) Stages() stage.Stages {
 	return c.stages
 }
 
+// Run implements [ICLI].
 func (c *cliApp) Run() error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -86,6 +98,7 @@ func (c *cliApp) Run() error {
 	return e
 }
 
+// Shutdown implements [ICLI].
 func (c *cliApp) Shutdown() error {
 	if c.shutdown != nil {
 		return c.shutdown()
@@ -117,6 +130,7 @@ func (c *cliApp) AddShutdown(f func() error) {
 	}
 }
 
+// FindComponents implements [ICLI].
 func (c *cliApp) FindComponents(
 	args *general.ComponentArgs,
 ) (comps []*component.Component, all []*component.Component, rootDir string, err error) {

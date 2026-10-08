@@ -1,10 +1,16 @@
 package stage
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 type Stage string
 
-// String returns the string of the stage.
+// Interface implementation guard.
+var _ fmt.Stringer = (*Stage)(nil)
+
+// String implements [fmt.Stringer].
 func (s Stage) String() string {
 	return (string)(s)
 }

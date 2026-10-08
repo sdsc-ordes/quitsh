@@ -16,10 +16,15 @@ func NewGoLintRunner(config any) (runner.IRunner, error) {
 	return &GoLintRunner{}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GoLintRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (*GoLintRunner) ID() runner.RegisterID {
 	return GoLintRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *GoLintRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

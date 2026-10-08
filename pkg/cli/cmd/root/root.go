@@ -75,6 +75,9 @@ type (
 	}
 )
 
+// Interface implementation guard.
+var _ defaults.Setter = (*Args)(nil)
+
 // SetDefaults implements [defaults.Setter].
 func (s *Args) SetDefaults() {
 	if s.Config == "" {
@@ -84,6 +87,9 @@ func (s *Args) SetDefaults() {
 		s.ConfigUser = os.Getenv(common.EnvQuitshConfigUser)
 	}
 }
+
+// Interface implementation guard.
+var _ defaults.Setter = (*Settings)(nil)
 
 // SetDefaults implements [defaults.Setter].
 func (s *Settings) SetDefaults() {

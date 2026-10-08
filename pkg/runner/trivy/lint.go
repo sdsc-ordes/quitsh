@@ -30,10 +30,15 @@ func NewTrivyLintRunner(config any, settings *config.LintSettings) (runner.IRunn
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*TrivyLintRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (r *TrivyLintRunner) ID() runner.RegisterID {
 	return TrivyLintRunnerID
 }
 
+// Run implements [runner.IRunner].
 func (r *TrivyLintRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()

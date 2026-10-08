@@ -4,18 +4,23 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/errors"
 
 	"github.com/hashicorp/go-version"
+	"github.com/sdsc-ordes/quitsh/pkg/config"
+	"github.com/spf13/pflag"
 )
 
 type Version struct {
 	version.Version
 }
 
-// String implements the [pflag.Value] interface.
+// Interface implementation guard.
+var _ pflag.Value = (*Version)(nil)
+
+// String implements [pflag.Value].
 func (v *Version) String() string {
 	return v.Version.String()
 }
 
-// Set implements the [pflag.Value] interface.
+// Set implements [pflag.Value].
 func (v *Version) Set(s string) error {
 	err := v.Version.UnmarshalText([]byte(s))
 	if err != nil {
@@ -25,7 +30,7 @@ func (v *Version) Set(s string) error {
 	return nil
 }
 
-// Type implements the [pflag.Value] interface.
+// Type implements [pflag.Value].
 func (v *Version) Type() string {
 	return "ComponentVersion"
 }
@@ -34,7 +39,10 @@ func (v *Version) UnmarshalText(bytes []byte) error {
 	return v.Version.UnmarshalText(bytes)
 }
 
-// UnmarshalMapstruct implements the [config.UnmarshalMapstruct] interface.
+// Interface implementation guard.
+var _ config.UnmarshalerMapstruct = (*Version)(nil)
+
+// UnmarshalMapstruct implements [config.UnmarshalerMapstruct].
 func (v *Version) UnmarshalMapstruct(data any) error {
 	d, ok := data.(string)
 	if !ok {

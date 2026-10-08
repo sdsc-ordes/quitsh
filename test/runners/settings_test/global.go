@@ -37,15 +37,25 @@ func NewBuildSettings(
 	}
 }
 
+// Interface implementation guard.
+var _ config.IBuildSettings = (*wrapIBuildSettings)(nil)
+
+// BuildType implements [config.IBuildSettings].
 func (c *wrapIBuildSettings) BuildType() common.BuildType {
 	return c.ref.BuildType
 }
+
+// EnvironmentType implements [config.IBuildSettings].
 func (c *wrapIBuildSettings) EnvironmentType() common.EnvironmentType {
 	return c.ref.EnvironmentType
 }
+
+// Coverage implements [config.IBuildSettings].
 func (c *wrapIBuildSettings) Coverage() bool {
 	return c.ref.Coverage
 }
+
+// Args implements [config.IBuildSettings].
 func (c *wrapIBuildSettings) Args() []string {
 	return c.ref.Args
 }

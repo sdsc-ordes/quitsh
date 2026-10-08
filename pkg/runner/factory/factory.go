@@ -69,6 +69,9 @@ type RunnerInstance struct {
 	Toolchain string
 }
 
+// Interface implementation guard.
+var _ IFactory = (*factory)(nil)
+
 // Stages implements [IFactory].
 func (fac *factory) Stages() stage.Stages {
 	return fac.stages

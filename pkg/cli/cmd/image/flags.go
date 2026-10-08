@@ -11,6 +11,7 @@ import (
 	"github.com/sdsc-ordes/quitsh/pkg/registry"
 	"github.com/sdsc-ordes/quitsh/pkg/runner/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type (
@@ -119,12 +120,15 @@ func AddPushFlagsGeneral(cmd *cobra.Command, setts *config.ImageSettings) {
 		"If HTTPS is used to talk the registry.")
 }
 
-// Implementing pflag.Value interface.
+// Interface implementation guard.
+var _ pflag.Value = (*imgTypesParseWrapper)(nil)
+
+// String implements [pflag.Value].
 func (i *imgTypesParseWrapper) String() string {
 	return fmt.Sprintf("%q", *i.values)
 }
 
-// Implementing pflag.Value interface.
+// Set implements [pflag.Value].
 func (i *imgTypesParseWrapper) Set(s string) error {
 	for v := range strings.SplitSeq(s, ",") {
 		vv, err := image.NewType(strings.TrimSpace(v))
@@ -137,17 +141,20 @@ func (i *imgTypesParseWrapper) Set(s string) error {
 	return nil
 }
 
-// Implementing pflag.Value interface.
+// Type implements [pflag.Value].
 func (i *imgTypesParseWrapper) Type() string {
 	return "string"
 }
 
-// Implementing pflag.Value interface.
+// Interface implementation guard.
+var _ pflag.Value = (*copyToParseWrapper)(nil)
+
+// String implements [pflag.Value].
 func (i *copyToParseWrapper) String() string {
 	return *i.value
 }
 
-// Implementing pflag.Value interface.
+// Set implements [pflag.Value].
 func (i *copyToParseWrapper) Set(s string) error {
 	if s != "containers-storage:" &&
 		s != "docker://" &&
@@ -160,6 +167,7 @@ func (i *copyToParseWrapper) Set(s string) error {
 	return nil
 }
 
+// Type implements [pflag.Value].
 func (i *copyToParseWrapper) Type() string {
 	return "string"
 }

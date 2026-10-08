@@ -33,6 +33,10 @@ func NewGoTestBinRunner(config any, settings config.ITestSettings) (runner.IRunn
 	}, nil
 }
 
+// Interface implementation guard.
+var _ runner.IRunner = (*GoTestBinRunner)(nil)
+
+// ID implements [runner.IRunner].
 func (r *GoTestBinRunner) ID() runner.RegisterID {
 	return GoTestBinRunnerID
 }
@@ -143,6 +147,7 @@ func testBinary(
 	return nil
 }
 
+// Run implements [runner.IRunner].
 func (r *GoTestBinRunner) Run(ctx runner.IContext) error {
 	log := ctx.Log()
 	comp := ctx.Component()
